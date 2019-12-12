@@ -2,6 +2,8 @@
 title: JuliaGPU
 ---
 
+<p class="font-125">High-performance GPU programming in a high-level language.</p>
+
 <br />
 
 <div class="text-justify">
