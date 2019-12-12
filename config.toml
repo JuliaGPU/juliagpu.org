@@ -1,7 +1,7 @@
 baseURL = "//juliagpu.org/"
 languageCode = "en-us"
 title = "JuliaGPU"
-theme = "vanilla-bootstrap-hugo-theme"
+theme = "vanilla-bootstrap"
 googleAnalytics = "UA-154489943-1"
 enableGitInfo = true
 
@@ -19,28 +19,28 @@ post = "/:filename/"
   name = "Home"
   pre = "home"
   url = "/"
-  weight = 1.0
+  weight = 1
 
   [[menu.nav]]
   name = "Blog"
   pre = "file-text"
   url = "/post/"
-  weight = 2.0
+  weight = 2
 
   [[menu.nav]]
   name = "NVIDIA CUDA"
   url = "/nvidia/"
-  weight = 3.0
+  weight = 4
 
   [[menu.nav]]
   name = "AMD ROCm"
   url = "/amd/"
-  weight = 4.0
+  weight = 5
 
   [[menu.nav]]
   name = "OpenCL"
   url = "/opencl/"
-  weight = 5.0
+  weight = 6
 
 [params]
 includeBootstrapJs = false
