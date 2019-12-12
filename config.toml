@@ -22,7 +22,7 @@ post = "/:filename/"
   weight = 1.0
 
   [[menu.nav]]
-  name = "News"
+  name = "Blog"
   pre = "file-text"
   url = "/post/"
   weight = 2.0
