@@ -1,0 +1,13 @@
+---
+date: "2019-12-12"
+tags: []
+title: "New website"
+---
+
+Welcome to the new landing page for the JuliaGPU organization. This website serves as an
+introduction to the several packages for programming GPUs in Julia, with pointers to
+relevant resources for new users.
+
+The sources for this website are hosted at
+[GitHub](https://github.com/JuliaGPU/juliagpu.org) and generated using Hugo, feel free to
+open an issue or pull request if you think it could be improved.
