@@ -8,7 +8,7 @@ install:
 # build the website
 script:
   - hugo
-  # - echo 'juliagpu.org' > public/CNAME
+  - echo 'juliagpu.org' > public/CNAME
 
 # deploy to GitHub pages
 deploy:
