@@ -28,6 +28,12 @@ post = "/:filename/"
   weight = 2
 
   [[menu.nav]]
+  name = "Learn"
+  pre = "book-open"
+  url = "/learn/"
+  weight = 3
+
+  [[menu.nav]]
   name = "NVIDIA CUDA"
   url = "/nvidia/"
   weight = 4
