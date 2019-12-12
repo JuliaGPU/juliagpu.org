@@ -1,0 +1,87 @@
+baseURL = "https://juliagpu.github.io/juliagpu.org/"
+languageCode = "en-us"
+title = "JuliaGPU"
+theme = "vanilla-bootstrap-hugo-theme"
+googleAnalytics = "UA-154489943-1"
+
+[taxonomies]
+tag = "tags"
+
+[permalinks]
+post = "/:filename/"
+
+# See https://feathericons.com/
+# The value of pre is the icon name
+[menu]
+
+  [[menu.nav]]
+  name = "Home"
+  pre = "home"
+  url = "/"
+  weight = 1.0
+
+  [[menu.nav]]
+  name = "News"
+  pre = "file-text"
+  url = "/post/"
+  weight = 2.0
+
+  [[menu.nav]]
+  name = "NVIDIA CUDA"
+  url = "/nvidia/"
+  weight = 3.0
+
+  [[menu.nav]]
+  name = "AMD ROCm"
+  url = "/amd/"
+  weight = 4.0
+
+  [[menu.nav]]
+  name = "OpenCL"
+  url = "/opencl/"
+  weight = 5.0
+
+[params]
+includeBootstrapJs = false
+showActiveNav = true
+containerMaxWidth = "700px"
+dateFormat = "Jan 2, 2006"
+footerText = "Made with [Hugo](https://gohugo.io/) & [Vanilla](https://github.com/zwbetz-gh/vanilla-bootstrap-hugo-theme)"
+hideFooter = false
+
+[markup]
+defaultMarkdownHandler = "goldmark"
+
+  [markup.goldmark]
+
+    [markup.goldmark.extensions]
+    definitionList = true
+    footnote = true
+    linkify = true
+    strikethrough = true
+    table = true
+    taskList = true
+    typographer = true
+
+    [markup.goldmark.parser]
+    attribute = true
+    autoHeadingID = true
+
+    [markup.goldmark.renderer]
+    hardWraps = false
+    unsafe = true
+    xHTML = false
+
+  [markup.highlight]
+  codeFences = true
+  hl_Lines = ""
+  lineNoStart = 1.0
+  lineNos = false
+  lineNumbersInTable = true
+  noClasses = true
+  style = "monokai"
+  tabWidth = 4.0
+
+  [markup.tableOfContents]
+  endLevel = 6.0
+  startLevel = 2.0
