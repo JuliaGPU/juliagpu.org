@@ -1,4 +1,4 @@
-baseURL: https://juliagpu.github.io
+baseURL: https://juliagpu.github.io/juliagpu.org/
 languageCode: en-us
 title: JuliaGPU
 theme: vanilla-bootstrap-hugo-theme
