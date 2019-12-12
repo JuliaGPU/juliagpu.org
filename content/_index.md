@@ -39,6 +39,22 @@ C, but the native programming capabilities are not supported on recent versions
 of Julia anymore.
 
 
+## Applications
+
+There are several Julia applications and libraries that rely on the language's GPU
+capabilities, such as:
+
+- [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
+- [DiffEqGPU.jl](https://github.com/JuliaDiffEq/DiffEqGPU.jl) as part of the
+  DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers
+- [Oceananigans.jl](https://github.com/climate-machine/Oceananigans.jl) to accelerate a
+  non-hydrostatic ocean modeling application
+
+Many other Julia applications and libraries can be used with GPUs, too: By means of the
+CuArrays.jl or ROCArrays.jl packages for respectively NVIDIA and AMD, existing software that
+uses the Julia array interfaces can often be executed as-is on a GPU.
+
+
 ## Community
 
 If you need help, or have questions about GPU programming in Julia, you can find members of
