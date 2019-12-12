@@ -2,7 +2,7 @@ baseURL: https://juliagpu.github.io
 languageCode: en-us
 title: JuliaGPU
 theme: vanilla-bootstrap-hugo-theme
-googleAnalytics: UA-123456789-1
+googleAnalytics: UA-154489943-1
 
 taxonomies:
   tag: tags
