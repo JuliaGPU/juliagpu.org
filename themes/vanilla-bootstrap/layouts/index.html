@@ -1,13 +1,21 @@
 {{ define "main" }}
 
 <div id="home-jumbotron" class="jumbotron text-center">
-{{ with .Content }}
-  <h1>{{ $.Page.Title }}</h1>
-  {{ . }}
-{{ else }}
-  <h1>{{ .Site.Title }}</h1>
-  <p class="font-125">{{ .Site.Params.homeText | markdownify }}</p>
-{{ end }}
+  <h1>
+    {{ if isset .Site.Params "subtitle" }}
+      <img height=70 src="{{ .Site.Params.logo | absURL }}">
+    {{ end }}
+    {{ $.Page.Title }}
+  </h1>
+  {{ if isset .Site.Params "subtitle" }}
+    <p class="font-125">{{ .Site.Params.subtitle | markdownify }}</p>
+  {{ end }}
+</div>
+
+<div>
+  {{ with .Content }}
+    {{ . }}
+  {{ end }}
 </div>
 
 {{ end }}

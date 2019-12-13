@@ -2,12 +2,6 @@
 title: JuliaGPU
 ---
 
-<p class="font-125">High-performance GPU programming in a high-level language.</p>
-
-<br />
-
-<div class="text-justify">
-
 JuliaGPU is a Github organization created to unify the many packages for
 programming GPUs in Julia. With its high-level syntax and flexible compiler,
 Julia is well positioned to productively program hardware accelerators like GPUs
@@ -17,10 +11,6 @@ Several GPU platforms are supported, but there are large differences in features
 and stability. On this website, you can find a brief introduction of the
 supported platforms and links to the respective home pages.
 
-</div>
-
-
-<div class="text-left">
 
 ## Supported platforms
 
@@ -66,5 +56,3 @@ the community at:
   section](https://discourse.julialang.org/c/domain/gpu/11)
 - Julia Slack ([register here](https://slackinvite.julialang.org/)), on the [#gpu
   channel](https://julialang.slack.com/messages/C689Y34LE/)
-
-</div>
