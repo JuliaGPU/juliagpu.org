@@ -1,7 +1,7 @@
 ---
 date: "2019-12-12"
 tags: []
-title: "New website"
+title: "New website for JuliaGPU"
 ---
 
 Welcome to the new landing page for the JuliaGPU organization. This website serves as an
