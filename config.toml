@@ -35,12 +35,12 @@ post = "/:filename/"
 
   [[menu.nav]]
   name = "NVIDIA CUDA"
-  url = "/nvidia/"
+  url = "/cuda/"
   weight = 4
 
   [[menu.nav]]
   name = "AMD ROCm"
-  url = "/amd/"
+  url = "/rocm/"
   weight = 5
 
   [[menu.nav]]
