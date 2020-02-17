@@ -14,13 +14,13 @@ supported platforms and links to the respective home pages.
 
 ## Supported platforms
 
-The best supported GPU platform in Julia is **[NVIDIA CUDA](/nvidia/)**, with
+The best supported GPU platform in Julia is **[NVIDIA CUDA](cuda)**, with
 mature and full-featured packages for both low-level kernel programming as well
 as working with high-level operations on arrays. All versions of Julia are
 supported, and the functionality is actively used by a variety of applications
 and libraries.
 
-Experimental support exists for **[AMD GPUs](amd)** running on the ROCm stack.
+Experimental support exists for **[AMD GPUs](rocm)** running on the ROCm stack.
 These GPUs can similarly be programmed in Julia at the kernel level or using
 array operations, but these capabilities are under heavy development and are not
 ready for general consumption yet.
