@@ -57,7 +57,7 @@ julia> parent() = (@cuprintln(child()); return)
 julia> @cuda parent()
 0
 
-julia> bar() = (@cuprintln(child() + 1); return)
+julia> parent() = (@cuprintln(child() + 1); return)
 julia> @cuda parent()
 1
 
