@@ -1,0 +1,6 @@
+---
+date: "2020-01-14"
+tags: []
+title: "Julia's Dramatic Rise in HPC and Elsewhere"
+externallink: "https://www.hpcwire.com/2020/01/14/julia-programmings-dramatic-rise-in-hpc-and-elsewhere/"
+---
