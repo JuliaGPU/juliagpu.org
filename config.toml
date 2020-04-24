@@ -1,4 +1,4 @@
-baseURL = "//juliagpu.org/"
+baseURL = "https://juliagpu.org/"
 languageCode = "en-us"
 title = "JuliaGPU"
 theme = "vanilla-bootstrap"
