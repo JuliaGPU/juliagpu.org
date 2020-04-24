@@ -1,5 +1,5 @@
 ---
-date: "2020-03-25"
+url: "/cudanative_3.0-cuarrays_2.0/"
 tags: []
 title: "CUDAnative 3.0 and CuArrays 2.0"
 ---

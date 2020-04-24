@@ -11,6 +11,9 @@ tag = "tags"
 [permalinks]
 post = "/:filename/"
 
+[frontmatter]
+date  = [":filename"]
+
 # See https://feathericons.com/
 # The value of pre is the icon name
 [menu]
