@@ -33,14 +33,18 @@ of Julia anymore.
 
 ## Applications
 
-There are several Julia applications and libraries that rely on the language's GPU
+There are many Julia applications and libraries that rely on the language's GPU
 capabilities, such as:
 
 - [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
+- [Yao.jl](https://github.com/QuantumBFS/Yao.jl) framework for quantum information research
 - [DiffEqGPU.jl](https://github.com/JuliaDiffEq/DiffEqGPU.jl) as part of the
   DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers
 - [Oceananigans.jl](https://github.com/climate-machine/Oceananigans.jl) to accelerate a
   non-hydrostatic ocean modeling application
+- [GPUifyLoops.jl](https://github.com/vchuravy/GPUifyLoops.jl/) and
+  [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for
+  working with CPUs and GPUs alike using vendor-neutral abstractions
 
 Many other Julia applications and libraries can be used with GPUs, too: By means of the
 CuArrays.jl or ROCArrays.jl packages for respectively NVIDIA and AMD, existing software that
