@@ -10,13 +10,18 @@
       {{ $isMenu = or $isMenu (eq $currentPage.Title .Name) }}
       {{ $isMenu = or $isMenu (and (eq .Name "Blog") (eq $currentPage.Section "post")) }}
       {{ $isMenu = or $isMenu (and (eq .Name "Tags") (eq $currentPage.Section "tags")) }}
-      {{ if $isMenu }} 
+      {{ if $isMenu }}
         {{ $active = "nav-link-active" }}
-      {{ end }}  
-    {{ end }}  
-    {{ $icon := printf "<i data-feather=\"%s\"></i>" .Pre }}
-    {{ $text := print $icon " " .Name | safeHTML }}
-    <a class="nav-link {{ $active }}" href="{{ .URL }}">{{ $text }}</a>
+      {{ end }}
+    {{ end }}
+    {{ if .Pre }}
+      {{ $icon := printf "<i data-feather=\"%s\"></i>" .Pre }}
+      {{ $text := print $icon " " .Name | safeHTML }}
+      <a class="nav-link {{ $active }}" href="{{ .URL }}">{{ $text }}</a>
+    {{ else }}
+      {{ $text := print .Name | safeHTML }}
+      <a class="nav-link {{ $active }}" href="{{ .URL }}">{{ $text }}</a>
+    {{ end }}
   {{ end }}
   </nav>
 </div>
