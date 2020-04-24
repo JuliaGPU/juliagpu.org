@@ -2,6 +2,17 @@
 title: "Learn"
 ---
 
+Currently, the Julia CUDA stack is the most mature, easiest to install, and
+full-featured. The [CUDA.jl](https://juliagpu.gitlab.io/CUDA.jl/) repository is
+a central place for the documentation of all relevant packages. Start with the
+instructions on [how to
+install](https://juliagpu.gitlab.io/CUDA.jl/installation/overview/) the stack,
+and follow with this [introductory
+tutorial](https://juliagpu.gitlab.io/CUDA.jl/tutorials/introduction/).
+
+If you prefer videos, the presentations below highlight different aspects
+of the toolchain.
+
 ## Effective CUDA GPU computing in Julia
 
 * Design and benefits of the Julia GPU stack
