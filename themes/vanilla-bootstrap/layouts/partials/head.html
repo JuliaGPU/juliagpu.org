@@ -3,6 +3,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   {{ hugo.Generator }}
   <link rel="stylesheet" href="{{ "css/bootstrap.min.css" | absURL }}">
+
+  <!-- RSS feeds, etc -->
+  {{ range .AlternativeOutputFormats -}}
+    {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
+  {{ end -}}
+
   {{ $title := print .Title " · " .Site.Title }}
   {{ if .IsHome }}
     {{ $title = .Site.Title }}
