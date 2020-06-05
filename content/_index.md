@@ -33,7 +33,7 @@ of Julia anymore.
 
 ## Applications
 
-There are [many Julia applications and libraries](https://juliahub.com/ui/Packages/CUDAnative/4Zu2W/3.0.4) that rely on the language's GPU
+There are [many Julia applications and libraries](https://juliahub.com/ui/Packages/CUDAnative/4Zu2W/) that rely on the language's GPU
 capabilities, such as:
 
 - [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
