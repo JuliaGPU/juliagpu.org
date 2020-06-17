@@ -2,6 +2,14 @@
 title: "NVIDIA CUDA"
 ---
 
+[![][docs-latest-img]][docs-latest-url] [![][github-stars-img]][github-stars-url]
+
+[docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
+[docs-latest-url]: https://juliagpu.gitlab.io/CUDA.jl/
+
+[github-stars-img]: https://img.shields.io/github/stars/JuliaGPU/CUDA.jl?style=social
+[github-stars-url]: https://github.com/JuliaGPU/CUDA.jl
+
 The programming support for NVIDIA GPUs in Julia is provided by the
 [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) package. It is built on the CUDA toolkit, and
 aims to be as full-featured and offer the same performance as CUDA C. The toolchain is
