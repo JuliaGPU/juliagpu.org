@@ -51,6 +51,11 @@ date  = [":filename"]
   url = "/opencl/"
   weight = 6
 
+  [[menu.nav]]
+  name = "oneAPI"
+  url = "/oneapi/"
+  weight = 7
+
 [params]
 includeBootstrapJs = false
 showActiveNav = true
