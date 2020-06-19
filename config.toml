@@ -47,14 +47,9 @@ date  = [":filename"]
   weight = 5
 
   [[menu.nav]]
-  name = "OpenCL"
-  url = "/opencl/"
+  name = "Other"
+  url = "/other/"
   weight = 6
-
-  [[menu.nav]]
-  name = "oneAPI"
-  url = "/oneapi/"
-  weight = 7
 
 [params]
 includeBootstrapJs = false
