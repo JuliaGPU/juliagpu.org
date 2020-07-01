@@ -12,9 +12,9 @@ similar capabilities as the [NVIDIA CUDA](/cuda/) stack, with support for both l
 kernel programming as well as an array-oriented interface. It is similarly comprised of
 multiple packages:
 
-- [HSARuntime.jl](https://github.com/jpsamaroo/HSARuntime.jl): interfacing with the HSA runtime
+- [HSARuntime.jl](https://github.com/JuliaGPU/HSARuntime.jl): interfacing with the HSA runtime
 - [AMDGPUnative.jl](https://github.com/JuliaGPU/AMDGPUnative.jl): GPU kernel programming support
-- [ROCArrays.jl](https://github.com/jpsamaroo/ROCArrays.jl): array programming interface
+- [ROCArrays.jl](https://github.com/JuliaGPU/ROCArrays.jl): array programming interface
 
 At this point, the toolchain is **highly experimental**, and does not fully work on an
 out-of-the-box version of Julia.
