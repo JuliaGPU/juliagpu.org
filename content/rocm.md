@@ -8,7 +8,7 @@ title: "AMD ROCm"
 [docs-master-url]: https://juliagpu.gitlab.io/AMDGPUnative.jl/
 
 The Julia programming support for AMD GPUs based on the ROCm platform aims to provide
-similar capabilities as the [NVIDIA CUDA](/nvidia/) stack, with support for both low-level
+similar capabilities as the [NVIDIA CUDA](/cuda/) stack, with support for both low-level
 kernel programming as well as an array-oriented interface. It is similarly comprised of
 multiple packages:
 
