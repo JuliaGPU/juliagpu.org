@@ -1,7 +1,13 @@
 {{ define "main" }}
 
 <h1>{{ .Title }}</h1>
+
 {{ partial "date-and-tags.html" . }}
+{{ with .Params.author }}
+  <br>
+  <i data-feather="edit-2"></i> {{ $.Params.author }}
+{{ end }}
+
 <br><br>
 {{ if isset .Params "externallink" }}
     This is an external post, redirecting you to <a href="{{ .Params.externallink }}">{{ .Params.externallink }}</a>...

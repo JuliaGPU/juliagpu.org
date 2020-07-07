@@ -2,6 +2,7 @@
 url: "/cudanative_3.0-cuarrays_2.0/"
 tags: []
 title: "CUDAnative.jl 3.0 and CuArrays.jl 2.0"
+author: "Tim Besard"
 ---
 
 This release of the Julia CUDA stack contains some exciting new features: automatic

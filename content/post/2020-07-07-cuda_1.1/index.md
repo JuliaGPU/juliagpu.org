@@ -1,6 +1,7 @@
 ---
 tags: []
 title: "CUDA.jl 1.1"
+author: "Tim Besard"
 ---
 
 CUDA.jl 1.1 marks the first feature release after merging several CUDA packages into one. It
