@@ -38,7 +38,7 @@
         <description>{{ . | plainify }}</description>
       {{ end }}
       {{ with .Content }}
-        <content:encoded>{{ . | html }}</content:encoded>
+        <content type="text/html">{{ `<![CDATA[` | safeHTML }}{{ . | safeHTML }}{{ `]]>` | safeHTML }}</content>
       {{ end }}
     </item>
     {{ end }}
