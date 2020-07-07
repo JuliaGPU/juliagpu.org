@@ -136,7 +136,6 @@ julia> save("imgwarp.png", reinterpret(eltype(img), outimg))
 
 ## Minor features
 
-
 The test-suite is now parallelized, using up-to `JULIA_NUM_THREADS` processes:
 
 ```
@@ -188,3 +187,7 @@ Toolchain:
 ```
 
 CUTENSOR artifacts have been upgraded to version 1.1.0.
+
+Benchmarking infrastructure based on the Codespeed project has been set-up at
+[speed.juliagpu.org](https://speed.juliagpu.org/) to keep track of the performance of
+various operations.
