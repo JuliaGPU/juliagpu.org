@@ -10,6 +10,8 @@ installation of CUDA using artifacts, full support for GPU method redefinitions,
 experimental support for multitasking and multithreading. The release is technically
 breaking, but most end-users should not be affected.
 
+<!--more-->
+
 
 ## API changes
 

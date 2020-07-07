@@ -8,6 +8,8 @@ CUDA.jl 1.1 marks the first feature release after merging several CUDA packages 
 raises the minimal Julia version to 1.4, and comes with support for the impending 1.5
 release.
 
+<!--more-->
+
 
 ## CUDA.jl replacing CuArrays/CUDAnative.jl
 
