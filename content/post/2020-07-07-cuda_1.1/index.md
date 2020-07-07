@@ -133,7 +133,7 @@ julia> outimg = Array(outimg_d)
 julia> save("imgwarp.png", reinterpret(eltype(img), outimg))
 ```
 
-![alt text](imgwarp.png "Logo Title Text 1")
+{{< img "imgwarp.png" "Warped lighthouse" >}}
 
 
 ## Minor features
