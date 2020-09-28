@@ -3,15 +3,17 @@
 <h1>{{ .Title }}</h1>
 
 {{ range .Pages.ByDate.Reverse }}
+{{ if not .Params.hidden }}
 <p>
   {{ if isset .Params "externallink" }}
     <a class="font-125" href="{{ .Params.externallink }}" target="_blank">{{ .Title }}</a><span>&nbsp;&#8599;</span>
-  {{else}}
+  {{ else }}
     <a class="font-125" href="{{ .Permalink }}">{{ .Title }}</a>
   {{ end }}
   <br>
   {{ partial "date-and-tags.html" . }}
 </p>
+{{ end }}
 {{ end }}
 
 <!-- Feed information -->

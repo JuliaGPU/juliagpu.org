@@ -30,6 +30,7 @@
 	{{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{ end }}
     {{ range $pages }}
+    {{ if not .Params.hidden }}
     <item>
       <title>{{ .Title }}</title>
       <link>{{ .Permalink }}</link>
@@ -43,6 +44,7 @@
         <content:encoded>{{ `<![CDATA[` | safeHTML }}{{ . | safeHTML }}{{ `]]>` | safeHTML }}</content:encoded>
       {{ end }}
     </item>
+    {{ end }}
     {{ end }}
   </channel>
 </rss>
