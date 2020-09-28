@@ -54,8 +54,8 @@ i!  computeType: type=cublasComputeType_t; val=CUBLAS_COMPUTE_32F(68)
 ```
 
 Alternatively, CUBLAS can be configured to automatically down-cast 32-bit inputs to Float16.
-This is [now](https://github.com/JuliaGPU/CUDA.jl/pull/424) exposed through a global CUDA.jl
-math mode:
+This is [now](https://github.com/JuliaGPU/CUDA.jl/pull/424) exposed through a task-local
+CUDA.jl math mode:
 
 ```julia
 julia> CUDA.math_mode!(CUDA.FAST_MATH; precision=:Float16)
@@ -72,6 +72,9 @@ i!  computeType: type=cublasComputeType_t; val=CUBLAS_COMPUTE_32F_FAST_16F(74)
  0.175258  0.226159
  0.511893  0.331351
 ```
+
+As part of these changes, CUDA.jl now defaults to using tensor cores. This may affect
+accuracy; use math mode `PEDANTIC` if you want the old behavior.
 
 Work is [under way](https://github.com/JuliaGPU/CUDA.jl/issues/391) to extend these
 capabilities to the rest of CUDA.jl, e.g., the CUDNN wrappers, or the native kernel
