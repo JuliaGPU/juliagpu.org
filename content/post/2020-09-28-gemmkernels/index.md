@@ -1,7 +1,7 @@
 ---
 tags: []
 title: "Paper: Flexible Performant GEMM Kernels on GPUs"
-author: "Thomas Faignaert, Tim Besard, Bjorn De Sutter"
+author: "Thomas Faingnaert, Tim Besard, Bjorn De Sutter"
 ---
 
 General Matrix Multiplication or GEMM kernels take center place in high performance
