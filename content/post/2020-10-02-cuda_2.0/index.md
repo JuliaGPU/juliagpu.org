@@ -1,11 +1,10 @@
 ---
 tags: []
-title: "Preview: CUDA.jl 2.0"
+title: "CUDA.jl 2.0"
 author: "Tim Besard"
-hidden: true
 ---
 
-We'll soon be releasing CUDA.jl 2.0, a breaking release with several new features. Highlights
+Today we're releasing CUDA.jl 2.0, a breaking release with several new features. Highlights
 include initial support for Float16, a switch to CUDA's new stream model, a much-needed
 rework of the sparse array support and support for CUDA 11.1.
 
@@ -13,8 +12,6 @@ The release now requires **Julia 1.5**, and assumes a GPU with **compute capabil
 higher (although most of the package will still work with an older GPU).
 
 <!--more-->
-
-To try this version of CUDA.jl, use `add CUDA#master` from the package manager.
 
 ## Low- and mixed-precision operations
 
