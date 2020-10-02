@@ -131,7 +131,7 @@ execute concurrently with those on other streams:
 ### Multi-threading
 
 Another consequence of the new stream model is that each thread gets its own default stream
-(accessible as `CuStreamPerThread()`). Together with Julia's treading capabilities, this
+(accessible as `CuStreamPerThread()`). Together with Julia's threading capabilities, this
 makes it trivial to group independent work in tasks, benefiting from concurrent execution on
 the GPU where possible:
 
