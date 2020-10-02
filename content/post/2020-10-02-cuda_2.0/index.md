@@ -15,10 +15,11 @@ higher (although most of the package will still work with an older GPU).
 
 ## Low- and mixed-precision operations
 
-With NVIDIA's latest GPUs emphasizing support for low-precision operations, CUDA.jl
-[now](https://github.com/JuliaGPU/CUDA.jl/pull/417) starts to support. For example,
-the CUBLAS wrappers can be used with (B)Float16 inputs (running under `JULIA_DEBUG=CUBLAS`
-to illustrate the called methods) thanks to the `cublasGemmEx` API call:
+With NVIDIA's latest GPUs featuring more and more low-precision operations,
+CUDA.jl [now](https://github.com/JuliaGPU/CUDA.jl/pull/417) starts to support
+these data types. For example, the CUBLAS wrappers can be used with (B)Float16
+inputs (running under `JULIA_DEBUG=CUBLAS` to illustrate the called methods)
+thanks to the `cublasGemmEx` API call:
 
 ```julia
 julia> mul!(CUDA.zeros(Float32,2,2), cu(rand(Float16,2,2)), cu(rand(Float16,2,2)))
