@@ -28,8 +28,8 @@ CUDA and its dependencies will now be automatically installed using artifacts ge
 BinaryBuilder.jl. This greatly improves usability, and only requires a functioning NVIDIA
 driver:
 
-```julia
-$ JULIA_DEBUG=CUDAnative julia
+```julia-repl
+julia> ENV["JULIA_DEBUG"] = "CUDAnative"
 
 julia> using CUDAnative
 
@@ -54,7 +54,7 @@ CUDAnative 3.0 now fully supports method redefinitions, commonly referred to as 
 issue #265](https://github.com/JuliaLang/julia/issues/265), and makes it possible to use
 interactive programming tools like Revise.jl:
 
-```julia
+```julia-repl
 julia> child() = 0
 julia> parent() = (@cuprintln(child()); return)
 julia> @cuda parent()

@@ -37,7 +37,7 @@ code.
 CUDA.jl now integrates with the NVIDIA Management Library, or NVML. With this library, it's
 possible to query information about the system, any GPU devices, their topology, etc.:
 
-```julia
+```julia-repl
 julia> using CUDA
 
 julia> dev = first(NVML.devices())
@@ -80,7 +80,7 @@ Now we can upload this image to the array, using the `CuTextureArray` type for o
 storage (normal `CuArray`s are supported too), and bind it to a `CuTexture` object that we
 can pass to a kernel:
 
-```julia
+```julia-repl
 julia> texturearray = CuTextureArray(img′)
 
 julia> texture = CuTexture(texturearray; normalized_coordinates=true)
@@ -110,7 +110,7 @@ The size of the output image determines how many elements we need to process. Th
 be translated to a number of threads and blocks, keeping in mind device and kernel
 characteristics. We automate this using the occupancy API:
 
-```julia
+```julia-repl
 julia> outimg_d = CuArray{eltype(img′)}(undef, 500, 1000);
 
 julia> function configurator(kernel)
@@ -127,7 +127,7 @@ julia> @cuda config=configurator warp(outimg_d, texture)
 
 Finally, we fetch and visualize the output:
 
-```julia
+```julia-repl
 julia> outimg = Array(outimg_d)
 
 julia> save("imgwarp.png", reinterpret(eltype(img), outimg))
@@ -161,7 +161,7 @@ Test Summary: |  Pass  Broken  Total
 
 A copy of `Base.versioninfo()` is available to report on the CUDA toolchain and any devices:
 
-```
+```julia-repl
 julia> CUDA.versioninfo()
 CUDA toolkit 10.2.89, artifact installation
 CUDA driver 11.0.0

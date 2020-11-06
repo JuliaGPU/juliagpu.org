@@ -21,8 +21,10 @@ these data types. For example, the CUBLAS wrappers can be used with (B)Float16
 inputs (running under `JULIA_DEBUG=CUBLAS` to illustrate the called methods)
 thanks to the `cublasGemmEx` API call:
 
-```julia
-julia> mul!(CUDA.zeros(Float32,2,2), cu(rand(Float16,2,2)), cu(rand(Float16,2,2)))
+```julia-repl
+julia> mul!(CUDA.zeros(Float32,2,2),
+            cu(rand(Float16,2,2)),
+            cu(rand(Float16,2,2)))
 
 I! cuBLAS (v11.0) function cublasStatus_t cublasGemmEx(...) called:
 i!  Atype: type=cudaDataType_t; val=CUDA_R_16F(2)
@@ -35,10 +37,12 @@ i!  computeType: type=cublasComputeType_t; val=CUBLAS_COMPUTE_32F(68)
  1.12923   1.04541
 ```
 
-```julia
+```julia-repl
 julia> using BFloat16s
 
-julia> mul!(CUDA.zeros(BFloat16,2,2), cu(BFloat16.(rand(2,2))), cu(BFloat16.(rand(2,2))))
+julia> mul!(CUDA.zeros(BFloat16,2,2),
+            cu(BFloat16.(rand(2,2))),
+            cu(BFloat16.(rand(2,2))))
 
 I! cuBLAS (v11.0) function cublasStatus_t cublasGemmEx(...) called:
 i!  Atype: type=cudaDataType_t; val=CUDA_R_16BF(14)
@@ -55,10 +59,12 @@ Alternatively, CUBLAS can be configured to automatically down-cast 32-bit inputs
 This is [now](https://github.com/JuliaGPU/CUDA.jl/pull/424) exposed through a task-local
 CUDA.jl math mode:
 
-```julia
+```julia-repl
 julia> CUDA.math_mode!(CUDA.FAST_MATH; precision=:Float16)
 
-julia> mul!(CuArray(zeros(Float32,2,2)), CuArray(rand(Float32,2,2)), CuArray(rand(Float32,2,2)))
+julia> mul!(CuArray(zeros(Float32,2,2)),
+            CuArray(rand(Float32,2,2)),
+            CuArray(rand(Float32,2,2)))
 
 I! cuBLAS (v11.0) function cublasStatus_t cublasGemmEx(...) called:
 i!  Atype: type=cudaDataType_t; val=CUDA_R_32F(0)
@@ -173,7 +179,7 @@ refactored](https://github.com/JuliaGPU/CUDA.jl/pull/409), bringing them in line
 array types and their expected behavior. For example, the custom `switch2` methods have been
 removed in favor of calls to `convert` and array constructors:
 
-```julia
+```julia-repl
 julia> using SparseArrays
 julia> using CUDA, CUDA.CUSPARSE
 
@@ -209,7 +215,7 @@ This release also features support for the brand-new CUDA 11.1. As there is no c
 release of CUDNN or CUTENSOR yet, CUDA.jl won't automatically select this version, but you
 can force it to by setting the `JULIA_CUDA_VERSION` environment variable to `11.1`:
 
-```julia
+```julia-repl
 julia> ENV["JULIA_CUDA_VERSION"] = "11.1"
 
 julia> using CUDA
