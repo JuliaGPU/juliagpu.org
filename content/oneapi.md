@@ -2,6 +2,11 @@
 title: "Intel oneAPI"
 ---
 
+[![][github-stars-img]][github-stars-url]
+
+[github-stars-img]: https://img.shields.io/github/stars/JuliaGPU/oneAPI.jl?style=social
+[github-stars-url]: https://github.com/JuliaGPU/oneAPI.jl
+
 oneAPI is an open standard for programming hardware accelerators, originally designed by
 Intel. The [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) package offers a Julia
 interface to this programming model. The package is in early development, but already
