@@ -20,15 +20,13 @@ as working with high-level operations on arrays. All versions of Julia are
 supported, and the functionality is actively used by a variety of applications
 and libraries.
 
-Experimental support exists for **[AMD GPUs](rocm)** running on the ROCm stack.
-These GPUs can similarly be programmed in Julia at the kernel level or using
-array operations, but these capabilities are under heavy development and are not
-ready for general consumption yet.
+Similar, but much newer capabilities exist for **[Intel GPUs with oneAPI](oneapi)**.
+Currently, full-featured kernel programming capabilities are available, but there is no
+support for vendor libraries such as oneMKL or oneDNN yet.
 
-Lastly, there is limited support for programming GPUs with **[OpenCL](opencl)**.
-It is possible to interface with such GPUs to execute kernels written in OpenCL
-C, but the native programming capabilities are not supported on recent versions
-of Julia anymore.
+Experimental support exists for **[AMD GPUs](rocm)** running on the ROCm stack. These GPUs
+can again be programmed in Julia at the kernel level or using array operations, but these
+capabilities are under heavy development and are not ready for general consumption yet.
 
 
 ## Applications
