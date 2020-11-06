@@ -12,6 +12,14 @@ recent versions of Julia, only [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl
 available. This package can be used to compile and execute GPU kernels written in OpenCL C.
 
 
+## ArrayFire
+
+ArrayFire is a general-purpose software library that targets CPUs, GPUs, and other
+accelerator hardware. The [ArrayFire.jl](https://github.com/JuliaGPU/ArrayFire.jl) package
+provides a Julia interface to this library, and makes it possible to program accelerators
+using an array abstraction built on the ArrayFire library.
+
+
 ## oneAPI
 
 Support for the oneAPI programming model is a work in progress, and can be found
