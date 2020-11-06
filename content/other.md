@@ -18,11 +18,3 @@ ArrayFire is a general-purpose software library that targets CPUs, GPUs, and oth
 accelerator hardware. The [ArrayFire.jl](https://github.com/JuliaGPU/ArrayFire.jl) package
 provides a Julia interface to this library, and makes it possible to program accelerators
 using an array abstraction built on the ArrayFire library.
-
-
-## oneAPI
-
-Support for the oneAPI programming model is a work in progress, and can be found
-in the unregistered [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) package.
-The package aims to offer the same level of programmability as the Julia CUDA
-stack, i.e., both offering an array-based and kernel programming model.

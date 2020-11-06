@@ -47,9 +47,14 @@ date  = [":filename"]
   weight = 5
 
   [[menu.nav]]
+  name = "Intel oneAPI"
+  url = "/oneapi/"
+  weight = 6
+
+  [[menu.nav]]
   name = "Other"
   url = "/other/"
-  weight = 6
+  weight = 7
 
 [params]
 includeBootstrapJs = false
