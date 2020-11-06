@@ -89,16 +89,10 @@ defaultMarkdownHandler = "goldmark"
     unsafe = true
     xHTML = false
 
+  # Disable Hugo's server-side highlighter
   [markup.highlight]
-  codeFences = true
-  hl_Lines = ""
-  lineNoStart = 1.0
-  lineNos = false
-  lineNumbersInTable = true
-  noClasses = true
-  style = "monokai"
-  tabWidth = 4.0
+  codeFences = false
 
   [markup.tableOfContents]
-  endLevel = 6.0
-  startLevel = 2.0
+  startLevel = 2
+  endLevel = 6

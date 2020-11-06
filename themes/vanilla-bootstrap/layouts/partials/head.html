@@ -5,6 +5,17 @@
   {{ hugo.Generator }}
   <link rel="stylesheet" href="{{ "css/bootstrap.min.css" | absURL }}">
 
+  <!-- highlight.js from https://fredrikekre.se/posts/highlight-julia/ -->
+  <link rel="stylesheet" href="/highlight.css">
+  <script src="/highlight.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <style>
+    .hljs {
+      padding: 0;
+      background: none;
+  }
+  </style>
+
   <!-- RSS feeds, etc -->
   {{ range .AlternativeOutputFormats -}}
     {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
