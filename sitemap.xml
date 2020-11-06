@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>https://juliagpu.org/2020-11-05-oneapi_0.1/</loc>
+    <lastmod>2020-11-06T09:51:52+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-10-30-cuda_2.1/</loc>
+    <lastmod>2020-10-30T12:38:43+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-10-02-cuda_2.0/</loc>
+    <lastmod>2020-11-06T09:51:52+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-09-28-gemmkernels/</loc>
+    <lastmod>2020-10-01T23:30:05+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-07-18-cuda_1.3/</loc>
+    <lastmod>2020-11-06T09:51:52+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-07-07-cuda_1.1/</loc>
+    <lastmod>2020-11-06T09:51:52+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/cudanative_3.0-cuarrays_2.0/</loc>
+    <lastmod>2020-11-06T09:51:52+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-01-14-hpcwire/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2020-01-05-itensors/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/new_site/</loc>
+    <lastmod>2020-07-07T16:39:34+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2019-12-03-diffeq-0.6.9/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2019-12-03-nvidia-arm-gpu/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2019-10-17-nextjournal-intro/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2019-05-09-diffeq-0.6.4/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2019-03-04-nps-clima-gpu/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2018-12-12-paoc-clima/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2017-12-11-diffeq-stochastic_pdes/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/2017-10-25-nvidia-devblog/</loc>
+    <lastmod>2020-04-24T15:56:14+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/about/</loc>
+    <lastmod>2020-04-24T15:55:15+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/rocm/</loc>
+    <lastmod>2020-07-06T13:45:43-05:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/post/</loc>
+    <lastmod>2020-04-24T15:55:15+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/oneapi/</loc>
+    <lastmod>2020-11-06T08:31:02+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/</loc>
+    <lastmod>2020-06-05T16:13:03+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/learn/</loc>
+    <lastmod>2020-04-24T16:28:44+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/cuda/</loc>
+    <lastmod>2020-06-17T08:27:06+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/other/</loc>
+    <lastmod>2020-11-06T08:31:02+01:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://juliagpu.org/tags/</loc>
+  </url>
+  
+</urlset>
