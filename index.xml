@@ -814,7 +814,8 @@ functional for simple usecases. We only officially support Julia 1.4 and Julia
 1.5.</p>
 ]]></content:encoded></item><item><title>Intel oneAPI</title><link>https://juliagpu.org/oneapi/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/oneapi/</guid><description>oneAPI is an open standard for programming hardware accelerators, originally designed by Intel. The oneAPI.jl package offers a Julia interface to this programming model. The package is in early development, but already provides most features for application development.
 Similarly to other GPU support packages in Julia, oneAPI.jl makes it possible to work with accelerators at three distinct abstraction levels:
-high-level, using the oneArray array type and Julia&amp;rsquo;s powerful array abstractions; by writing your own kernels and launching them using the @oneapi macro; using the low-level Level Zero wrappers in the oneL0 submodule.</description><content:encoded><![CDATA[<p>oneAPI is an open standard for programming hardware accelerators, originally designed by
+high-level, using the oneArray array type and Julia&amp;rsquo;s powerful array abstractions; by writing your own kernels and launching them using the @oneapi macro; using the low-level Level Zero wrappers in the oneL0 submodule.</description><content:encoded><![CDATA[<p><a href="https://github.com/JuliaGPU/oneAPI.jl"><img src="https://img.shields.io/github/stars/JuliaGPU/oneAPI.jl?style=social" alt=""></a></p>
+<p>oneAPI is an open standard for programming hardware accelerators, originally designed by
 Intel. The <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a> package offers a Julia
 interface to this programming model. The package is in early development, but already
 provides most features for application development.</p>
