@@ -1,5 +1,5 @@
 /*
-  Highlight.js 10.3.99 (5855fb9c)
+  Highlight.js 10.3.99 (87304ed3)
   License: BSD-3-Clause
   Copyright (c) 2006-2020, Ivan Sagalaev
 */
@@ -2714,7 +2714,6 @@ hljs.registerLanguage('julia', function () {
         TYPE_CONTEXT,
         BUILTIN_OPERATORS,
         KEYWORDLIKE_OPERATORS,
-        COMMENT,
       ]
     };
 
