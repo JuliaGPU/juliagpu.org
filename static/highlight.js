@@ -1,5 +1,5 @@
 /*
-  Highlight.js 10.3.99 (b957609a)
+  Highlight.js 10.3.99 (5855fb9c)
   License: BSD-3-Clause
   Copyright (c) 2006-2020, Ivan Sagalaev
 */
@@ -2714,6 +2714,7 @@ hljs.registerLanguage('julia', function () {
         TYPE_CONTEXT,
         BUILTIN_OPERATORS,
         KEYWORDLIKE_OPERATORS,
+        COMMENT,
       ]
     };
 
@@ -2754,7 +2755,7 @@ hljs.registerLanguage('julia', function () {
 
     var SHORT_FUNCTION_DEFINITION = {
       className: '',
-      begin: VARIABLE_NAME_RE + '\\(.*\\)(\\s+where.*?)?\\s*(?==)',
+      begin: VARIABLE_NAME_RE + '\\(.*\\)(\\s+where.*?)?\\s*(?==(?!=))',
       returnBegin:true,
       contains: [
           {begin: VARIABLE_NAME_RE + '(?=\\()', className: 'title'},
