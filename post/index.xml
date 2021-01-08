@@ -1,4 +1,49 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Blog on JuliaGPU</title><link>https://juliagpu.org/post/</link><description>Recent content in Blog on JuliaGPU</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://juliagpu.org/post/index.xml" rel="self" type="application/rss+xml"/><item><title>Introducing: oneAPI.jl</title><link>https://juliagpu.org/2020-11-05-oneapi_0.1/</link><pubDate>Thu, 05 Nov 2020 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2020-11-05-oneapi_0.1/</guid><description>We&amp;rsquo;re proud to announce the first version of oneAPI.jl, a Julia package for programming accelerators with the oneAPI programming model. It is currently available for select Intel GPUs, including common integrated ones, and offers a similar experience to CUDA.jl.</description><content:encoded><![CDATA[<p>We&rsquo;re proud to announce the first version of oneAPI.jl, a Julia package for programming
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Blog on JuliaGPU</title><link>https://juliagpu.org/post/</link><description>Recent content in Blog on JuliaGPU</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://juliagpu.org/post/index.xml" rel="self" type="application/rss+xml"/><item><title>CUDA.jl 2.4 and 2.5</title><link>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</link><pubDate>Fri, 08 Jan 2021 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</guid><description>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5 and 1.6. These releases feature a greatly improved findmin and findmax kernels, an improved interface for kernel introspection, support for CUDA 11.2, and of course many bug fixes.</description><content:encoded><![CDATA[<p>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5
+and 1.6. These releases feature a greatly improved <code>findmin</code> and <code>findmax</code> kernels, an
+improved interface for kernel introspection, support for CUDA 11.2, and of course many bug
+fixes.</p>
+<h2 id="improved-findmin-and-findmax-kernels">Improved <code>findmin</code> and <code>findmax</code> kernels</h2>
+<p>Thanks to <a href="https://github.com/tkf">@tkf</a> and <a href="https://github.com/Ellipse0934">@Ellipse0934</a>,
+CUDA.jl now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/576">uses a single-pass kernel for finding the minimum or maximum item in a
+CuArray</a>. This fixes compatibility with
+<code>NaN</code>-valued elements, while on average improving performance. Depending on the rank, shape
+and size of the array these improvements vary from a minor regression to order-of-magnitude
+improvements.</p>
+<h2 id="new-kernel-introspection-interface">New kernel introspection interface</h2>
+<p>It is now possible to obtain a compiled-but-not-launched kernel by passing the
+<code>launch=false</code> keyword to <code>@cuda</code>. This is useful when you want to reflect, e.g., query the
+amount of registers, or other kernel properties:</p>
+<pre><code class="language-julia">julia&gt; kernel = @cuda launch=false identity(nothing)
+CUDA.HostKernel{identity,Tuple{Nothing}}(...)
+
+julia&gt; CUDA.registers(kernel)
+4
+</code></pre>
+<p>The old API is still available, and will even be extended in future versions of CUDA.jl for
+the purpose of compiling device functions (not kernels):</p>
+<pre><code class="language-julia">julia&gt; kernel = cufunction(identity, Tuple{Nothing})
+CUDA.HostKernel{identity,Tuple{Nothing}}(...)
+</code></pre>
+<h2 id="support-for-cuda-112">Support for CUDA 11.2</h2>
+<p>CUDA.jl now supports the latest version of CUDA, version 11.2. Because CUDNN and CUTENSOR
+are not compatible with this release yet, CUDA.jl won&rsquo;t automatically switch to it unless
+you explicitly request so:</p>
+<pre><code class="language-julia">julia&gt; ENV[&quot;JULIA_CUDA_VERSION&quot;] = &quot;11.2&quot;
+&quot;11.2&quot;
+
+julia&gt; using CUDA
+
+julia&gt; CUDA.versioninfo()
+CUDA toolkit 11.2.0, artifact installation
+CUDA driver 11.2.0
+NVIDIA driver 460.27.4
+</code></pre>
+<p>Alternatively, if you disable use of artifacts through <code>JULIA_CUDA_USE_BINARYBUILDER=false</code>,
+CUDA 11.2 can be picked up from your local system.</p>
+<h2 id="future-developments">Future developments</h2>
+<p>Due to upstream compiler changes, CUDA.jl 2.4 is expected to be the last release compatible
+with Julia 1.5. Patch releases are still possible, but are not automatic: If you need a
+specific bugfix from a future CUDA.jl release, create an issue or PR to backport the change.</p>]]></content:encoded></item><item><title>Introducing: oneAPI.jl</title><link>https://juliagpu.org/2020-11-05-oneapi_0.1/</link><pubDate>Thu, 05 Nov 2020 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2020-11-05-oneapi_0.1/</guid><description>We&amp;rsquo;re proud to announce the first version of oneAPI.jl, a Julia package for programming accelerators with the oneAPI programming model. It is currently available for select Intel GPUs, including common integrated ones, and offers a similar experience to CUDA.jl.</description><content:encoded><![CDATA[<p>We&rsquo;re proud to announce the first version of oneAPI.jl, a Julia package for programming
 accelerators with the <a href="https://www.oneapi.com/">oneAPI programming model</a>. It is currently
 available for select Intel GPUs, including common integrated ones, and offers a similar
 experience to CUDA.jl.</p>
