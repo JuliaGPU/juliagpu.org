@@ -1,0 +1,75 @@
+<!doctype html><html lang=en class=h-100><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta content="noindex, follow" name=robots><meta name=generator content="Hugo 0.75.1"><link rel=stylesheet href=https://juliagpu.org/css/bootstrap.min.css><link rel=stylesheet href=/highlight.css><script src=/highlight.min.js></script><script>hljs.initHighlightingOnLoad();</script><style>.hljs{padding:0;background:0 0}</style><title>CUDA.jl 3.0 · JuliaGPU</title><style>.container{max-width:700px}#nav-border{border-bottom:1px solid #212529}#main{margin-top:1em;margin-bottom:4em}#home-jumbotron{background-color:inherit}#footer .container{padding:1em 0}#footer a{color:inherit;text-decoration:underline}.font-125{font-size:125%}.tag-btn{margin-bottom:.3em}pre{background-color:#f5f5f5;border:1px solid #ccc;border-radius:4px;padding:16px}pre code{padding:0;font-size:inherit;color:inherit;background-color:transparent;border-radius:0}code{padding:2px 4px;font-size:90%;color:#c7254e;background-color:#f9f2f4;border-radius:4px}img,iframe,embed,video,audio{max-width:100%}.card-img,.card-img-top,.card-img-bottom{width:initial}</style></head><body class="d-flex flex-column h-100"><div id=nav-border class=container><nav class="navbar navbar-expand-lg navbar-light justify-content-center"><ul class=navbar-nav><li class=nav-item><a class=nav-link href=/><i data-feather=home></i>Home</a></li><li class="nav-item active"><a class=nav-link href=/post/><i data-feather=file-text></i>Blog</a></li><li class=nav-item><a class=nav-link href=/learn/><i data-feather=book-open></i>Learn</a></li><li class=nav-item><a class=nav-link href=/cuda/>NVIDIA CUDA</a></li><li class=nav-item><a class=nav-link href=/rocm/>AMD ROCm</a></li><li class=nav-item><a class=nav-link href=/oneapi/>Intel oneAPI</a></li><li class=nav-item><a class=nav-link href=/other/>Other</a></li></ul></nav></div><div class=container><main id=main><h1>CUDA.jl 3.0</h1><i data-feather=calendar></i><time datetime=2021-03-01>Mar 1, 2021</time><br><i data-feather=edit-2></i>Tim Besard<br><br><p>CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved
+multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator, and a
+completely revamped cuDNN interface.</p><h2 id=improved-multi-tasking-and-multi-threading>Improved multi-tasking and multi-threading</h2><p>Traditionally, CUDA operations were enqueued on the global default stream, and many of these
+operations (like copying memory, or synchronizing execution) were fully blocking. This posed
+difficulties when using multiple tasks, each of which assumed to perform independent
+operations (possibly on different devices, maybe even from a different CPU thread).
+<strong>CUDA.jl now uses a private stream for each Julia task, and avoids blocking operations
+where possible, enabling task-based concurrent execution.</strong></p><p>A <del>picture</del> snippet of code is worth a thousand words, so let&rsquo;s have a look at some dummy
+computation that both uses a library function (GEMM from CUBLAS) and a native Julia
+broadcast kernel:</p><pre><code class=language-julia>using CUDA, LinearAlgebra
+
+function compute(a,b,c)
+    mul!(c, a, b)
+    broadcast!(sin, c, c)
+    synchronize()
+    c
+end
+</code></pre><p>To perform this computation concurrently, we can just use Julia&rsquo;s task-based programming
+interfaces and wrap each computation in an <code>@async</code> block. To synchronize these tasks at the
+end, we wrap in a <code>@sync</code> block. Finally, to visualize these computations in the profiler
+trace below we use NVTX&rsquo;s <code>@range</code> macro:</p><pre><code class=language-julia>function iteration(a,b,c)
+    results = Vector{Any}(undef, 2)
+    NVTX.@range &quot;computation&quot; @sync begin
+        @async begin
+            results[1] = compute(a,b,c)
+        end
+        @async begin
+            results[2] = compute(a,b,c)
+        end
+    end
+    NVTX.@range &quot;comparison&quot; Array(results[1]) == Array(results[2])
+end
+</code></pre><p>We then invoke this function using some random data:</p><pre><code class=language-julia>function main(N=1024)
+    a = CUDA.rand(N,N)
+    b = CUDA.rand(N,N)
+    c = CUDA.rand(N,N)
+
+    # make sure this data can be used by other tasks!
+    synchronize()
+
+    # warm-up
+    iteration(a,b,c)
+    GC.gc(true)
+
+    NVTX.@range &quot;main&quot; iteration(a,b,c)
+end
+</code></pre><p>The snippet above illustrates one breaking aspect of this change: Because each task uses its
+own stream, <strong>you now need to synchronize when re-using data in another task.</strong> Although it
+is unlikely that any user code was relying on the old behavior, it is technically a breaking
+change.</p><p>If we profile these computations, we can see how the execution was overlapped:</p><figure><img src=https://juliagpu.org/2021-03-01-cuda_3.0/task_based_concurrency.png alt="Overlapping execution on the GPU using task-based concurrency"></figure><p>The region highlighted in green was spent enqueueing operations, which includes the call to
+<code>synchronize()</code>. This used to be a globally-synchronizing operation, whereas now it only
+synchronizes the task-local stream while yielding to the Julia scheduler so that it can
+continue executing other tasks. <strong>For synchronizing the entire device, use the new
+<code>synchronize_all()</code> function.</strong></p><p>The remainder of computation was then spent executing kernels. Here, these executions were
+overlapping, but that obviously depends on the exact characteristics of the computations and
+your GPU. The same approach however can be used for multi-GPU programming, where each task
+targets a different device. It is also possible to use different threads for each task.</p><p>Note that not all operations have been made fully asynchronous yet. For example, copying
+memory to or from the GPU will currently still synchronize execution, and thus inhibit
+switching to another task. That is why the example above only called <code>synchronize()</code> in the
+compute task, and copied the memory to the host in the parent task.</p><h2 id=cuda-112-and-stream-ordered-allocations>CUDA 11.2 and stream-ordered allocations</h2><p>CUDA.jl now also fully supports CUDA 11.2, and it will default to using that version of the
+toolkit if your driver supports it. The release came with several new features, such as <a href=https://developer.nvidia.com/blog/enhancing-memory-allocation-with-new-cuda-11-2-features/>the
+new stream-ordered memory
+allocator</a>.
+Without going into details, it is now possible to asynchonously allocate memory, obviating
+much of the need to cache those allocations in a memory pool. Initial benchmarks have shown
+nice speed-ups from using this allocator, while lowering memory pressure and thus reducing
+invocations of the Julia garbage collector.</p><p>When using CUDA 11.2, CUDA.jl will default to the CUDA-backed memory pool, and disable its
+own caching layer. If you want to compare performance, you can still use the old allocator
+and caching memory pool by setting the <code>JULIA_CUDA_MEMORY_POOL</code> environment variable to,
+e.g. <code>binned</code>. On older versions of CUDA, the <code>binned</code> pool is still used by default.</p><h2 id=revamped-cudnn-interface>Revamped cuDNN interface</h2><p>As part of this release, the cuDNN wrappers have been completely revamped by
+<a href=https://github.com/denizyuret>@denizyuret</a>. The goal of the redesign is to more faithfully
+map the cuDNN API to more natural Julia functions, so that packages like Knet.jl or NNlib.jl
+can more easily use advanced cuDNN features without having to resort to low-level C calls.
+For more details, refer to <a href=https://github.com/JuliaGPU/CUDA.jl/blob/da7c6eee82d6ea0eee1cb75c8589c8a92b0bc474/lib/cudnn/README.md>the design
+document</a>.</p></main></div><footer id=footer class="mt-auto text-center text-muted"><div class=container>Made with <a href=https://gohugo.io/>Hugo</a> & <a href=https://github.com/zwbetz-gh/vanilla-bootstrap-hugo-theme>Vanilla</a></div></footer><script src=https://juliagpu.org/js/feather.min.js></script><script>feather.replace()</script><script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;ga('create','UA-154489943-1','auto');ga('send','pageview');</script><script async src=https://www.google-analytics.com/analytics.js></script></body></html>
