@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/assets/favicon.ico">
+  <link rel=alternate type=application/rss+xml href=https://juliagpu.org/index.xml title=JuliaGPU>
+
+  <link rel=stylesheet href="/css/bootstrap.min.css">
+  {{if hasmath}} {{insert head_katex.html }}     {{end}}
+  {{if hascode}} {{insert head_highlight.html }} {{end}}
+
+  {{insert style_adjustments.html}}
+
+  {{ispage index.html}}
+    <title>JuliaGPU</title>
+  {{end}}
+  {{isnotpage index.html}}
+    <title>{{title}} ⋅ JuliaGPU</title>
+  {{end}}
+</head>
+<body class="d-flex flex-column h-100">
+  {{insert header.html}}
+
+  <div class="container">
+    <main id=main>
+
+    {{ispage post/*}}{{isnotpage post/index.html}}
+      {{postredirect}}
+      <h1>{{title}}</h1>
+      {{post_date}}
+      <br><br>
+    {{end}}{{end}}
+<!-- Content appended here -->

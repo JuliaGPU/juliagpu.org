@@ -1,6 +1,0 @@
-<!-- quick short-code for images yielding an absolute URL (for RSS compat)
-     TODO: merge with bootstrap-card (or get rid of that?) -->
-{{ $img := $.Page.Resources.GetMatch (.Get 0)}}
-<figure>
-	<img src="{{ $img.Permalink }}" alt="{{ .Get 1 }}" />
-</figure>

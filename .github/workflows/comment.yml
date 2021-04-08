@@ -1,0 +1,15 @@
+name: Comment on PR
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  pr_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR comment
+        # if this is a pull request build AND the pull request is NOT made from a fork
+        if: github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name
+        uses: thollander/actions-comment-pull-request@71efef56b184328c7ef1f213577c3a90edaa4aff
+        with:
+          message: 'Once the build has completed, you can preview your PR at this URL: https://maleadt.github.io/juliagpu.org/previews/PR${{ github.event.number }}/ in a couple of minutes.'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
