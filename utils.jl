@@ -119,7 +119,12 @@ function hfun_postredirect()
     return Franklin.hfun_redirect([path])
 end
 
-# strip a trailing index.html
-function hfun_hugo_guid(params::Vector{String})
-    return replace(replace(locvar(params[1]), r"index.html$" => ""), "/post/" => "/")
+function hfun_rss_guid()
+    rss_guid = locvar("guid")
+    if rss_guid !== nothing
+        return rss_guid::String
+    else
+        # Hugo-style GUID without `/post/` or `index.html`
+        return replace(replace(locvar(:fd_full_url), r"index.html$" => ""), "/post/" => "/")
+    end
 end

@@ -7,6 +7,7 @@ abstract = """
   experimental support for multitasking and multithreading. The release is technically
   breaking, but most end-users should not be affected.
   """
+guid = "https://juliagpu.org/cudanative_3.0-cuarrays_2.0/"
 +++
 
 {{redirect /cudanative_3.0-cuarrays_2.0/}}
