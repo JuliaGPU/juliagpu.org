@@ -27,7 +27,9 @@
     <main id=main>
 
     {{ispage post/*}}{{isnotpage post/index.html}}
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
       {{postredirect}}
+
       <h1>{{title}}</h1>
       {{post_date}}
       <br><br>

@@ -28,6 +28,11 @@ function getdate(fname)
 end
 
 function hfun_post_date()
+    # capture the RSS publication date from the file name
+    fd_url = locvar(:fd_url)::String
+    d = Date(match(r"(20\d\d-\d\d-\d\d)", fd_url).captures[1])
+    Franklin.set_var!(Franklin.LOCAL_VARS, "rss_pubdate", d)
+
     fname = blogpost_name(locvar(:fd_rpath)::String)
     y, m, d = getdate(fname)
     author = locvar(:author)
@@ -111,8 +116,6 @@ end
 function hfun_postredirect()
     fd_url = locvar(:fd_url)::String
     path = replace(fd_url, "/post/" => "/")
-    d = Date(match(r"(20\d\d-\d\d-\d\d)", fd_url).captures[1])
-    Franklin.set_var!(Franklin.LOCAL_VARS, "rss_pubdate", d)
     return Franklin.hfun_redirect([path])
 end
 
