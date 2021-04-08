@@ -599,7 +599,7 @@ end</code></pre>
 <item>
   <title><![CDATA[New website for JuliaGPU]]></title>
   <link>https://juliagpu.org/post/2019-12-12-new_site/index.html</link>
-  <guid>https://juliagpu.org/2020-07-18-cuda_1.3/</guid>
+  <guid>https://juliagpu.org/new_site/</guid>
   <description><![CDATA[Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.]]></description>  
   
   <content:encoded><![CDATA[<p>Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.</p>
