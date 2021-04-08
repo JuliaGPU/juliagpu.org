@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Blog on JuliaGPU</title><link>https://juliagpu.org/post/</link><description>Recent content in Blog on JuliaGPU</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://juliagpu.org/post/index.xml" rel="self" type="application/rss+xml"/><item><title>CUDA.jl 2.4 and 2.5</title><link>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</link><pubDate>Fri, 08 Jan 2021 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</guid><description>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5 and 1.6. These releases feature a greatly improved findmin and findmax kernels, an improved interface for kernel introspection, support for CUDA 11.2, and of course many bug fixes.</description><content:encoded><![CDATA[<p>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>JuliaGPU</title><link>https://juliagpu.org/</link><description>Recent content on JuliaGPU</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://juliagpu.org/index.xml" rel="self" type="application/rss+xml"/><item><title>CUDA.jl 2.4 and 2.5</title><link>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</link><pubDate>Fri, 08 Jan 2021 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</guid><description>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5 and 1.6. These releases feature a greatly improved findmin and findmax kernels, an improved interface for kernel introspection, support for CUDA 11.2, and of course many bug fixes.</description><content:encoded><![CDATA[<p>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5
 and 1.6. These releases feature a greatly improved <code>findmin</code> and <code>findmax</code> kernels, an
 improved interface for kernel introspection, support for CUDA 11.2, and of course many bug
 fixes.</p>
@@ -827,4 +827,176 @@ introduction to the several packages for programming GPUs in Julia, with pointer
 relevant resources for new users.</p>
 <p>The sources for this website are hosted at
 <a href="https://github.com/JuliaGPU/juliagpu.org">GitHub</a> and generated using Hugo, feel free to
-open an issue or pull request if you think it could be improved.</p>]]></content:encoded></item><item><title>DifferentialEquations.jl v6.9.0 released with automatic Multi-GPU support</title><link>https://juliagpu.org/2019-12-03-diffeq-0.6.9/</link><pubDate>Tue, 03 Dec 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-12-03-diffeq-0.6.9/</guid></item><item><title>Julia Computing Brings Support for NVIDIA GPU Computing on Arm Powered Servers</title><link>https://juliagpu.org/2019-12-03-nvidia-arm-gpu/</link><pubDate>Tue, 03 Dec 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-12-03-nvidia-arm-gpu/</guid></item><item><title>An Introduction to GPU Programming in Julia</title><link>https://juliagpu.org/2019-10-17-nextjournal-intro/</link><pubDate>Thu, 17 Oct 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-10-17-nextjournal-intro/</guid></item><item><title>DifferentialEquations.jl v6.4.0 released with full GPU ODE support</title><link>https://juliagpu.org/2019-05-09-diffeq-0.6.4/</link><pubDate>Thu, 09 May 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-05-09-diffeq-0.6.4/</guid></item><item><title>Next Generation Climate Models leverage Julia and GPUs</title><link>https://juliagpu.org/2019-03-04-nps-clima-gpu/</link><pubDate>Mon, 04 Mar 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-03-04-nps-clima-gpu/</guid></item><item><title>New Climate Model to be Built from the Ground Up</title><link>https://juliagpu.org/2018-12-12-paoc-clima/</link><pubDate>Wed, 12 Dec 2018 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2018-12-12-paoc-clima/</guid></item><item><title>Solving Systems of Stochastic PDEs and using GPUs in Julia</title><link>https://juliagpu.org/2017-12-11-diffeq-stochastic_pdes/</link><pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2017-12-11-diffeq-stochastic_pdes/</guid></item><item><title>High-Performance GPU Computing in the Julia Programming Language</title><link>https://juliagpu.org/2017-10-25-nvidia-devblog/</link><pubDate>Wed, 25 Oct 2017 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2017-10-25-nvidia-devblog/</guid></item></channel></rss>
+open an issue or pull request if you think it could be improved.</p>]]></content:encoded></item><item><title>DifferentialEquations.jl v6.9.0 released with automatic Multi-GPU support</title><link>https://juliagpu.org/2019-12-03-diffeq-0.6.9/</link><pubDate>Tue, 03 Dec 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-12-03-diffeq-0.6.9/</guid></item><item><title>Julia Computing Brings Support for NVIDIA GPU Computing on Arm Powered Servers</title><link>https://juliagpu.org/2019-12-03-nvidia-arm-gpu/</link><pubDate>Tue, 03 Dec 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-12-03-nvidia-arm-gpu/</guid></item><item><title>An Introduction to GPU Programming in Julia</title><link>https://juliagpu.org/2019-10-17-nextjournal-intro/</link><pubDate>Thu, 17 Oct 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-10-17-nextjournal-intro/</guid></item><item><title>DifferentialEquations.jl v6.4.0 released with full GPU ODE support</title><link>https://juliagpu.org/2019-05-09-diffeq-0.6.4/</link><pubDate>Thu, 09 May 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-05-09-diffeq-0.6.4/</guid></item><item><title>Next Generation Climate Models leverage Julia and GPUs</title><link>https://juliagpu.org/2019-03-04-nps-clima-gpu/</link><pubDate>Mon, 04 Mar 2019 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2019-03-04-nps-clima-gpu/</guid></item><item><title>New Climate Model to be Built from the Ground Up</title><link>https://juliagpu.org/2018-12-12-paoc-clima/</link><pubDate>Wed, 12 Dec 2018 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2018-12-12-paoc-clima/</guid></item><item><title>Solving Systems of Stochastic PDEs and using GPUs in Julia</title><link>https://juliagpu.org/2017-12-11-diffeq-stochastic_pdes/</link><pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2017-12-11-diffeq-stochastic_pdes/</guid></item><item><title>High-Performance GPU Computing in the Julia Programming Language</title><link>https://juliagpu.org/2017-10-25-nvidia-devblog/</link><pubDate>Wed, 25 Oct 2017 00:00:00 +0000</pubDate><guid>https://juliagpu.org/2017-10-25-nvidia-devblog/</guid></item><item><title>About</title><link>https://juliagpu.org/about/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/about/</guid><description>Hugo is the world’s fastest framework for building websites. It is written in Go.
+It makes use of a variety of open source projects including:
+https://github.com/russross/blackfriday https://github.com/alecthomas/chroma https://github.com/muesli/smartcrop https://github.com/spf13/cobra https://github.com/spf13/viper Learn more and contribute on GitHub.</description><content:encoded><![CDATA[<p>Hugo is the <strong>world’s fastest framework for building websites</strong>. It is written in Go.</p>
+<p>It makes use of a variety of open source projects including:</p>
+<ul>
+<li><a href="https://github.com/russross/blackfriday">https://github.com/russross/blackfriday</a></li>
+<li><a href="https://github.com/alecthomas/chroma">https://github.com/alecthomas/chroma</a></li>
+<li><a href="https://github.com/muesli/smartcrop">https://github.com/muesli/smartcrop</a></li>
+<li><a href="https://github.com/spf13/cobra">https://github.com/spf13/cobra</a></li>
+<li><a href="https://github.com/spf13/viper">https://github.com/spf13/viper</a></li>
+</ul>
+<p>Learn more and contribute on <a href="https://github.com/gohugoio">GitHub</a>.</p>
+]]></content:encoded></item><item><title>AMD ROCm</title><link>https://juliagpu.org/rocm/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/rocm/</guid><description>The Julia programming support for AMD GPUs based on the ROCm platform aims to provide similar capabilities as the NVIDIA CUDA stack, with support for both low-level kernel programming as well as an array-oriented interface.
+Julia support exists in the form of a single package:
+AMDGPU.jl This package contains everything needed to access the HSA runtime, program GPU kernels, and utilize a user-friendly array-based interface. The stack originally was divided into 3 separate packages, which still exist and may be of use for interested users and developers:</description><content:encoded><![CDATA[<p><a href="https://juliagpu.gitlab.io/AMDGPU.jl/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt=""></a> <a href="https://github.com/JuliaGPU/AMDGPU.jl"><img src="https://img.shields.io/github/stars/JuliaGPU/AMDGPU.jl?style=social" alt=""></a></p>
+<p>The Julia programming support for AMD GPUs based on the ROCm platform aims to
+provide similar capabilities as the <a href="/cuda/">NVIDIA CUDA</a> stack, with support
+for both low-level kernel programming as well as an array-oriented interface.</p>
+<p>Julia support exists in the form of a single package:</p>
+<ul>
+<li><a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a></li>
+</ul>
+<p>This package contains everything needed to access the HSA runtime, program GPU
+kernels, and utilize a user-friendly array-based interface. The stack
+originally was divided into 3 separate packages, which still exist and may be
+of use for interested users and developers:</p>
+<ul>
+<li><a href="https://github.com/JuliaGPU/HSARuntime.jl">HSARuntime.jl</a>: interfacing with the HSA runtime</li>
+<li><a href="https://github.com/JuliaGPU/AMDGPUnative.jl">AMDGPUnative.jl</a>: GPU kernel programming support</li>
+<li><a href="https://github.com/JuliaGPU/ROCArrays.jl">ROCArrays.jl</a>: array programming interface</li>
+</ul>
+<p>At this point, the toolchain is a work in progress, although it is quite
+functional for simple usecases. We only officially support Julia 1.4 and Julia
+1.5.</p>
+]]></content:encoded></item><item><title>Intel oneAPI</title><link>https://juliagpu.org/oneapi/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/oneapi/</guid><description>oneAPI is an open standard for programming hardware accelerators, originally designed by Intel. The oneAPI.jl package offers a Julia interface to this programming model. The package is in early development, but already provides most features for application development.
+Similarly to other GPU support packages in Julia, oneAPI.jl makes it possible to work with accelerators at three distinct abstraction levels:
+high-level, using the oneArray array type and Julia&amp;rsquo;s powerful array abstractions; by writing your own kernels and launching them using the @oneapi macro; using the low-level Level Zero wrappers in the oneL0 submodule.</description><content:encoded><![CDATA[<p><a href="https://github.com/JuliaGPU/oneAPI.jl"><img src="https://img.shields.io/github/stars/JuliaGPU/oneAPI.jl?style=social" alt=""></a></p>
+<p>oneAPI is an open standard for programming hardware accelerators, originally designed by
+Intel. The <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a> package offers a Julia
+interface to this programming model. The package is in early development, but already
+provides most features for application development.</p>
+<p>Similarly to other GPU support packages in Julia, oneAPI.jl makes it possible to work with
+accelerators at three distinct abstraction levels:</p>
+<ul>
+<li>high-level, using the <code>oneArray</code> array type and Julia&rsquo;s powerful array abstractions;</li>
+<li>by writing your own kernels and launching them using the <code>@oneapi</code> macro;</li>
+<li>using the low-level Level Zero wrappers in the <code>oneL0</code> submodule.</li>
+</ul>
+<p>For more information, refer to the <a href="https://juliagpu.org/2020-11-05-oneapi_0.1/">introductory blog post</a>.</p>
+]]></content:encoded></item><item><title>Learn</title><link>https://juliagpu.org/learn/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/learn/</guid><description>Currently, the Julia CUDA stack is the most mature, easiest to install, and full-featured. The CUDA.jl repository is a central place for the documentation of all relevant packages. Start with the instructions on how to install the stack, and follow with this introductory tutorial.
+If you prefer videos, the presentations below highlight different aspects of the toolchain.
+Effective CUDA GPU computing in Julia Design and benefits of the Julia GPU stack Composability with existing (non-GPU) software Performance killers and tools for optimization Demonstration How Julia is compiled to CUDA GPUs Design and implementation of the Julia language Retargeting the language to GPUs Use of LLVM with LLVM.</description><content:encoded><![CDATA[<p>Currently, the Julia CUDA stack is the most mature, easiest to install, and
+full-featured. The <a href="https://juliagpu.gitlab.io/CUDA.jl/">CUDA.jl</a> repository is
+a central place for the documentation of all relevant packages. Start with the
+instructions on <a href="https://juliagpu.gitlab.io/CUDA.jl/installation/overview/">how to
+install</a> the stack,
+and follow with this <a href="https://juliagpu.gitlab.io/CUDA.jl/tutorials/introduction/">introductory
+tutorial</a>.</p>
+<p>If you prefer videos, the presentations below highlight different aspects
+of the toolchain.</p>
+<h2 id="effective-cuda-gpu-computing-in-julia">Effective CUDA GPU computing in Julia</h2>
+<ul>
+<li>Design and benefits of the Julia GPU stack</li>
+<li>Composability with existing (non-GPU) software</li>
+<li>Performance killers and tools for optimization</li>
+<li>Demonstration</li>
+</ul>
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+  <iframe src="https://www.youtube.com/embed/7Yq1UyncDNc" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
+</div>
+
+</br>
+<h2 id="how-julia-is-compiled-to-cuda-gpus">How Julia is compiled to CUDA GPUs</h2>
+<ul>
+<li>Design and implementation of the Julia language</li>
+<li>Retargeting the language to GPUs</li>
+<li>Use of LLVM with LLVM.jl</li>
+<li>Benefits of a high-level language for GPU programming</li>
+</ul>
+
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+  <iframe src="https://www.youtube.com/embed/Fz-ogmASMAE" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
+</div>
+
+]]></content:encoded></item><item><title>NVIDIA CUDA</title><link>https://juliagpu.org/cuda/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/cuda/</guid><description>The programming support for NVIDIA GPUs in Julia is provided by the CUDA.jl package. It is built on the CUDA toolkit, and aims to be as full-featured and offer the same performance as CUDA C. The toolchain is mature, has been under development since 2014 and can easily be installed on any current version of Julia using the integrated package manager.
+CUDA.jl makes it possible to program NVIDIA GPUs at different abstraction levels:</description><content:encoded><![CDATA[<p><a href="https://juliagpu.gitlab.io/CUDA.jl/"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt=""></a> <a href="https://github.com/JuliaGPU/CUDA.jl"><img src="https://img.shields.io/github/stars/JuliaGPU/CUDA.jl?style=social" alt=""></a></p>
+<p>The programming support for NVIDIA GPUs in Julia is provided by the
+<a href="https://github.com/JuliaGPU/CUDA.jl">CUDA.jl</a> package. It is built on the CUDA toolkit, and
+aims to be as full-featured and offer the same performance as CUDA C. The toolchain is
+mature, has been under development since 2014 and can easily be installed on any current
+version of Julia using the integrated package manager.</p>
+<p>CUDA.jl makes it possible to program NVIDIA GPUs at different abstraction levels:</p>
+<ul>
+<li>by using the <code>CuArray</code> type, providing a user-friendly yet powerful abstraction that does
+not require any GPU programming experience;</li>
+<li>by writing CUDA kernels, with the same performance as kernels written in CUDA C;</li>
+<li>by interfacing with CUDA APIs and libraries directly, offering the same level of
+flexibility you would expect from a C-based programming environment.</li>
+</ul>
+<p>The <a href="https://juliagpu.gitlab.io/CUDA.jl/">documentation</a> of CUDA.jl demonstrates each of
+these approaches.</p>
+<h2 id="performance">Performance</h2>
+<p>Julia on the CPU is known for its good performance, approaching that of statically compiled
+languages like C. The same holds for programming NVIDIA GPUs with kernels written using
+CUDA.jl, where we have <a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">shown</a> the performance to approach and even
+sometimes exceed that of CUDA C on a selection<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> of applications from the Rodinia
+benchmark suite:</p>
+
+
+
+
+  
+
+
+<div class="card mb-3" style="">
+  <a href="https://juliagpu.org/cuda/performance.png">
+    <img src="https://juliagpu.org/cuda/performance_hua6459c56873bf72c41d6d1d8143eaa73_342008_700x0_resize_box_2.png" class="card-img-top" alt="">
+  </a>
+  
+    <div class="card-body">
+    
+    
+      <p class="card-text">Relative performance of Rodinia benchmarks <a href="https://github.com/JuliaParallel/rodinia">implemented in Julia with CUDA.jl</a>.</p>
+    
+    </div>
+  
+</div>
+<h2 id="publications">Publications</h2>
+<p>Much of the software in this toolchain was developed as part of academic research. If you
+would like to help support it, please star the relevant repositories as such metrics may
+help us secure funding in the future. If you use our software as part of your research,
+teaching, or other activities, we would be grateful if you could cite our work:</p>
+<ul>
+<li>
+<p>Tim Besard, Valentin Churavy, Alan Edelman and Bjorn De Sutter. &ldquo;<a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">Rapid software
+prototyping for heterogeneous and distributed platforms.</a>&rdquo; <em>Advances in
+Engineering Software</em> (2019).</p>
+</li>
+<li>
+<p>Tim Besard, Christophe Foket, and Bjorn De Sutter. &ldquo;<a href="https://ieeexplore.ieee.org/abstract/document/8471188">Effective extensible programming:
+Unleashing Julia on GPUs.</a>&rdquo; <em>IEEE
+Transactions on Parallel and Distributed Systems</em> (2018).</p>
+</li>
+<li>
+<p>Tim Besard. &ldquo;<a href="https://blog.maleadt.net/phd.pdf">Abstractions for Programming Graphics Processors in High-Level Programming
+Languages.</a>&rdquo; (2019) PhD dissertation.</p>
+</li>
+</ul>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p>Since porting applications from one programming language to another is labour
+intensive, we only ported and analyzed the 10 smallest benchmarks from the suite. More
+details can be found in <a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">the paper</a>. <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+]]></content:encoded></item><item><title>Other</title><link>https://juliagpu.org/other/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://juliagpu.org/other/</guid><description>Several other back-ends exist, not all of them with the same level of polish or support as the NVIDIA and AMD back-ends.
+OpenCL Programming OpenCL GPUs in Julia is much more limited than other supported platforms. On recent versions of Julia, only OpenCL.jl is available. This package can be used to compile and execute GPU kernels written in OpenCL C.
+ArrayFire ArrayFire is a general-purpose software library that targets CPUs, GPUs, and other accelerator hardware.</description><content:encoded><![CDATA[<p>Several other back-ends exist, not all of them with the same level of polish or
+support as the NVIDIA and AMD back-ends.</p>
+<h2 id="opencl">OpenCL</h2>
+<p>Programming OpenCL GPUs in Julia is much more limited than other supported platforms. On
+recent versions of Julia, only <a href="https://github.com/JuliaGPU/OpenCL.jl">OpenCL.jl</a> is
+available. This package can be used to compile and execute GPU kernels written in OpenCL C.</p>
+<h2 id="arrayfire">ArrayFire</h2>
+<p>ArrayFire is a general-purpose software library that targets CPUs, GPUs, and other
+accelerator hardware. The <a href="https://github.com/JuliaGPU/ArrayFire.jl">ArrayFire.jl</a> package
+provides a Julia interface to this library, and makes it possible to program accelerators
+using an array abstraction built on the ArrayFire library.</p>
+]]></content:encoded></item></channel></rss>
