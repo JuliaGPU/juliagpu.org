@@ -56,6 +56,6 @@ external_entries = [
 
 ~~~
 <p align=center>
-  <a href=/feed.xml><i data-feather=rss></i></a>
+  <a href=/post/index.xml><i data-feather=rss></i></a>
 <p>
 ~~~
