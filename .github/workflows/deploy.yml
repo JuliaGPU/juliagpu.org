@@ -31,6 +31,11 @@ jobs:
            using Franklin;
            optimize(minify=false, prerender=false);'
 
+    - name: Set preview prepath
+      # if this build is a PR build and the PR is NOT from a fork
+      if: github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name
+      run: sed -i '2 i prepath = "previews/PR'${{ github.event.number }}'"' config.md
+
     - name: Build site
       run: julia --project -e '
            using Pkg; Pkg.instantiate();
