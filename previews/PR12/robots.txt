@@ -1,0 +1,4 @@
+Sitemap: https://juliagpu.org/sitemap.xml
+
+User-agent: *
+Disallow:
