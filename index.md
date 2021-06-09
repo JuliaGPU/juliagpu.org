@@ -17,6 +17,10 @@ sacrificing performance.
 
 Several GPU platforms are supported, but there are large differences in features and stability. On this website, you can find a brief introduction of the supported platforms and links to the respective home pages.
 
+{{youtube aKRv-W9Eg8g}}
+
+\
+
 ## Supported platforms
 
 The best supported GPU platform in Julia is [**NVIDIA CUDA**](/cuda/), with mature and full-featured packages for both low-level kernel programming as well as working with high-level operations on arrays.
