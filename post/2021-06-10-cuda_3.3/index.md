@@ -1,8 +1,8 @@
 +++
-title = "CUDA.jl 3.1, 3.2 and 3.3"
+title = "CUDA.jl 3.3"
 author = "Tim Besard"
 abstract = """
-  There have been several releases of CUDA.jl in the past couple of months, with many bugfixes and several exciting new features to improve GPU programming in Julia: `CuArray` now supports isbits Unions, CUDA.jl can emit debug info for use with NVIDIA tools, and changes to the compiler make it even easier to use the latest version of the CUDA toolkit."""
+  There have been several releases of CUDA.jl in the past couple of months, with many bugfixes and many exciting new features to improve GPU programming in Julia: `CuArray` now supports isbits Unions, CUDA.jl can emit debug info for use with NVIDIA tools, and changes to the compiler make it even easier to use the latest version of the CUDA toolkit."""
 +++
 
 {{abstract}}
@@ -59,7 +59,7 @@ towards GPU support for DataFrames.jl.
 
 ## Debug and location information
 
-Another noteworthy feature in CUDA.jl 3.3 is the [support for emitting debug and location
+Another noteworthy addition is the [support for emitting debug and location
 information](https://github.com/JuliaGPU/CUDA.jl/pull/891). The debug level, set by passing
 `-g <level>` to the `julia` executable, determines how much info is emitted. The default of
 level 1 only enables location information instructions which should not impact performance.
@@ -109,18 +109,17 @@ macro expansion () at .julia/packages/LLVM/hHQuD/src/interop/base.jl:74
 
 ## Improved CUDA compatibility support
 
-As always, new CUDA.jl releases come with updated support for the CUDA toolkit. In CUDA.jl
-3.1, we've [added support for CUDA 11.3](https://github.com/JuliaGPU/CUDA.jl/pull/858),
-while CUDA.jl 3.3 [is compatible with CUDA 11.3 Update
-1](https://github.com/JuliaGPU/CUDA.jl/pull/945). Users don't have to do anything to update
-to these versions, as CUDA.jl will automatically select and download the latest supported
-version.
+As always, new CUDA.jl releases come with updated support for the CUDA toolkit. CUDA.jl is
+now compatible with [CUDA 11.3](https://github.com/JuliaGPU/CUDA.jl/pull/858), as well as
+[CUDA 11.3 Update 1](https://github.com/JuliaGPU/CUDA.jl/pull/945). Users don't have to do
+anything to update to these versions, as CUDA.jl will automatically select and download the
+latest supported version.
 
 Of course, for CUDA.jl to use the latest versions of the CUDA toolkit, a sufficiently recent
 version of the NVIDIA driver is required. Before CUDA 11.0, the driver's CUDA compatibility
 was a strict lower bound, and every minor CUDA release required a driver update. CUDA 11.0
 comes with an enhanced compatibility option that follows semantic versioning, e.g., CUDA
-11.3 can be used on an NVIDIA driver that only supports up to CUDA 11.0. CUDA.jl 3.3 now
+11.3 can be used on an NVIDIA driver that only supports up to CUDA 11.0. CUDA.jl now
 [follows semantic versioning](https://github.com/JuliaGPU/CUDA.jl/pull/936) when selecting a
 compatible toolkit, making it easier to use the latest version of the CUDA toolkit in Julia.
 
@@ -133,8 +132,8 @@ driver APIs, so it's always recommended to keep your NVIDIA driver up-to-date.
 ## High-level graph APIs
 
 To overcome the cost of launching kernels, CUDA makes it possible to build computational
-graphs, and execute those graphs with less overhead than the underlying operations. With
-CUDA.jl 3.1, we provide easy access to the APIs [to record and
+graphs, and execute those graphs with less overhead than the underlying operations. In
+CUDA.jl we provide easy access to the APIs [to record and
 execute](https://github.com/JuliaGPU/CUDA.jl/pull/877) these graphs:
 
 ```julia
@@ -178,20 +177,20 @@ end
 
 ## Minor changes and features
 
-- CUDA.jl 3.1 [now supports](https://github.com/JuliaGPU/CUDA.jl/pull/842) `@atomic`
+- CUDA.jl [now supports](https://github.com/JuliaGPU/CUDA.jl/pull/842) `@atomic`
   multiplication and division (by @yuehhua)
-- Several statistics functions [are
-  implemented](https://github.com/JuliaGPU/CUDA.jl/pull/509) in CUDA.jl 3.1 (by @berquist)
-- The device-side random number generator in CUDA.jl 3.2 [is based on
+- Several statistics functions [have been
+  implemented](https://github.com/JuliaGPU/CUDA.jl/pull/509) (by @berquist)
+- The device-side random number generator in [is now based on
   Philox2x](https://github.com/JuliaGPU/CUDA.jl/pull/890), greatly improving quality of
   randomness (passing BigCrush) while allowing calls to `rand()` from divergent threads.
-- In CUDA.jl 3.2, dependent libraries like CUDNN and CUTENSOR [are only downloaded and
+- Dependent libraries like CUDNN and CUTENSOR [are now only downloaded and
   initialized](https://github.com/JuliaGPU/CUDA.jl/pull/882) when they are used.
-- The `synchronize()` function in CUDA.jl 3.2 [now first
+- The `synchronize()` function in [now first
   spins](https://github.com/JuliaGPU/CUDA.jl/pull/896) before yielding and sleeping, to
   improve the latency of short-running operations.
 - Several additional operations are now supported on Float16 inputs, such as [CUSPARSE and
-  CUBLAS](https://github.com/JuliaGPU/CUDA.jl/pull/904) operations in CUDA.jl 3.3, and
-  [various math intrinsics](https://github.com/JuliaGPU/CUDA.jl/pull/871) in CUDA.jl 3.1.
+  CUBLAS](https://github.com/JuliaGPU/CUDA.jl/pull/904) operations, and
+  [various math intrinsics](https://github.com/JuliaGPU/CUDA.jl/pull/871).
 - Kepler support (compute capability 3.5) [has been
   reinstated](https://github.com/JuliaGPU/CUDA.jl/pull/923) for the time being.
