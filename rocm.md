@@ -6,8 +6,8 @@ title = "AMD ROCm"
 
 ~~~
 <p>
-  <a href="https://juliagpu.gitlab.io/AMDGPU.jl/">
-    <img src="https://img.shields.io/badge/docs-latest-blue.svg" alt>
+  <a href="https://amdgpu.juliagpu.org/stable/">
+    <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt>
   </a>
   <a href="https://github.com/JuliaGPU/AMDGPU.jl">
     <img src="https://img.shields.io/github/stars/JuliaGPU/AMDGPU.jl?style=social" alt>

@@ -17,6 +17,10 @@ sacrificing performance.
 
 Several GPU platforms are supported, but there are large differences in features and stability. On this website, you can find a brief introduction of the supported platforms and links to the respective home pages.
 
+{{youtube aKRv-W9Eg8g}}
+
+\
+
 ## Supported platforms
 
 The best supported GPU platform in Julia is [**NVIDIA CUDA**](/cuda/), with mature and full-featured packages for both low-level kernel programming as well as working with high-level operations on arrays.
@@ -37,7 +41,19 @@ capabilities, such as:
 - [Oceananigans.jl](https://github.com/climate-machine/Oceananigans.jl) to accelerate a non-hydrostatic ocean modeling application
 - [GPUifyLoops.jl](https://github.com/vchuravy/GPUifyLoops.jl/) and [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for working with CPUs and GPUs alike using vendor-neutral abstractions
 
-Many other Julia applications and libraries can be used with GPUs, too: By means of the CuArrays.jl or ROCArrays.jl packages for respectively NVIDIA and AMD, existing software that uses the Julia array interfaces can often be executed as-is on a GPU.
+Many other Julia applications and libraries can be used with GPUs, too: By means of GPU-specific array types like CuArray from CUDA.jl or ROCArray from AMDGPU.jl, existing software that uses the Julia array interfaces can often be executed as-is on a GPU.
+
+## Publications
+
+Much of Julia's GPU support was developed as part of academic research. If you would like
+to help support it, please star the relevant repositories as such metrics may help us secure
+funding in the future. If you use our software as part of your research, teaching, or other
+activities, we would be grateful if you could cite our work:
+
+[compiler-paper]: https://www.sciencedirect.com/science/article/pii/S0965997818310123
+
+- Tim Besard, Christophe Foket, and Bjorn De Sutter. "[Effective extensible programming: Unleashing Julia on GPUs.](https://ieeexplore.ieee.org/abstract/document/8471188)" *IEEE Transactions on Parallel and Distributed Systems* (2018).
+- Tim Besard, Valentin Churavy, Alan Edelman and Bjorn De Sutter. "[Rapid software prototyping for heterogeneous and distributed platforms.][compiler-paper]" *Advances in Engineering Software* (2019).
 
 ## Community
 

@@ -6,8 +6,8 @@ title = "NVIDIA CUDA"
 
 ~~~
 <p>
-<a href="https://juliagpu.gitlab.io/CUDA.jl/">
-  <img src="https://img.shields.io/badge/docs-latest-blue.svg" alt>
+<a href="https://cuda.juliagpu.org/stable/">
+  <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt>
 </a>
 <a href="https://github.com/JuliaGPU/CUDA.jl">
   <img src="https://img.shields.io/github/stars/JuliaGPU/CUDA.jl?style=social" alt>
@@ -27,7 +27,7 @@ CUDA.jl makes it possible to program NVIDIA GPUs at different abstraction levels
 - by interfacing with CUDA APIs and libraries directly, offering the same level of
   flexibility you would expect from a C-based programming environment.
 
-The [documentation](https://juliagpu.gitlab.io/CUDA.jl/) of CUDA.jl demonstrates each of these approaches.
+The [documentation](https://cuda.juliagpu.org/stable/) of CUDA.jl demonstrates each of these approaches.
 
 
 ## Performance
@@ -46,12 +46,6 @@ Julia on the CPU is known for its good performance, approaching that of statical
   </div>
 </div>
 ~~~
-
-## Publications
-
-Much of the software in this toolchain was developed as part of academic research. If you would like to help support it, please star the relevant repositories as such metrics may help us secure funding in the future. If you use our software as part of your research, teaching, or other activities, we would be grateful if you could cite our work:
-
-- Tim Besard, Christophe Foket, and Bjorn De Sutter. "[Effective extensible programming: Unleashing Julia on GPUs.](https://ieeexplore.ieee.org/abstract/document/8471188)" *IEEE Transactions on Parallel and Distributed Systems* (2018).
 
 ---
 
