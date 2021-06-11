@@ -45,7 +45,7 @@ v"10.2.89"
 
 Use of a local installation is still possible by setting the environment variable
 `JULIA_CUDA_USE_BINARYBUILDER` to false. For more details, refer to [the
-documentation](https://juliagpu.gitlab.io/CUDA.jl/installation/overview/).
+documentation](https://cuda.juliagpu.org/stable/installation/overview/).
 
 Relevant PRs: [CUDAnative.jl#492](https://github.com/JuliaGPU/CUDAnative.jl/pull/492) and [CuArrays.jl#490](https://github.com/JuliaGPU/CuArrays.jl/pull/490)
 

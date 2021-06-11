@@ -6,8 +6,8 @@ title = "NVIDIA CUDA"
 
 ~~~
 <p>
-<a href="https://juliagpu.gitlab.io/CUDA.jl/">
-  <img src="https://img.shields.io/badge/docs-latest-blue.svg" alt>
+<a href="https://cuda.juliagpu.org/stable/">
+  <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt>
 </a>
 <a href="https://github.com/JuliaGPU/CUDA.jl">
   <img src="https://img.shields.io/github/stars/JuliaGPU/CUDA.jl?style=social" alt>
@@ -27,7 +27,7 @@ CUDA.jl makes it possible to program NVIDIA GPUs at different abstraction levels
 - by interfacing with CUDA APIs and libraries directly, offering the same level of
   flexibility you would expect from a C-based programming environment.
 
-The [documentation](https://juliagpu.gitlab.io/CUDA.jl/) of CUDA.jl demonstrates each of these approaches.
+The [documentation](https://cuda.juliagpu.org/stable/) of CUDA.jl demonstrates each of these approaches.
 
 
 ## Performance
