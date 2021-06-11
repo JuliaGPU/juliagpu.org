@@ -162,7 +162,7 @@ julia&gt; CUDAnative.version&#40;&#41;
 ┌ Debug: Using CUDA 10.2.89 from an artifact at /depot/artifacts/...
 └ @ CUDAnative CUDAnative/src/bindeps.jl:108
 v&quot;10.2.89&quot;</code></pre>
-<p>Use of a local installation is still possible by setting the environment variable <code>JULIA_CUDA_USE_BINARYBUILDER</code> to false. For more details, refer to <a href="https://juliagpu.gitlab.io/CUDA.jl/installation/overview/">the documentation</a>.</p>
+<p>Use of a local installation is still possible by setting the environment variable <code>JULIA_CUDA_USE_BINARYBUILDER</code> to false. For more details, refer to <a href="https://cuda.juliagpu.org/stable/installation/overview/">the documentation</a>.</p>
 <p>Relevant PRs: <a href="https://github.com/JuliaGPU/CUDAnative.jl/pull/492">CUDAnative.jl#492</a> and <a href="https://github.com/JuliaGPU/CuArrays.jl/pull/490">CuArrays.jl#490</a></p>
 <h2 id="method_redefinitions"><a href="#method_redefinitions" class="header-anchor">Method redefinitions</a></h2>
 <p>CUDAnative 3.0 now fully supports method redefinitions, commonly referred to as <a href="https://github.com/JuliaLang/julia/issues/265">Julia issue #265</a>, and makes it possible to use interactive programming tools like Revise.jl:</p>
