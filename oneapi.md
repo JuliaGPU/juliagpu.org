@@ -20,4 +20,4 @@ Similarly to other GPU support packages in Julia, oneAPI.jl makes it possible to
 - by writing your own kernels and launching them using the `@oneapi` macro;
 - using the low-level Level Zero wrappers in the `oneL0` submodule.
 
-For more information, refer to the [introductory blog post]("/post/2020-11-05-oneapi_0.1/").
+For more information, refer to the [introductory blog post](/post/2020-11-05-oneapi_0.1/).
