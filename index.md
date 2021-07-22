@@ -17,7 +17,7 @@ sacrificing performance.
 
 Several GPU platforms are supported, but there are large differences in features and stability. On this website, you can find a brief introduction of the supported platforms and links to the respective home pages.
 
-{{youtube aKRv-W9Eg8g}}
+{{youtube Hz9IMJuW5hU}}
 
 \
 
