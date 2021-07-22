@@ -51,3 +51,5 @@ Julia on the CPU is known for its good performance, approaching that of statical
 
 [^1]: Since porting applications from one programming language to another is labour
 intensive, we only ported and analyzed the 10 smallest benchmarks from the suite. More details can be found in [the paper][compiler-paper].
+
+[compiler-paper]: https://www.sciencedirect.com/science/article/pii/S0965997818310123
