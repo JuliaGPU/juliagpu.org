@@ -14,6 +14,20 @@ the stack, and follow with this [introductory tutorial](https://cuda.juliagpu.or
 If you prefer videos, the presentations below highlight different aspects
 of the toolchain.
 
+
+## Concurrent GPU computing in CUDA.jl 3.0
+
+Introduction to concurrent GPU computing:
+
+* Overlapping GPU computations
+* Using multiple devices
+* Using threads
+
+{{youtube fw0R5G8pB0U}}
+
+\\
+
+
 ## Effective CUDA GPU computing in Julia
 
 * Design and benefits of the Julia GPU stack
@@ -24,13 +38,3 @@ of the toolchain.
 {{youtube 7Yq1UyncDNc}}
 
 \\
-
-
-## How Julia is compiled to CUDA GPUs
-
-* Design and implementation of the Julia language
-* Retargeting the language to GPUs
-* Use of LLVM with LLVM.jl
-* Benefits of a high-level language for GPU programming
-
-{{youtube Fz-ogmASMAE}}
