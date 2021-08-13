@@ -156,7 +156,7 @@ julia&gt; function kernel&#40;a&#41;
          return
        end
 
-julia&gt; @device_code_warntype @cuda threads&#61;16 kernel&#40;a&#41;
+julia&gt; @cuda threads&#61;16 kernel&#40;a&#41;
 
 julia&gt; a
 1-element CuArray&#123;Int64, 1, CUDA.Mem.DeviceBuffer&#125;:
