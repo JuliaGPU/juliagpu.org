@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR16/assets/favicon.ico">
+  <link rel=alternate type=application/rss+xml href=https://juliagpu.org/index.xml title=JuliaGPU>
+
+  <link rel=stylesheet href="/previews/PR16/css/bootstrap.min.css">
+  
+  
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>AMD ROCm ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR16/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR16/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR16/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR16/cuda/">NVIDIA CUDA</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR16/rocm/">AMD ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR16/oneapi/">Intel oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR16/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+<!-- Content appended here -->
+
+<h1 id="amd_rocm"><a href="#amd_rocm" class="header-anchor">AMD ROCm</a></h1>
+
+<p>
+  <a href="https://amdgpu.juliagpu.org/stable/">
+    <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt>
+  </a>
+  <a href="https://github.com/JuliaGPU/AMDGPU.jl">
+    <img src="https://img.shields.io/github/stars/JuliaGPU/AMDGPU.jl?style=social" alt>
+  </a>
+</p>
+
+<p>The Julia programming support for AMD GPUs based on the ROCm platform aims to provide similar capabilities as the <a href="/previews/PR16/cuda/">NVIDIA CUDA</a> stack, with support for both low-level kernel programming as well as an array-oriented interface.</p>
+<p>Julia support exists in the form of a single package:</p>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a></p>
+</li>
+</ul>
+<p>This package contains everything needed to access the HSA runtime, program GPU kernels, and utilize a user-friendly array-based interface. The stack originally was divided into 3 separate packages, which still exist and may be of use for interested users and developers:</p>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/HSARuntime.jl">HSARuntime.jl</a>: interfacing with the HSA runtime</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/AMDGPUnative.jl">AMDGPUnative.jl</a>: GPU kernel programming support</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/ROCArrays.jl">ROCArrays.jl</a>: array programming interface</p>
+</li>
+</ul>
+<p>At this point, the toolchain is a work in progress, although it is quite functional for simple usecases. We only officially support Julia 1.4 and Julia 1.5.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR16/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
