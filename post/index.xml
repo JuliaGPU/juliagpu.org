@@ -22,10 +22,10 @@
   <title><![CDATA[CUDA.jl 3.4]]></title>
   <link>https://juliagpu.org/post/2021-08-13-cuda_3.4/index.html</link>
   <guid>https://juliagpu.org/2021-08-13-cuda_3.4/</guid>
-  <description><![CDATA[The latest version of CUDA.jl brings several new features, from improved atomic operations to initial support for arrays with unified memory. The native random number generator introduced in CUDA.jl is now the default, and support for memory pools other than the CUDA stream-ordered one has been removed.]]></description>  
+  <description><![CDATA[The latest version of CUDA.jl brings several new features, from improved atomic operations to initial support for arrays with unified memory. The native random number generator introduced in CUDA.jl 3.0 is now the default fallback, and support for memory pools other than the CUDA stream-ordered one has been removed.]]></description>  
   
   <content:encoded><![CDATA[
-<p>The latest version of CUDA.jl brings several new features, from improved atomic operations to initial support for arrays with unified memory. The native random number generator introduced in CUDA.jl is now the default, and support for memory pools other than the CUDA stream-ordered one has been removed.</p>
+<p>The latest version of CUDA.jl brings several new features, from improved atomic operations to initial support for arrays with unified memory. The native random number generator introduced in CUDA.jl 3.0 is now the default fallback, and support for memory pools other than the CUDA stream-ordered one has been removed.</p>
 <h2 id="streamlined_atomic_operations">Streamlined atomic operations</h2>
 <p>In preparation of integrating with the new standard <code>@atomic</code> macro introduced in Julia 1.7, we have <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1059">streamlined the capabilities of atomic operations in CUDA.jl</a>. The API is now split into two levels: low-level <code>atomic_</code> methods for atomic functionality that&#39;s directly supported by the hardware, and a high-level <code>@atomic</code> macro that tries to perform operations natively or falls back to a loop with compare-and-swap. This fall-back implementation makes it possible to use more complex operations that do not map onto a single atomic operation:</p>
 <pre><code class="language-julia-repl">julia&gt; a &#61; CuArray&#40;&#91;1&#93;&#41;;julia&gt; function kernel&#40;a&#41;
