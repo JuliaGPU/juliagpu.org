@@ -1,0 +1,926 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rss version="2.0"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/"
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:media="http://search.yahoo.com/mrss/"
+  xmlns:atom="http://www.w3.org/2005/Atom"
+  xmlns:georss="http://www.georss.org/georss">
+
+  <channel>
+    <title><![CDATA[JuliaGPU]]></title>
+    <link>https://juliagpu.org</link>
+    <description><![CDATA[High-performance GPU programming in a high-level language.]]></description>
+    <generator>Franklin.jl -- https://github.com/tlienart/Franklin.jl</generator>
+    <atom:link
+      href="https://juliagpu.org/post/index.xml"
+      rel="self"
+      type="application/rss+xml" />
+
+
+<item>
+  <title><![CDATA[CUDA.jl 3.4]]></title>
+  <link>https://juliagpu.org/post/2021-08-13-cuda_3.4/index.html</link>
+  <guid>https://juliagpu.org/2021-08-13-cuda_3.4/</guid>
+  <description><![CDATA[The latest version of CUDA.jl brings several new features, from improved atomic operations to initial support for arrays with unified memory. The native random number generator introduced in CUDA.jl 3.0 is now the default fallback, and support for memory pools other than the CUDA stream-ordered one has been removed.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>The latest version of CUDA.jl brings several new features, from improved atomic operations to initial support for arrays with unified memory. The native random number generator introduced in CUDA.jl 3.0 is now the default fallback, and support for memory pools other than the CUDA stream-ordered one has been removed.</p>
+<h2 id="streamlined_atomic_operations">Streamlined atomic operations</h2>
+<p>In preparation of integrating with the new standard <code>@atomic</code> macro introduced in Julia 1.7, we have <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1059">streamlined the capabilities of atomic operations in CUDA.jl</a>. The API is now split into two levels: low-level <code>atomic_</code> methods for atomic functionality that&#39;s directly supported by the hardware, and a high-level <code>@atomic</code> macro that tries to perform operations natively or falls back to a loop with compare-and-swap. This fall-back implementation makes it possible to use more complex operations that do not map onto a single atomic operation:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; CuArray&#40;&#91;1&#93;&#41;;julia&gt; function kernel&#40;a&#41;
+         CUDA.@atomic a&#91;&#93; &lt;&lt;&#61; 1
+         return
+       endjulia&gt; @cuda threads&#61;16 kernel&#40;a&#41;julia&gt; a
+1-element CuArray&#123;Int64, 1, CUDA.Mem.DeviceBuffer&#125;:
+ 65536julia&gt; 1&lt;&lt;16
+65536</code></pre>
+<p>The only requirement is that the types being used are supported by <code>CUDA.atomic_cas&#33;</code>. This includes common types like 32 and 64-bit integers and floating-point numbers, as well as 16-bit numbers on devices with compute capability 7.0 or higher.</p>
+<p>Note that on Julia 1.7 and higher, CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1097">does not export the <code>@atomic</code> macro anymore</a> to avoid conflicts with the version in Base. That means it is recommended to always fully specify uses of the macro, i.e., use <code>CUDA.@atomic</code> as in the example above.</p>
+<h2 id="arrays_with_unified_memory">Arrays with unified memory</h2>
+<p>You may have noticed that the <code>CuArray</code> type in the example above included an additional parameter, <code>Mem.DeviceBuffer</code>. This has been introduced to support arrays backed by different kinds of buffers. By default, we will use an ordinary device buffer, but it&#39;s now possible to <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1023">allocate arrays backed by unified buffers</a> that can be used on multiple devices:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; cu&#40;&#91;0&#93;; unified&#61;true&#41;
+1-element CuArray&#123;Int64, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 0julia&gt; a .&#43;&#61; 1
+1-element CuArray&#123;Int64, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 1julia&gt; device&#33;&#40;1&#41;julia&gt; a .&#43;&#61; 1
+1-element CuArray&#123;Int64, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 2</code></pre>
+<p>Although all operations should work equally well with arrays backed by unified memory, they have not been optimized yet. For example, copying memory to the device could be avoided as the driver can automatically page in unified memory on-demand.</p>
+<h2 id="new_default_random_number_generator">New default random number generator</h2>
+<p>CUDA.jl 3.0 introduced a new random number generator, and starting with CUDA.jl 3.2 performance and quality of this generator was improved up to the point it could be used by applications. A couple of features were still missing though, such as generating normally-distributed random numbers, or support for complex numbers. These features have been <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1082">added in CUDA.jl 3.3</a>, and the generator is now used as the default fallback when CURAND does not support the requested element types.</p>
+<p>Both the performance and quality of this generator is much better than the previous, GPUArrays.jl-based one:</p>
+<pre><code class="language-julia-repl">julia&gt; using BenchmarkTools
+julia&gt; cuda_rng &#61; CUDA.RNG&#40;&#41;;
+julia&gt; gpuarrays_rng &#61; GPUArrays.default_rng&#40;CuArray&#41;;
+julia&gt; a &#61; CUDA.zeros&#40;1024,1024&#41;;julia&gt; @benchmark CUDA.@sync rand&#33;&#40;&#36;cuda_rng, &#36;a&#41;
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range &#40;min … max&#41;:  17.040 μs …  2.430 ms  ┊ GC &#40;min … max&#41;: 0.00&#37; … 99.04&#37;
+ Time  &#40;median&#41;:     18.500 μs              ┊ GC &#40;median&#41;:    0.00&#37;
+ Time  &#40;mean ± σ&#41;:   20.604 μs ± 34.734 μs  ┊ GC &#40;mean ± σ&#41;:  1.17&#37; ±  0.99&#37;         ▃▆█▇▇▅▄▂▁
+  ▂▂▂▃▄▆███████████▇▆▆▅▅▄▄▄▃▃▃▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▂▂ ▄
+  17 μs           Histogram: frequency by time        24.1 μs &lt;julia&gt; @benchmark CUDA.@sync rand&#33;&#40;&#36;gpuarrays_rng, &#36;a&#41;
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range &#40;min … max&#41;:  72.489 μs …  2.790 ms  ┊ GC &#40;min … max&#41;: 0.00&#37; … 98.44&#37;
+ Time  &#40;median&#41;:     74.479 μs              ┊ GC &#40;median&#41;:    0.00&#37;
+ Time  &#40;mean ± σ&#41;:   81.211 μs ± 61.598 μs  ┊ GC &#40;mean ± σ&#41;:  0.67&#37; ±  1.40&#37;  █                                                           ▁
+  █▆▃▁▃▃▅▆▅▁▁▁▁▁▃▁▁▁▁▁▁▁▁▁▁▁▄▆▁▁▁▁▁▁▁▁▄▄▃▄▃▁▁▁▁▁▁▁▁▁▃▃▄▆▄▁▄▃▆ █
+  72.5 μs      Histogram: log&#40;frequency&#41; by time       443 μs &lt;</code></pre>
+<pre><code class="language-julia-repl">julia&gt; using RNGTest
+julia&gt; test_cuda_rng &#61; RNGTest.wrap&#40;cuda_rng, UInt32&#41;;
+julia&gt; test_gpuarrays_rng &#61; RNGTest.wrap&#40;gpuarrays_rng, UInt32&#41;;julia&gt; RNGTest.smallcrushTestU01&#40;test_cuda_rng&#41;
+ All tests were passedjulia&gt; RNGTest.smallcrushTestU01&#40;test_gpuarrays_rng&#41;
+ The following tests gave p-values outside &#91;0.001, 0.9990&#93;:       Test                          p-value
+ ----------------------------------------------
+  1  BirthdaySpacings                 eps
+  2  Collision                        eps
+  3  Gap                              eps
+  4  SimpPoker                       1.0e-4
+  5  CouponCollector                  eps
+  6  MaxOft                           eps
+  7  WeightDistrib                    eps
+ 10  RandomWalk1 M                   6.0e-4
+ ----------------------------------------------
+ &#40;eps  means a value &lt; 1.0e-300&#41;:</code></pre>
+<h2 id="removal_of_old_memory_pools">Removal of old memory pools</h2>
+<p>With the new stream-ordered allocator, caching memory allocations at the CUDA library level, much of the need for memory pools to cache memory allocations has disappeared. To simplify the allocation code, we have <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1015">removed support for those Julia-managed memory pools</a> &#40;i.e., <code>binned</code>, <code>split</code> and <code>simple</code>&#41;. You can now only use the <code>cuda</code> memory pool, or use no pool at all by setting the <code>JULIA_CUDA_MEMORY_POOL</code> environment variable to <code>none</code>.</p>
+<p>Not using a memory pool degrades performance, so if you are stuck on an NVIDIA driver that does not support CUDA 11.2, it is advised to remain on CUDA.jl 3.3 until you can upgrade.</p>
+<p>Also note that the new stream-ordered allocator has <a href="https://github.com/JuliaGPU/CUDA.jl/issues/1053">turned out incompatible with legacy cuIpc APIs</a> as used by OpenMPI. If that applies to you, consider disabling the memory pool or reverting to CUDA.jl 3.3 if your application&#39;s allocation pattern benefits from a memory pool.</p>
+<p>Because of this, we will be maintaining CUDA.jl 3.3 longer than usual. All bug fixes in CUDA.jl 3.4 have already been backported to the previous release, which is currently at version 3.3.6.</p>
+<h2 id="device_capability-dependent_kernel_code">Device capability-dependent kernel code</h2>
+<p>Some of the improvements in this release depend on the ability to write generic code that only uses certain hardware features when they are available. To facilitate writing such code, the compiler now embeds metadata in the generated code that can be used to branch on.</p>
+<p>Currently, the device capability and PTX ISA version are embedded and made available using respectively the <code>compute_capability</code> and <code>ptx_isa_version</code> functions. A simplified version number type, constructable using the <code>sv&quot;...&quot;</code> string macro, can be used to test against these properties. For example:</p>
+<pre><code class="language-julia-repl">julia&gt; function kernel&#40;a&#41;
+           a&#91;&#93; &#61; compute_capability&#40;&#41; &gt;&#61; sv&quot;6.0&quot; ? 1 : 2
+           return
+       end
+kernel &#40;generic function with 1 method&#41;julia&gt; CUDA.code_llvm&#40;kernel, Tuple&#123;CuDeviceVector&#123;Float32, AS.Global&#125;&#125;&#41;
+define void @julia_kernel_1&#40;&#123; i8 addrspace&#40;1&#41;*, i64, &#91;1 x i64&#93; &#125;* &#37;0&#41; &#123;
+top:
+  &#37;1 &#61; bitcast &#123; i8 addrspace&#40;1&#41;*, i64, &#91;1 x i64&#93; &#125;* &#37;0 to float addrspace&#40;1&#41;**
+  &#37;2 &#61; load float addrspace&#40;1&#41;*, float addrspace&#40;1&#41;** &#37;1, align 8
+  store float 1.000000e&#43;00, float addrspace&#40;1&#41;* &#37;2, align 4
+  ret void
+&#125;julia&gt; capability&#40;device&#33;&#40;1&#41;&#41;
+v&quot;3.5.0&quot;julia&gt; CUDA.code_llvm&#40;kernel, Tuple&#123;CuDeviceVector&#123;Float32, AS.Global&#125;&#125;&#41;
+define void @julia_kernel_2&#40;&#123; i8 addrspace&#40;1&#41;*, i64, &#91;1 x i64&#93; &#125;* &#37;0&#41; &#123;
+top:
+  &#37;1 &#61; bitcast &#123; i8 addrspace&#40;1&#41;*, i64, &#91;1 x i64&#93; &#125;* &#37;0 to float addrspace&#40;1&#41;**
+  &#37;2 &#61; load float addrspace&#40;1&#41;*, float addrspace&#40;1&#41;** &#37;1, align 8
+  store float 2.000000e&#43;00, float addrspace&#40;1&#41;* &#37;2, align 4
+  ret void
+&#125;</code></pre>
+<p>The branch on the compute capability is completely optimized away. At the same time, this does not require re-inferring the function as the optimization happens at the LLVM level.</p>
+<h2 id="other_changes">Other changes</h2>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1084">Support for CUDA 11.4 Update 1</a></p>
+</li>
+<li><p>Improved thread safety <a href="https://github.com/JuliaGPU/CUDA.jl/pull/993">&#91;1&#93;</a> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1074">&#91;2&#93;</a></p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Fri, 13 Aug 2021 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 3.3]]></title>
+  <link>https://juliagpu.org/post/2021-06-10-cuda_3.3/index.html</link>
+  <guid>https://juliagpu.org/2021-06-10-cuda_3.3/</guid>
+  <description><![CDATA[There have been several releases of CUDA.jl in the past couple of months, with many bugfixes and many exciting new features to improve GPU programming in Julia: &lt;code&gt;CuArray&lt;/code&gt; now supports isbits Unions, CUDA.jl can emit debug info for use with NVIDIA tools, and changes to the compiler make it even easier to use the latest version of the CUDA toolkit.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>There have been several releases of CUDA.jl in the past couple of months, with many bugfixes and many exciting new features to improve GPU programming in Julia: <code>CuArray</code> now supports isbits Unions, CUDA.jl can emit debug info for use with NVIDIA tools, and changes to the compiler make it even easier to use the latest version of the CUDA toolkit.</p>
+<h2 id="cuarray_support_for_isbits_unions"><code>CuArray</code> support for isbits Unions</h2>
+<p>Unions are a way to represent values of one type or another, e.g., a value that can be an integer or a floating point. If all possible element types of a Union are so-called bitstypes, which can be stored contiguously in memory, the Union of these types can be stored contiguously too. This kind of optimization is implemented by the Array type, which can store such &quot;isbits Unions&quot; inline, as opposed to storing a pointer to a heap-allocated box. For more details, refer to the <a href="https://docs.julialang.org/en/v1/devdocs/isbitsunionarrays/">Julia documentation</a>.</p>
+<p>With CUDA.jl 3.3, the CuArray GPU array type now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/941">supports this optimization too</a>. That means you can safely allocate CuArrays with isbits union element types and perform GPU-accelerated operations on then:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; CuArray&#40;&#91;1, nothing, 3&#93;&#41;
+3-element CuArray&#123;Union&#123;Nothing, Int64&#125;, 1&#125;:
+ 1
+  nothing
+ 3julia&gt; findfirst&#40;isnothing, a&#41;
+2</code></pre>
+<p>It is also safe to pass these CuArrays to a kernel and use unions there:</p>
+<pre><code class="language-julia-repl">julia&gt; function kernel&#40;a&#41;
+         i &#61; threadIdx&#40;&#41;.x
+         if a&#91;i&#93; &#33;&#61;&#61; nothing
+           a&#91;i&#93; &#43;&#61; 1
+         end
+         return
+       endjulia&gt; @cuda threads&#61;3 kernel&#40;a&#41;julia&gt; a
+3-element CuArray&#123;Union&#123;Nothing, Int64&#125;, 1&#125;:
+ 2
+  nothing
+ 4</code></pre>
+<p>This feature is especially valuable to represent missing values, and is an important step towards GPU support for DataFrames.jl.</p>
+<h2 id="debug_and_location_information">Debug and location information</h2>
+<p>Another noteworthy addition is the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/891">support for emitting debug and location information</a>. The debug level, set by passing <code>-g &lt;level&gt;</code> to the <code>julia</code> executable, determines how much info is emitted. The default of level 1 only enables location information instructions which should not impact performance. Passing <code>-g0</code> disables this, while passing <code>-g2</code> also enables the output of DWARF debug information and compiles in debug mode.</p>
+<p>Location information is useful for a variety of reasons. Many tools, like the NVIDIA profilers, use it corelate instructions to source code:</p>
+<figure>
+  <img src="https://juliagpu.org/post/2021-06-10-cuda_3.3/nvvp.png" alt="NVIDIA Visual Profiler with source-code location information">
+</figure><p>Debug information can be used to debug compiled code using <code>cuda-gdb</code>:</p>
+<pre><code class="language-julia">&#36; cuda-gdb --args julia -g2 examples/vadd.jl
+&#40;cuda-gdb&#41; set cuda break_on_launch all
+&#40;cuda-gdb&#41; run
+&#91;Switching focus to CUDA kernel 0, grid 1, block &#40;0,0,0&#41;, thread &#40;0,0,0&#41;, device 0, sm 0, warp 0, lane 0&#93;
+macro expansion &#40;&#41; at .julia/packages/LLVM/hHQuD/src/interop/base.jl:74
+74                  Base.llvmcall&#40;&#40;&#36;ir,&#36;fn&#41;, &#36;rettyp, &#36;argtyp, &#36;&#40;args.args...&#41;&#41;&#40;cuda-gdb&#41; bt
+#0  macro expansion &#40;&#41; at .julia/packages/LLVM/hHQuD/src/interop/base.jl:74
+#1  macro expansion &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:6
+#2  _index &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:6
+#3  blockIdx_x &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:56
+#4  blockIdx &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:76
+#5  julia_vadd&lt;&lt;&lt;&#40;1,1,1&#41;,&#40;12,1,1&#41;&gt;&gt;&gt; &#40;a&#61;..., b&#61;..., c&#61;...&#41; at .julia/dev/CUDA/examples/vadd.jl:6&#40;cuda-gdb&#41; f 5
+#5  julia_vadd&lt;&lt;&lt;&#40;1,1,1&#41;,&#40;12,1,1&#41;&gt;&gt;&gt; &#40;a&#61;..., b&#61;..., c&#61;...&#41; at .julia/dev/CUDA/examples/vadd.jl:6
+6           i &#61; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x&#40;cuda-gdb&#41; l
+1       using Test
+2
+3       using CUDA
+4
+5       function vadd&#40;a, b, c&#41;
+6           i &#61; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+7           c&#91;i&#93; &#61; a&#91;i&#93; &#43; b&#91;i&#93;
+8           return
+9       end
+10</code></pre>
+<h2 id="improved_cuda_compatibility_support">Improved CUDA compatibility support</h2>
+<p>As always, new CUDA.jl releases come with updated support for the CUDA toolkit. CUDA.jl is now compatible with <a href="https://github.com/JuliaGPU/CUDA.jl/pull/858">CUDA 11.3</a>, as well as <a href="https://github.com/JuliaGPU/CUDA.jl/pull/945">CUDA 11.3 Update 1</a>. Users don&#39;t have to do anything to update to these versions, as CUDA.jl will automatically select and download the latest supported version.</p>
+<p>Of course, for CUDA.jl to use the latest versions of the CUDA toolkit, a sufficiently recent version of the NVIDIA driver is required. Before CUDA 11.0, the driver&#39;s CUDA compatibility was a strict lower bound, and every minor CUDA release required a driver update. CUDA 11.0 comes with an enhanced compatibility option that follows semantic versioning, e.g., CUDA 11.3 can be used on an NVIDIA driver that only supports up to CUDA 11.0. CUDA.jl now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/936">follows semantic versioning</a> when selecting a compatible toolkit, making it easier to use the latest version of the CUDA toolkit in Julia.</p>
+<p>For those interested: Implementing semantic versioning required the CUDA.jl compiler to <a href="https://github.com/JuliaGPU/CUDA.jl/pull/892">use <code>ptxas</code> instead of the driver&#39;s embedded JIT</a> to generate GPU machine code. At the same time, many parts of CUDA.jl still use the CUDA driver APIs, so it&#39;s always recommended to keep your NVIDIA driver up-to-date.</p>
+<h2 id="high-level_graph_apis">High-level graph APIs</h2>
+<p>To overcome the cost of launching kernels, CUDA makes it possible to build computational graphs, and execute those graphs with less overhead than the underlying operations. In CUDA.jl we provide easy access to the APIs <a href="https://github.com/JuliaGPU/CUDA.jl/pull/877">to record and execute</a> these graphs:</p>
+<pre><code class="language-julia">A &#61; CUDA.zeros&#40;Int, 1&#41;# ensure the operation is compiled
+A .&#43;&#61; 1# capture
+graph &#61; capture&#40;&#41; do
+    A .&#43;&#61; 1
+end
+@test Array&#40;A&#41; &#61;&#61; &#91;1&#93;   # didn&#39;t change anything# instantiate and launch
+exec &#61; instantiate&#40;graph&#41;
+CUDA.launch&#40;exec&#41;
+@test Array&#40;A&#41; &#61;&#61; &#91;2&#93;# update and instantiate/launch again
+graph′ &#61; capture&#40;&#41; do
+    A .&#43;&#61; 2
+end
+update&#40;exec, graph′&#41;
+CUDA.launch&#40;exec&#41;
+@test Array&#40;A&#41; &#61;&#61; &#91;4&#93;</code></pre>
+<p>This sequence of operations is common enough that we provide a high-level <code>@captured</code> macro wraps that automatically records, updates, instantiates and launches the graph:</p>
+<pre><code class="language-julia">A &#61; CUDA.zeros&#40;Int, 1&#41;for i in 1:2
+    @captured A .&#43;&#61; 1
+end
+@test Array&#40;A&#41; &#61;&#61; &#91;2&#93;</code></pre>
+<h2 id="minor_changes_and_features">Minor changes and features</h2>
+<ul>
+<li><p>CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/842">now supports</a> <code>@atomic</code> multiplication and division &#40;by @yuehhua&#41;</p>
+</li>
+<li><p>Several statistics functions <a href="https://github.com/JuliaGPU/CUDA.jl/pull/509">have been implemented</a> &#40;by @berquist&#41;</p>
+</li>
+<li><p>The device-side random number generator in <a href="https://github.com/JuliaGPU/CUDA.jl/pull/890">is now based on Philox2x</a>, greatly improving quality of randomness &#40;passing BigCrush&#41; while allowing calls to <code>rand&#40;&#41;</code> from divergent threads.</p>
+</li>
+<li><p>Dependent libraries like CUDNN and CUTENSOR <a href="https://github.com/JuliaGPU/CUDA.jl/pull/882">are now only downloaded and initialized</a> when they are used.</p>
+</li>
+<li><p>The <code>synchronize&#40;&#41;</code> function in <a href="https://github.com/JuliaGPU/CUDA.jl/pull/896">now first spins</a> before yielding and sleeping, to improve the latency of short-running operations.</p>
+</li>
+<li><p>Several additional operations are now supported on Float16 inputs, such as <a href="https://github.com/JuliaGPU/CUDA.jl/pull/904">CUSPARSE and CUBLAS</a> operations, and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/871">various math intrinsics</a>.</p>
+</li>
+<li><p>Kepler support &#40;compute capability 3.5&#41; <a href="https://github.com/JuliaGPU/CUDA.jl/pull/923">has been reinstated</a> for the time being.</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Thu, 10 Jun 2021 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 3.0]]></title>
+  <link>https://juliagpu.org/post/2021-04-09-cuda_3.0/index.html</link>
+  <guid>https://juliagpu.org/2021-04-09-cuda_3.0/</guid>
+  <description><![CDATA[CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator, compiler tooling for GPU method overrides, device-side random number generation and a completely revamped cuDNN interface.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator, compiler tooling for GPU method overrides, device-side random number generation and a completely revamped cuDNN interface.</p>
+<h2 id="improved_multi-tasking_and_multi-threading">Improved multi-tasking and multi-threading</h2>
+<p>Before this release, CUDA operations were enqueued on a single global stream, and many of these operations &#40;like copying memory, or synchronizing execution&#41; were fully blocking. This posed difficulties when using multiple tasks to perform independent operations: Blocking operations prevent all tasks from making progress, and using the same stream introduces unintended dependencies on otherwise independend operations. <strong>CUDA.jl now uses <a href="https://github.com/JuliaGPU/CUDA.jl/pull/662">private streams for each Julia task</a>, and avoids blocking operations where possible, enabling task-based concurrent execution.</strong> It is also possible to use different devices on each task, and there is experimental support for executing those tasks from different threads.</p>
+<p>A <s>picture</s> snippet of code is worth a thousand words, so let&#39;s demonstrate using a computation that uses both a library function &#40;GEMM from CUBLAS&#41; and a native Julia broadcast kernel:</p>
+<pre><code class="language-julia">using CUDA, LinearAlgebrafunction compute&#40;a,b,c&#41;
+    mul&#33;&#40;c, a, b&#41;
+    broadcast&#33;&#40;sin, c, c&#41;
+    synchronize&#40;&#41;
+    c
+end</code></pre>
+<p>To execute multiple invocations of this function concurrently, we can simply use Julia&#39;s task-based programming interfaces and wrap each call to <code>compute</code> in an <code>@async</code> block. Then, we synchronize execution again by wrapping in a <code>@sync</code> block:</p>
+<pre><code class="language-julia">function iteration&#40;a,b,c&#41;
+    results &#61; Vector&#123;Any&#125;&#40;undef, 2&#41;
+    NVTX.@range &quot;computation&quot; @sync begin
+        @async begin
+            results&#91;1&#93; &#61; compute&#40;a,b,c&#41;
+        end
+        @async begin
+            results&#91;2&#93; &#61; compute&#40;a,b,c&#41;
+        end
+    end
+    NVTX.@range &quot;comparison&quot; Array&#40;results&#91;1&#93;&#41; &#61;&#61; Array&#40;results&#91;2&#93;&#41;
+end</code></pre>
+<p>The calls to the <code>@range</code> macro from NVTX, a submodule of CUDA.jl, will visualize the different phases of execution when we profile our program. We now invoke our function using some random data:</p>
+<pre><code class="language-julia">function main&#40;N&#61;1024&#41;
+    a &#61; CUDA.rand&#40;N,N&#41;
+    b &#61; CUDA.rand&#40;N,N&#41;
+    c &#61; CUDA.rand&#40;N,N&#41;    # make sure this data can be used by other tasks&#33;
+    synchronize&#40;&#41;    # warm-up
+    iteration&#40;a,b,c&#41;
+    GC.gc&#40;true&#41;    NVTX.@range &quot;main&quot; iteration&#40;a,b,c&#41;
+end</code></pre>
+<p>The snippet above illustrates one breaking aspect of this release: Because each task uses its own stream, <strong>you now need to synchronize when re-using data in another task.</strong> Although it is unlikely that any user code was relying on the old behavior, it is technically a breaking change, and as such we are bumping the major version of the CUDA.jl package.</p>
+<p>If we profile these our program using NSight Systems, we can see how the execution of both calls to <code>compute</code> was overlapped:</p>
+<figure>
+  <img src="https://juliagpu.org/post/2021-04-09-cuda_3.0/task_based_concurrency.png" alt="Overlapping execution on the GPU using task-based concurrency">
+</figure><p>The region highlighted in green was spent enqueueing operations from the CPU, which includes the call to <code>synchronize&#40;&#41;</code>. This used to be a blocking operation, whereas now it only synchronizes the task-local stream while yielding to the Julia scheduler so that it can continue execution on another task. <strong>For synchronizing the entire device, use the new <code>device_synchronize&#40;&#41;</code> function.</strong></p>
+<p>The remainder of computation was then spent executing kernels. Here, execution was overlapped, but that obviously depends on the exact characteristics of the computations and your GPU. Also note that copying to and from the CPU is always going to block for some time, unless the memory was page-locked. CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/760">now supports</a> locking memory like that using the <code>pin</code> function; for more details refer to <a href="https://juliagpu.github.io/CUDA.jl/dev/usage/multitasking/">the CUDA.jl documentation on tasks and threads</a>.</p>
+<h2 id="cuda_112_and_stream-ordered_allocations">CUDA 11.2 and stream-ordered allocations</h2>
+<p>CUDA.jl now also fully supports CUDA 11.2, and it will default to using that version of the toolkit if your driver supports it. The release came with several new features, such as <a href="https://developer.nvidia.com/blog/enhancing-memory-allocation-with-new-cuda-11-2-features/">the new stream-ordered memory allocator</a>. Without going into details, it is now possible to asynchonously allocate memory, obviating much of the need to cache those allocations in a memory pool. Initial benchmarks have shown nice speed-ups from using this allocator, while lowering memory pressure and thus reducing invocations of the Julia garbage collector.</p>
+<p>When using CUDA 11.2, CUDA.jl will <a href="https://github.com/JuliaGPU/CUDA.jl/pull/679">default to the CUDA-backed memory pool</a> and disable its own caching layer. If you want to compare performance, you can still use the old allocator and caching memory pool by setting the <code>JULIA_CUDA_MEMORY_POOL</code> environment variable to, e.g. <code>binned</code>. On older versions of CUDA, the <code>binned</code> pool is still used by default.</p>
+<h2 id="gpu_method_overrides">GPU method overrides</h2>
+<p>With the new <code>AbstractInterpreter</code> functionality in Julia 1.6, it is now much easier to further customize the Base compiler. This has enabled us to develop <a href="https://github.com/JuliaGPU/GPUCompiler.jl/pull/151">a mechanism for overriding methods with GPU-specific counterparts</a>. It used to be required to explicitly pick CUDA-specific versions, e.g. <code>CUDA.sin</code>, because the Base version performed some GPU-incompatible operation. This was problematic as it did not compose with generic code, and the CUDA-specific versions often lacked support for specific combinations of argument types &#40;for example, <code>CUDA.sin&#40;::Complex&#41;</code> was not supported&#41;.</p>
+<p>With CUDA 3.0, it is possible to <strong>define GPU-specific methods that override an existing definition, without requiring a new function type</strong>. For now, this functionality is private to CUDA.jl, but we expect to make it available to other packages starting with Julia 1.7.</p>
+<p>This functionality has unblocked <em>many</em> issues, as can be seen in the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/750">corresponding pull request</a>. It is now no longer needed to prefix a call with the CUDA module to ensure a GPU-compatible version is used. Furthermore, it also protects users from accidentally calling GPU intrinsics, as doing so will now result in an error instead of a crash:</p>
+<pre><code class="language-text">julia&gt; CUDA.saturate&#40;1f0&#41;
+ERROR: This function is not intended for use on the CPU
+Stacktrace:
+ &#91;1&#93; error&#40;s::String&#41;
+   @ Base ./error.jl:33
+ &#91;2&#93; saturate&#40;x::Float32&#41;
+   @ CUDA ~/Julia/pkg/CUDA/src/device/intrinsics.jl:23
+ &#91;3&#93; top-level scope
+   @ REPL&#91;10&#93;:1</code></pre>
+<h2 id="device-side_random_number_generation">Device-side random number generation</h2>
+<p>As an illustration of the value of GPU method overrides, CUDA.jl now provides a device-side random number generator that is accessible by simply calling <code>rand&#40;&#41;</code> from a kernel:</p>
+<pre><code class="language-julia">julia&gt; function kernel&#40;&#41;
+         @cushow rand&#40;&#41;
+         return
+       end
+kernel &#40;generic function with 1 method&#41;julia&gt; @cuda kernel&#40;&#41;
+rand&#40;&#41; &#61; 0.668274</code></pre>
+<p>This works by overriding the <code>Random.default_rng&#40;&#41;</code> method, and providing a GPU-compatible random number generator: Building on <a href="https://github.com/JuliaGPU/CUDA.jl/pull/772">exploratory work</a> by <a href="https://github.com/S-D-R">@S-D-R</a>, the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/788">current generator</a> is a maximally equidistributed combined Tausworthe RNG that shares 32-bytes of random state across threads in a warp for performance. The generator performs well, but <a href="https://github.com/JuliaGPU/CUDA.jl/issues/803">does not pass</a> the Crush battery of tests, so PRs are welcome here to improve the implementation&#33;</p>
+<p>Note that for host-side operations, e.g. <code>rand&#33;&#40;::CuArray&#41;</code>, the generator is not yet used by default. Instead, we use CURAND whenever possible, and fall back to the slower but more full-featured GPUArrays.jl-generator in other cases.</p>
+<h2 id="revamped_cudnn_interface">Revamped cuDNN interface</h2>
+<p>Finally, the cuDNN wrappers have been <a href="https://github.com/JuliaGPU/CUDA.jl/pull/523">completely revamped</a> by <a href="https://github.com/denizyuret">@denizyuret</a>. The goal of the redesign is to more faithfully map the cuDNN API to more natural Julia functions, so that packages like Knet.jl or NNlib.jl can more easily use advanced cuDNN features without having to resort to low-level C calls. For more details, refer to <a href="https://github.com/JuliaGPU/CUDA.jl/blob/da7c6eee82d6ea0eee1cb75c8589c8a92b0bc474/lib/cudnn/README.md">the design document</a>. As part of this redesign, the high-level wrappers of CUDNN <a href="https://github.com/FluxML/NNlib.jl/pull/286">have been moved to</a> a subpackage of NNlib.jl.</p>
+]]></content:encoded>
+    
+  <pubDate>Fri, 09 Apr 2021 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 2.4 and 2.5]]></title>
+  <link>https://juliagpu.org/post/2021-01-08-cuda_2.4_2.5/index.html</link>
+  <guid>https://juliagpu.org/2021-01-08-cuda_2.4_2.5/</guid>
+  <description><![CDATA[CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5 and 1.6. These releases feature a greatly improved &lt;code&gt;findmin&lt;/code&gt; and &lt;code&gt;findmax&lt;/code&gt; kernels, an improved interface for kernel introspection, support for CUDA 11.2, and of course many bug fixes.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl v2.4 and v2.5 are two almost-identical feature releases, respectively for Julia 1.5 and 1.6. These releases feature a greatly improved <code>findmin</code> and <code>findmax</code> kernels, an improved interface for kernel introspection, support for CUDA 11.2, and of course many bug fixes.</p>
+<h2 id="improved_findmin_and_findmax_kernels">Improved <code>findmin</code> and <code>findmax</code> kernels</h2>
+<p>Thanks to <a href="https://github.com/tkf">@tkf</a> and <a href="https://github.com/Ellipse0934">@Ellipse0934</a>, CUDA.jl now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/576">uses a single-pass kernel for finding the minimum or maximum item in a CuArray</a>. This fixes compatibility with <code>NaN</code>-valued elements, while on average improving performance. Depending on the rank, shape and size of the array these improvements vary from a minor regression to order-of-magnitude improvements.</p>
+<h2 id="new_kernel_introspection_interface">New kernel introspection interface</h2>
+<p>It is now possible to obtain a compiled-but-not-launched kernel by passing the <code>launch&#61;false</code> keyword to <code>@cuda</code>. This is useful when you want to reflect, e.g., query the amount of registers, or other kernel properties:</p>
+<pre><code class="language-julia">julia&gt; kernel &#61; @cuda launch&#61;false identity&#40;nothing&#41;
+CUDA.HostKernel&#123;identity,Tuple&#123;Nothing&#125;&#125;&#40;...&#41;julia&gt; CUDA.registers&#40;kernel&#41;
+4</code></pre>
+<p>The old API is still available, and will even be extended in future versions of CUDA.jl for the purpose of compiling device functions &#40;not kernels&#41;:</p>
+<pre><code class="language-julia">julia&gt; kernel &#61; cufunction&#40;identity, Tuple&#123;Nothing&#125;&#41;
+CUDA.HostKernel&#123;identity,Tuple&#123;Nothing&#125;&#125;&#40;...&#41;</code></pre>
+<h2 id="support_for_cuda_112">Support for CUDA 11.2</h2>
+<p>CUDA.jl now supports the latest version of CUDA, version 11.2. Because CUDNN and CUTENSOR are not compatible with this release yet, CUDA.jl won&#39;t automatically switch to it unless you explicitly request so:</p>
+<pre><code class="language-julia">julia&gt; ENV&#91;&quot;JULIA_CUDA_VERSION&quot;&#93; &#61; &quot;11.2&quot;
+&quot;11.2&quot;julia&gt; using CUDAjulia&gt; CUDA.versioninfo&#40;&#41;
+CUDA toolkit 11.2.0, artifact installation
+CUDA driver 11.2.0
+NVIDIA driver 460.27.4</code></pre>
+<p>Alternatively, if you disable use of artifacts through <code>JULIA_CUDA_USE_BINARYBUILDER&#61;false</code>, CUDA 11.2 can be picked up from your local system.</p>
+<h2 id="future_developments">Future developments</h2>
+<p>Due to upstream compiler changes, CUDA.jl 2.4 is expected to be the last release compatible with Julia 1.5. Patch releases are still possible, but are not automatic: If you need a specific bugfix from a future CUDA.jl release, create an issue or PR to backport the change.</p>
+]]></content:encoded>
+    
+  <pubDate>Fri, 08 Jan 2021 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[Introducing: oneAPI.jl]]></title>
+  <link>https://juliagpu.org/post/2020-11-05-oneapi_0.1/index.html</link>
+  <guid>https://juliagpu.org/2020-11-05-oneapi_0.1/</guid>
+  <description><![CDATA[We&#39;re proud to announce the first version of oneAPI.jl, a Julia package for programming accelerators with the &lt;a href&#61;&quot;https://www.oneapi.com/&quot;&gt;oneAPI programming model&lt;/a&gt;. It is currently available for select Intel GPUs, including common integrated ones, and offers a similar experience to CUDA.jl.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>We&#39;re proud to announce the first version of oneAPI.jl, a Julia package for programming accelerators with the <a href="https://www.oneapi.com/">oneAPI programming model</a>. It is currently available for select Intel GPUs, including common integrated ones, and offers a similar experience to CUDA.jl.</p>
+<p>The initial version of this package, v0.1, consists of three key components:</p>
+<ul>
+<li><p>wrappers for the oneAPI Level Zero interfaces;</p>
+</li>
+<li><p>a compiler for Julia source code to SPIR-V IR;</p>
+</li>
+<li><p>and an array interface for convenient data-parallel programming.</p>
+</li>
+</ul>
+<p>In this post, I&#39;ll briefly describe each of these. But first, some essentials.</p>
+<h2 id="installation">Installation</h2>
+<p>oneAPI.jl is currently only supported on 64-bit Linux, using a sufficiently recent kernel, and requires Julia 1.5. Furthermore, it currently only supports a limited set of Intel GPUs: Gen9 &#40;Skylake, Kaby Lake, Coffee Lake&#41;, Gen11 &#40;Ice Lake&#41;, and Gen12 &#40;Tiger Lake&#41;.</p>
+<p>If your Intel CPU has an integrated GPU supported by oneAPI, you can just go ahead and install the oneAPI.jl package:</p>
+<pre><code class="language-julia">pkg&gt; add oneAPI</code></pre>
+<p>That&#39;s right, no additional drivers required&#33; oneAPI.jl ships its own copy of the <a href="https://github.com/intel/compute-runtime">Intel Compute Runtime</a>, which works out of the box on any &#40;sufficiently recent&#41; Linux kernel. The initial download, powered by Julia&#39;s artifact subsystem, might take a while to complete. After that, you can import the package and start using its functionality:</p>
+<pre><code class="language-julia-repl">julia&gt; using oneAPIjulia&gt; oneAPI.versioninfo&#40;&#41;
+Binary dependencies:
+- NEO_jll: 20.42.18209&#43;0
+- libigc_jll: 1.0.5186&#43;0
+- gmmlib_jll: 20.3.2&#43;0
+- SPIRV_LLVM_Translator_jll: 9.0.0&#43;1
+- SPIRV_Tools_jll: 2020.2.0&#43;1Toolchain:
+- Julia: 1.5.2
+- LLVM: 9.0.11 driver:
+- 00007fee-06cb-0a10-1642-ca9f01000000 &#40;v1.0.0, API v1.0.0&#41;1 device:
+- Intel&#40;R&#41; Graphics Gen9</code></pre>
+<h2 id="the_onearray_type">The <code>oneArray</code> type</h2>
+<p>Similar to CUDA.jl&#39;s <code>CuArray</code> type, oneAPI.jl provides an array abstraction that you can use to easily perform data parallel operations on your GPU:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; oneArray&#40;zeros&#40;2,3&#41;&#41;
+2×3 oneArray&#123;Float64,2&#125;:
+ 0.0  0.0  0.0
+ 0.0  0.0  0.0julia&gt; a .&#43; 1
+2×3 oneArray&#123;Float64,2&#125;:
+ 1.0  1.0  1.0
+ 1.0  1.0  1.0julia&gt; sum&#40;ans; dims&#61;2&#41;
+2×1 oneArray&#123;Float64,2&#125;:
+ 3.0
+ 3.0</code></pre>
+<p>This functionality builds on the <a href="https://github.com/JuliaGPU/GPUArrays.jl/">GPUArrays.jl</a> package, which means that a lot of operations are supported out of the box. Some are still missing, of course, and we haven&#39;t carefully optimized for performance either.</p>
+<h2 id="kernel_programming">Kernel programming</h2>
+<p>The above array operations are made possible by a compiler that transforms Julia source code into SPIR-V IR for use with oneAPI. Most of this work is part of <a href="https://github.com/JuliaGPU/GPUCompiler.jl">GPUCompiler.jl</a>. In oneAPI.jl, we use this compiler to provide a kernel programming model:</p>
+<pre><code class="language-julia-repl">julia&gt; function vadd&#40;a, b, c&#41;
+           i &#61; get_global_id&#40;&#41;
+           @inbounds c&#91;i&#93; &#61; a&#91;i&#93; &#43; b&#91;i&#93;
+           return
+       endjulia&gt; a &#61; oneArray&#40;rand&#40;10&#41;&#41;;julia&gt; b &#61; oneArray&#40;rand&#40;10&#41;&#41;;julia&gt; c &#61; similar&#40;a&#41;;julia&gt; @oneapi items&#61;10 vadd&#40;a, b, c&#41;julia&gt; @test Array&#40;a&#41; .&#43; Array&#40;b&#41; &#61;&#61; Array&#40;c&#41;
+Test Passed</code></pre>
+<p>Again, the <code>@oneapi</code> macro resembles <code>@cuda</code> from CUDA.jl. One of the differences with the CUDA stack is that we use OpenCL-style built-ins, like <code>get_global_id</code> instead of <code>threadIdx</code> and <code>barrier</code> instead of <code>sync_threads</code>. Other familiar functionality, e.g. to reflect on the compiler, is available as well:</p>
+<pre><code class="language-julia-repl">julia&gt; @device_code_spirv @oneapi vadd&#40;a, b, c&#41;
+; CompilerJob of kernel vadd&#40;oneDeviceArray&#123;Float64,1,1&#125;,
+;                            oneDeviceArray&#123;Float64,1,1&#125;,
+;                            oneDeviceArray&#123;Float64,1,1&#125;&#41;
+; for GPUCompiler.SPIRVCompilerTarget; SPIR-V
+; Version: 1.0
+; Generator: Khronos LLVM/SPIR-V Translator; 14
+; Bound: 46
+; Schema: 0
+               OpCapability Addresses
+               OpCapability Linkage
+               OpCapability Kernel
+               OpCapability Float64
+               OpCapability Int64
+               OpCapability Int8
+          &#37;1 &#61; OpExtInstImport &quot;OpenCL.std&quot;
+               OpMemoryModel Physical64 OpenCL
+               OpEntryPoint Kernel
+               ...
+               OpReturn
+               OpFunctionEnd</code></pre>
+<h2 id="level_zero_wrappers">Level Zero wrappers</h2>
+<p>To interface with the oneAPI driver, we use the <a href="https://github.com/oneapi-src/level-zero">Level Zero API</a>. Wrappers for this API is available under the <code>oneL0</code> submodule of oneAPI.jl:</p>
+<pre><code class="language-julia-repl">julia&gt; using oneAPI.oneL0julia&gt; drv &#61; first&#40;drivers&#40;&#41;&#41;
+ZeDriver&#40;00000000-0000-0000-1642-ca9f01000000, version 1.0.0&#41;julia&gt; dev &#61; first&#40;devices&#40;drv&#41;&#41;
+ZeDevice&#40;GPU, vendor 0x8086, device 0x1912&#41;: Intel&#40;R&#41; Graphics Gen9</code></pre>
+<p>This is a low-level interface, and importing this submodule should not be required for the vast majority of users. It is only useful when you want to perform very specific operations, like submitting an certain operations to the command queue, working with events, etc. In that case, you should refer to the <a href="https://spec.oneapi.com/level-zero/latest/index.html">upstream specification</a>; The wrappers in the <code>oneL0</code> module closely mimic the C APIs.</p>
+<h2 id="status">Status</h2>
+<p>Version 0.1 of oneAPI.jl forms a solid base for future oneAPI developments in Julia. Thanks to the continued effort of generalizing the Julia GPU support in packages like GPUArrays.jl and GPUCompiler.jl, this initial version is already much more usable than early versions of CUDA.jl or AMDGPU.jl ever were.</p>
+<p>That said, there are crucial parts missing. For one, oneAPI.jl does not integrate with any of the vendor libraries like oneMKL or oneDNN. That means several important operations, e.g. matrix-matrix multiplication, will be slow. Hardware support is also limited, and the package currently only works on Linux.</p>
+<p>If you want to contribute to oneAPI.jl, or run into problems, check out the GitHub repository at <a href="https://github.com/JuliaGPU/oneAPI.jl">JuliaGPU/oneAPI.jl</a>. For questions, please use the <a href="https://discourse.julialang.org/c/domain/gpu">Julia Discourse forum</a> under the GPU domain and/or in the #gpu channel of the <a href="https://julialang.org/community/">Julia Slack</a>.</p>
+]]></content:encoded>
+    
+  <pubDate>Thu, 05 Nov 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 2.1]]></title>
+  <link>https://juliagpu.org/post/2020-10-30-cuda_2.1/index.html</link>
+  <guid>https://juliagpu.org/2020-10-30-cuda_2.1/</guid>
+  <description><![CDATA[CUDA.jl v2.1 is a bug-fix release, with one new feature: support for cubic texture interpolations. The release also partly reverts a change from v2.0: &lt;code&gt;reshape&lt;/code&gt;, &lt;code&gt;reinterpret&lt;/code&gt; and contiguous &lt;code&gt;view&lt;/code&gt;s now return a &lt;code&gt;CuArray&lt;/code&gt; again.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl v2.1 is a bug-fix release, with one new feature: support for cubic texture interpolations. The release also partly reverts a change from v2.0: <code>reshape</code>, <code>reinterpret</code> and contiguous <code>view</code>s now return a <code>CuArray</code> again.</p>
+<h2 id="generalized_texture_interpolations">Generalized texture interpolations</h2>
+<p>CUDA&#39;s texture hardware only supports nearest-neighbour and linear interpolation, for other modes one is required to perform the interpolation by hand. In CUDA.jl v2.1 we are generalizing the texture interpolation API so that it is possible to use both hardware-backed and software-implemented interpolation modes in exactly the same way:</p>
+<pre><code class="language-julia"># N is the dimensionality &#40;1, 2 or 3&#41;
+# T is the element type &#40;needs to be supported by the texture hardware&#41;# source array
+src &#61; rand&#40;T, fill&#40;10, N&#41;...&#41;# indices we want to interpolate
+idx &#61; &#91;tuple&#40;rand&#40;1:0.1:10, N&#41;...&#41; for _ in 1:10&#93;# upload to the GPU
+gpu_src &#61; CuArray&#40;src&#41;
+gpu_idx &#61; CuArray&#40;idx&#41;# create a texture array for optimized fetching
+# this is required for N&#61;1, optional for N&#61;2 and N&#61;3
+gpu_src &#61; CuTextureArray&#40;gpu_src&#41;# interpolate using a texture
+gpu_dst &#61; CuArray&#123;T&#125;&#40;undef, size&#40;gpu_idx&#41;&#41;
+gpu_tex &#61; CuTexture&#40;gpu_src; interpolation&#61;CUDA.NearestNeighbour&#40;&#41;&#41;
+broadcast&#33;&#40;gpu_dst, gpu_idx, Ref&#40;gpu_tex&#41;&#41; do idx, tex
+    tex&#91;idx...&#93;
+end# back to the CPU
+dst &#61; Array&#40;gpu_dst&#41;</code></pre>
+<p>Here, we can change the <code>interpolation</code> argument to <code>CuTexture</code> to either <code>NearestNeighbour</code> or <code>LinearInterpolation</code>, both supported by the hardware, or <code>CubicInterpolation</code> which is implemented in software &#40;building on the hardware-supported linear interpolation&#41;.</p>
+<h2 id="partial_revert_of_array_wrapper_changes">Partial revert of array wrapper changes</h2>
+<p>In CUDA.jl v2.0, we changed the behavior of several important array operations to reuse available wrappers in Base: <code>reshape</code> started returning a <code>ReshapedArray</code>, <code>view</code> now returned a <code>SubArray</code>, and <code>reinterpret</code> was reworked to use <code>ReinterpretArray</code>. These changes were made to ensure maximal compatibility with Base&#39;s array type, and to simplify the implementation in CUDA.jl and GPUArrays.jl.</p>
+<p>However, this change turned out to regress the time to precompile and load CUDA.jl. Consequently, the change has been reverted, and these wrappers are now implemented as part of the <code>CuArray</code> type again. Note however that we intend to revisit this change in the future. It is therefore recommended to use the <code>DenseCuArray</code> type alias for methods that need a <code>CuArray</code> backed by contiguous GPU memory. For strided <code>CuArray</code>s, i.e. non-contiguous views, you should use the <code>StridedCuArray</code> alias.</p>
+]]></content:encoded>
+    
+  <pubDate>Fri, 30 Oct 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 2.0]]></title>
+  <link>https://juliagpu.org/post/2020-10-02-cuda_2.0/index.html</link>
+  <guid>https://juliagpu.org/2020-10-02-cuda_2.0/</guid>
+  <description><![CDATA[Today we&#39;re releasing CUDA.jl 2.0, a breaking release with several new features. Highlights include initial support for Float16, a switch to CUDA&#39;s new stream model, a much-needed rework of the sparse array support and support for CUDA 11.1.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>Today we&#39;re releasing CUDA.jl 2.0, a breaking release with several new features. Highlights include initial support for Float16, a switch to CUDA&#39;s new stream model, a much-needed rework of the sparse array support and support for CUDA 11.1.</p>
+<p>The release now requires <strong>Julia 1.5</strong>, and assumes a GPU with <strong>compute capability 5.0</strong> or higher &#40;although most of the package will still work with an older GPU&#41;.</p>
+<h2 id="low-_and_mixed-precision_operations">Low- and mixed-precision operations</h2>
+<p>With NVIDIA&#39;s latest GPUs featuring more and more low-precision operations, CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/417">now</a> starts to support these data types. For example, the CUBLAS wrappers can be used with &#40;B&#41;Float16 inputs &#40;running under <code>JULIA_DEBUG&#61;CUBLAS</code> to illustrate the called methods&#41; thanks to the <code>cublasGemmEx</code> API call:</p>
+<pre><code class="language-julia-repl">julia&gt; mul&#33;&#40;CUDA.zeros&#40;Float32,2,2&#41;,
+            cu&#40;rand&#40;Float16,2,2&#41;&#41;,
+            cu&#40;rand&#40;Float16,2,2&#41;&#41;&#41;I&#33; cuBLAS &#40;v11.0&#41; function cublasStatus_t cublasGemmEx&#40;...&#41; called:
+i&#33;  Atype: type&#61;cudaDataType_t; val&#61;CUDA_R_16F&#40;2&#41;
+i&#33;  Btype: type&#61;cudaDataType_t; val&#61;CUDA_R_16F&#40;2&#41;
+i&#33;  Ctype: type&#61;cudaDataType_t; val&#61;CUDA_R_32F&#40;0&#41;
+i&#33;  computeType: type&#61;cublasComputeType_t; val&#61;CUBLAS_COMPUTE_32F&#40;68&#41;2×2 CuArray&#123;Float32,2&#125;:
+ 0.481284  0.561241
+ 1.12923   1.04541</code></pre>
+<pre><code class="language-julia-repl">julia&gt; using BFloat16sjulia&gt; mul&#33;&#40;CUDA.zeros&#40;BFloat16,2,2&#41;,
+            cu&#40;BFloat16.&#40;rand&#40;2,2&#41;&#41;&#41;,
+            cu&#40;BFloat16.&#40;rand&#40;2,2&#41;&#41;&#41;&#41;I&#33; cuBLAS &#40;v11.0&#41; function cublasStatus_t cublasGemmEx&#40;...&#41; called:
+i&#33;  Atype: type&#61;cudaDataType_t; val&#61;CUDA_R_16BF&#40;14&#41;
+i&#33;  Btype: type&#61;cudaDataType_t; val&#61;CUDA_R_16BF&#40;14&#41;
+i&#33;  Ctype: type&#61;cudaDataType_t; val&#61;CUDA_R_16BF&#40;14&#41;
+i&#33;  computeType: type&#61;cublasComputeType_t; val&#61;CUBLAS_COMPUTE_32F&#40;68&#41;2×2 CuArray&#123;BFloat16,2&#125;:
+ 0.300781   0.71875
+ 0.0163574  0.0241699</code></pre>
+<p>Alternatively, CUBLAS can be configured to automatically down-cast 32-bit inputs to Float16. This is <a href="https://github.com/JuliaGPU/CUDA.jl/pull/424">now</a> exposed through a task-local CUDA.jl math mode:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.math_mode&#33;&#40;CUDA.FAST_MATH; precision&#61;:Float16&#41;julia&gt; mul&#33;&#40;CuArray&#40;zeros&#40;Float32,2,2&#41;&#41;,
+            CuArray&#40;rand&#40;Float32,2,2&#41;&#41;,
+            CuArray&#40;rand&#40;Float32,2,2&#41;&#41;&#41;I&#33; cuBLAS &#40;v11.0&#41; function cublasStatus_t cublasGemmEx&#40;...&#41; called:
+i&#33;  Atype: type&#61;cudaDataType_t; val&#61;CUDA_R_32F&#40;0&#41;
+i&#33;  Btype: type&#61;cudaDataType_t; val&#61;CUDA_R_32F&#40;0&#41;
+i&#33;  Ctype: type&#61;cudaDataType_t; val&#61;CUDA_R_32F&#40;0&#41;
+i&#33;  computeType: type&#61;cublasComputeType_t; val&#61;CUBLAS_COMPUTE_32F_FAST_16F&#40;74&#41;2×2 CuArray&#123;Float32,2&#125;:
+ 0.175258  0.226159
+ 0.511893  0.331351</code></pre>
+<p>As part of these changes, CUDA.jl now defaults to using tensor cores. This may affect accuracy; use math mode <code>PEDANTIC</code> if you want the old behavior.</p>
+<p>Work is <a href="https://github.com/JuliaGPU/CUDA.jl/issues/391">under way</a> to extend these capabilities to the rest of CUDA.jl, e.g., the CUDNN wrappers, or the native kernel programming capabilities.</p>
+<h2 id="new_default_stream_semantics">New default stream semantics</h2>
+<p>In CUDA.jl 2.0 we&#39;re <a href="https://github.com/JuliaGPU/CUDA.jl/pull/395">switching</a> to CUDA&#39;s <a href="https://developer.nvidia.com/blog/gpu-pro-tip-cuda-7-streams-simplify-concurrency/">simplified stream programming model</a>. This simplifies working with multiple streams, and opens up more possibilities for concurrent execution of GPU operations.</p>
+<h3 id="multi-stream_programming">Multi-stream programming</h3>
+<p>In the old model, the default stream &#40;used by all GPU operations unless specified otherwise&#41; was a special stream whose commands could not be executed concurrently with commands on regular, explicitly-created streams. For example, if we interleave kernels executed on a dedicated stream with ones on the default one, execution was serialized:</p>
+<pre><code class="language-julia">using CUDAN &#61; 1 &lt;&lt; 20function kernel&#40;x, n&#41;
+    tid &#61; threadIdx&#40;&#41;.x &#43; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x
+    for i &#61; tid:blockDim&#40;&#41;.x*gridDim&#40;&#41;.x:n
+        x&#91;i&#93; &#61; CUDA.sqrt&#40;CUDA.pow&#40;3.14159f0, i&#41;&#41;
+    end
+    return
+endnum_streams &#61; 8for i in 1:num_streams
+    stream &#61; CuStream&#40;&#41;    data &#61; CuArray&#123;Float32&#125;&#40;undef, N&#41;    @cuda blocks&#61;1 threads&#61;64 stream&#61;stream kernel&#40;data, N&#41;    @cuda kernel&#40;data, 0&#41;
+end</code></pre>
+<figure>
+  <img src="https://juliagpu.org/post/2020-10-02-cuda_2.0/multistream_before.png" alt="Multi-stream programming (old)">
+</figure><p>In the new model, default streams are regular streams and commands issued on them can execute concurrently with those on other streams:</p>
+<figure>
+  <img src="https://juliagpu.org/post/2020-10-02-cuda_2.0/multistream_after.png" alt="Multi-stream programming (new)">
+</figure><h3 id="multi-threading">Multi-threading</h3>
+<p>Another consequence of the new stream model is that each thread gets its own default stream &#40;accessible as <code>CuStreamPerThread&#40;&#41;</code>&#41;. Together with Julia&#39;s threading capabilities, this makes it trivial to group independent work in tasks, benefiting from concurrent execution on the GPU where possible:</p>
+<pre><code class="language-julia">using CUDAN &#61; 1 &lt;&lt; 20function kernel&#40;x, n&#41;
+    tid &#61; threadIdx&#40;&#41;.x &#43; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x
+    for i &#61; tid:blockDim&#40;&#41;.x*gridDim&#40;&#41;.x:n
+        x&#91;i&#93; &#61; CUDA.sqrt&#40;CUDA.pow&#40;3.14159f0, i&#41;&#41;
+    end
+    return
+endThreads.@threads for i in 1:Threads.nthreads&#40;&#41;
+    data &#61; CuArray&#123;Float32&#125;&#40;undef, N&#41;
+    @cuda blocks&#61;1 threads&#61;64 kernel&#40;data, N&#41;
+    synchronize&#40;CuDefaultStream&#40;&#41;&#41;
+end</code></pre>
+<figure>
+  <img src="https://juliagpu.org/post/2020-10-02-cuda_2.0/multithread_after.png" alt="Multi-threading (new)">
+</figure><p>With the old model, execution would have been serialized because the default stream was the same across threads:</p>
+<figure>
+  <img src="https://juliagpu.org/post/2020-10-02-cuda_2.0/multithread_before.png" alt="Multi-threading (old)">
+</figure><p>Future improvements will make this behavior configurable, such that users can use a different default stream per task.</p>
+<h2 id="sparse_array_clean-up">Sparse array clean-up</h2>
+<p>As part of CUDA.jl 2.0, the sparse array support <a href="https://github.com/JuliaGPU/CUDA.jl/pull/409">has been refactored</a>, bringing them in line with other array types and their expected behavior. For example, the custom <code>switch2</code> methods have been removed in favor of calls to <code>convert</code> and array constructors:</p>
+<pre><code class="language-julia-repl">julia&gt; using SparseArrays
+julia&gt; using CUDA, CUDA.CUSPARSEjulia&gt; CuSparseMatrixCSC&#40;CUDA.rand&#40;2,2&#41;&#41;
+2×2 CuSparseMatrixCSC&#123;Float32&#125; with 4 stored entries:
+  &#91;1, 1&#93;  &#61;  0.124012
+  &#91;2, 1&#93;  &#61;  0.791714
+  &#91;1, 2&#93;  &#61;  0.487905
+  &#91;2, 2&#93;  &#61;  0.752466julia&gt; CuSparseMatrixCOO&#40;sprand&#40;2,2, 0.5&#41;&#41;
+2×2 CuSparseMatrixCOO&#123;Float64&#125; with 3 stored entries:
+  &#91;1, 1&#93;  &#61;  0.183183
+  &#91;2, 1&#93;  &#61;  0.966466
+  &#91;2, 2&#93;  &#61;  0.064101julia&gt; CuSparseMatrixCSR&#40;ans&#41;
+2×2 CuSparseMatrixCSR&#123;Float64&#125; with 3 stored entries:
+  &#91;1, 1&#93;  &#61;  0.183183
+  &#91;2, 1&#93;  &#61;  0.966466
+  &#91;2, 2&#93;  &#61;  0.064101</code></pre>
+<p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/421">Initial support for the COO sparse matrix type </a> has also been added, along with more <a href="https://github.com/JuliaGPU/CUDA.jl/pull/351">better support for sparse matrix-vector multiplication</a>.</p>
+<h2 id="support_for_cuda_111">Support for CUDA 11.1</h2>
+<p>This release also features support for the brand-new CUDA 11.1. As there is no compatible release of CUDNN or CUTENSOR yet, CUDA.jl won&#39;t automatically select this version, but you can force it to by setting the <code>JULIA_CUDA_VERSION</code> environment variable to <code>11.1</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; ENV&#91;&quot;JULIA_CUDA_VERSION&quot;&#93; &#61; &quot;11.1&quot;julia&gt; using CUDAjulia&gt; CUDA.versioninfo&#40;&#41;
+CUDA toolkit 11.1.0, artifact installationLibraries:
+- CUDNN: missing
+- CUTENSOR: missing</code></pre>
+<h2 id="minor_changes">Minor changes</h2>
+<p>Many other changes are part of this release:</p>
+<ul>
+<li><p>Views, reshapes and array reinterpretations <a href="https://github.com/JuliaGPU/CUDA.jl/pull/437">are now represented</a> by the Base array wrappers, simplifying the CuArray type definition.</p>
+</li>
+<li><p>Various optimizations to <a href="https://github.com/JuliaGPU/CUDA.jl/pull/428">CUFFT</a> and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/321">CUDNN</a> library wrappers.</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/427">Support</a> for <code>LinearAlgebra.reflect&#33;</code> and <code>rotate&#33;</code></p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/435">Initial support</a> for calling CUDA libraries with strided inputs</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Fri, 02 Oct 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[Paper: Flexible Performant GEMM Kernels on GPUs]]></title>
+  <link>https://juliagpu.org/post/2020-09-28-gemmkernels/index.html</link>
+  <guid>https://juliagpu.org/2020-09-28-gemmkernels/</guid>
+  <description><![CDATA[General Matrix Multiplication or GEMM kernels take center place in high performance computing and machine learning. Recent NVIDIA GPUs include GEMM accelerators, such as NVIDIA&#39;s Tensor Cores. In this paper we show how it is possible to program these accelerators from Julia, and present abstractions and interfaces that allow to do so efficiently without sacrificing performance.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>General Matrix Multiplication or GEMM kernels take center place in high performance computing and machine learning. Recent NVIDIA GPUs include GEMM accelerators, such as NVIDIA&#39;s Tensor Cores. In this paper we show how it is possible to program these accelerators from Julia, and present abstractions and interfaces that allow to do so efficiently without sacrificing performance.</p>
+<p>A pre-print of the paper has been published on arXiv: <a href="https://arxiv.org/abs/2009.12263">arXiv:2009.12263</a>. <br/> The source code can be found on GitHub: <a href="https://github.com/thomasfaingnaert/GemmKernels.jl">thomasfaingnaert/GemmKernels.jl</a>.</p>
+<p>With the APIs from GemmKernels.jl, it is possible to instantiate GEMM kernels that perform in the same ball park as, and sometimes even outperform state-of-the-art libraries like CUBLAS and CUTLASS. For example, performing a mixed-precision multiplication of two 16-bit matrixes into a 32-bit accumulator &#40;on different combinations of layouts&#41;:</p>
+<figure>
+  <img src="https://juliagpu.org/post/2020-09-28-gemmkernels/mixed_precision.png" alt="Performance of mixed-precision GEMM">
+</figure><p>The APIs are also highly flexible and allow customization of each step, e.g., to apply the activation function <code>max&#40;x, 0&#41;</code> for implementing a rectified linear unit &#40;ReLU&#41;:</p>
+<pre><code class="language-julia">a &#61; CuArray&#40;rand&#40;Float16, &#40;M, K&#41;&#41;&#41;
+b &#61; CuArray&#40;rand&#40;Float16, &#40;K, N&#41;&#41;&#41;
+c &#61; CuArray&#40;rand&#40;Float32, &#40;M, N&#41;&#41;&#41;
+d &#61; similar&#40;c&#41;conf &#61; GemmKernels.get_config&#40;
+    gemm_shape &#61; &#40;M &#61; M, N &#61; N, K &#61; K&#41;,
+    operator &#61; Operator.WMMAOp&#123;16, 16, 16&#125;,
+    global_a_layout &#61; Layout.AlignedColMajor&#123;Float16&#125;,
+    global_c_layout &#61; Layout.AlignedColMajor&#123;Float32&#125;&#41;GemmKernels.matmul&#40;
+    a, b, c, d, conf;
+    transform_regs_to_shared_d &#61; Transform.Elementwise&#40;x -&gt; max&#40;x, 0&#41;&#41;&#41;</code></pre>
+<p>The GemmKernels.jl framework is written entirely in Julia, demonstrating the high-performance GPU programming capabilities of this language, but at the same time keeping the research accessible and easy to modify or repurpose by other Julia developers.</p>
+]]></content:encoded>
+    
+  <pubDate>Mon, 28 Sep 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Thomas Faingnaert, Tim Besard, Bjorn De Sutter</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 1.3 - Multi-device programming]]></title>
+  <link>https://juliagpu.org/post/2020-07-18-cuda_1.3/index.html</link>
+  <guid>https://juliagpu.org/2020-07-18-cuda_1.3/</guid>
+  <description><![CDATA[Today we&#39;re releasing CUDA.jl 1.3, with several new features. The most prominent change is support for multiple GPUs within a single process.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>Today we&#39;re releasing CUDA.jl 1.3, with several new features. The most prominent change is support for multiple GPUs within a single process.</p>
+<h2 id="multi-gpu_programming">Multi-GPU programming</h2>
+<p>With CUDA.jl 1.3, you can finally use multiple CUDA GPUs within a single process. To switch devices you can call <code>device&#33;</code>, query the current device with <code>device&#40;&#41;</code>, or reset it using <code>device_reset&#33;&#40;&#41;</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; collect&#40;devices&#40;&#41;&#41;
+9-element Array&#123;CuDevice,1&#125;:
+ CuDevice&#40;0&#41;: Tesla V100-PCIE-32GB
+ CuDevice&#40;1&#41;: Tesla V100-PCIE-32GB
+ CuDevice&#40;2&#41;: Tesla V100-PCIE-32GB
+ CuDevice&#40;3&#41;: Tesla V100-PCIE-32GB
+ CuDevice&#40;4&#41;: Tesla V100-PCIE-16GB
+ CuDevice&#40;5&#41;: Tesla P100-PCIE-16GB
+ CuDevice&#40;6&#41;: Tesla P100-PCIE-16GB
+ CuDevice&#40;7&#41;: GeForce GTX 1080 Ti
+ CuDevice&#40;8&#41;: GeForce GTX 1080 Tijulia&gt; device&#33;&#40;5&#41;julia&gt; device&#40;&#41;
+CuDevice&#40;5&#41;: Tesla P100-PCIE-16GB</code></pre>
+<p>Let&#39;s define a kernel to show this really works:</p>
+<pre><code class="language-julia-repl">julia&gt; function kernel&#40;&#41;
+           dev &#61; Ref&#123;Cint&#125;&#40;&#41;
+           CUDA.cudaGetDevice&#40;dev&#41;
+           @cuprintln&#40;&quot;Running on device &#36;&#40;dev&#91;&#93;&#41;&quot;&#41;
+           return
+       endjulia&gt; @cuda kernel&#40;&#41;
+Running on device 5julia&gt; device&#33;&#40;0&#41;julia&gt; device&#40;&#41;
+CuDevice&#40;0&#41;: Tesla V100-PCIE-32GBjulia&gt; @cuda kernel&#40;&#41;
+Running on device 0</code></pre>
+<p>Memory allocations, like <code>CuArray</code>s, are implicitly bound to the device they were allocated on. That means you should take care to only use an array when the owning device is active, or you will run into errors:</p>
+<pre><code class="language-julia-repl">julia&gt; device&#40;&#41;
+CuDevice&#40;0&#41;: Tesla V100-PCIE-32GBjulia&gt; a &#61; CUDA.rand&#40;1&#41;
+1-element CuArray&#123;Float32,1&#125;:
+ 0.6322775julia&gt; device&#33;&#40;1&#41;julia&gt; a
+ERROR: CUDA error: an illegal memory access was encountered</code></pre>
+<p>Future improvements might make the array type device-aware.</p>
+<h2 id="multitasking_and_multithreading">Multitasking and multithreading</h2>
+<p>Dovetailing with the support for multiple GPUs, is the ability to use these GPUs on separate Julia tasks and threads:</p>
+<pre><code class="language-julia-repl">julia&gt; device&#33;&#40;0&#41;julia&gt; @sync begin
+         @async begin
+           device&#33;&#40;1&#41;
+           println&#40;&quot;Working with &#36;&#40;device&#40;&#41;&#41; on &#36;&#40;current_task&#40;&#41;&#41;&quot;&#41;
+           yield&#40;&#41;
+           println&#40;&quot;Back to device &#36;&#40;device&#40;&#41;&#41; on &#36;&#40;current_task&#40;&#41;&#41;&quot;&#41;
+         end
+         @async begin
+           device&#33;&#40;2&#41;
+           println&#40;&quot;Working with &#36;&#40;device&#40;&#41;&#41; on &#36;&#40;current_task&#40;&#41;&#41;&quot;&#41;
+         end
+       end
+Working with CuDevice&#40;1&#41; on Task @0x00007fc9e6a48010
+Working with CuDevice&#40;2&#41; on Task @0x00007fc9e6a484f0
+Back to device CuDevice&#40;1&#41; on Task @0x00007fc9e6a48010julia&gt; device&#40;&#41;
+CuDevice&#40;0&#41;: Tesla V100-PCIE-32GB</code></pre>
+<p>Each task has its own local GPU state, such as the device it was bound to, handles to libraries like CUBLAS or CUDNN &#40;which means that each task can configure libraries independently&#41;, etc.</p>
+<h2 id="minor_features">Minor features</h2>
+<p>CUDA.jl 1.3 also features some minor changes:</p>
+<ul>
+<li><p>Reinstated compatibility with Julia 1.3</p>
+</li>
+<li><p>Support for CUDA 11.0 Update 1</p>
+</li>
+<li><p>Support for CUDNN 8.0.2</p>
+</li>
+</ul>
+<h2 id="known_issues">Known issues</h2>
+<p>Several operations on sparse arrays have been broken since CUDA.jl 1.2, due to the deprecations that were part of CUDA 11. The next version of CUDA.jl will drop support for CUDA 10.0 or older, which will make it possible to use new cuSPARSE APIs and add back missing functionality.</p>
+]]></content:encoded>
+    
+  <pubDate>Sat, 18 Jul 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDA.jl 1.1]]></title>
+  <link>https://juliagpu.org/post/2020-07-07-cuda_1.1/index.html</link>
+  <guid>https://juliagpu.org/2020-07-07-cuda_1.1/</guid>
+  <description><![CDATA[CUDA.jl 1.1 marks the first feature release after merging several CUDA packages into one. It raises the minimal Julia version to 1.4, and comes with support for the impending 1.5 release.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl 1.1 marks the first feature release after merging several CUDA packages into one. It raises the minimal Julia version to 1.4, and comes with support for the impending 1.5 release.</p>
+<h2 id="cudajl_replacing_cuarrayscudanativejl">CUDA.jl replacing CuArrays/CUDAnative.jl</h2>
+<p>As <a href="https://discourse.julialang.org/t/psa-cuda-jl-replacing-cuarrays-jl-cudanative-jl-cudadrv-jl-cudaapi-jl-call-for-testing/40205">announced a while back</a>, CUDA.jl is now the new package for programming CUDA GPUs in Julia, replacing CuArrays.jl, CUDAnative.jl, CUDAdrv.jl and CUDAapi.jl. The merged package should be a drop-in replacement: All existing functionality has been ported, and almost all exported functions are still there. Applications like Flux.jl or the DiffEq.jl stack are being updated to support this change.</p>
+<h2 id="cuda_11_support">CUDA 11 support</h2>
+<p>With CUDA.jl 1.1, we support the upcoming release of the CUDA toolkit. This only applies to locally-installed versions of the toolkit, i.e., you need to specify <code>JULIA_CUDA_USE_BINARYBUILDER&#61;false</code> in your environment to pick up the locally-installed release candidate of the CUDA toolkit. New features, like the third-generation tensor cores and its extended type support, or any new APIs, are not yet natively supported by Julia code.</p>
+<h2 id="nvidia_management_library_nvml">NVIDIA Management Library &#40;NVML&#41;</h2>
+<p>CUDA.jl now integrates with the NVIDIA Management Library, or NVML. With this library, it&#39;s possible to query information about the system, any GPU devices, their topology, etc.:</p>
+<pre><code class="language-julia-repl">julia&gt; using CUDAjulia&gt; dev &#61; first&#40;NVML.devices&#40;&#41;&#41;
+CUDA.NVML.Device&#40;Ptr&#123;Nothing&#125; @0x00007f987c7c6e38&#41;julia&gt; NVML.uuid&#40;dev&#41;
+UUID&#40;&quot;b8d5e790-ea4d-f962-e0c3-0448f69f2e23&quot;&#41;julia&gt; NVML.name&#40;dev&#41;
+&quot;Quadro RTX 5000&quot;julia&gt; NVML.power_usage&#40;dev&#41;
+37.863julia&gt; NVML.energy_consumption&#40;dev&#41;
+65330.292</code></pre>
+<h2 id="experimental_texture_support">Experimental: Texture support</h2>
+<p>It is now also possible to use the GPU&#39;s hardware texture support from Julia, albeit using a fairly low-level and still experimental API &#40;many thanks to <a href="https://github.com/cdsousa">@cdsousa</a> for the initial development&#41;. As a demo, let&#39;s start with loading a sample image:</p>
+<pre><code class="language-julia">julia&gt; using Images, TestImages, ColorTypes, FixedPointNumbers
+julia&gt; img &#61; RGBA&#123;N0f8&#125;.&#40;testimage&#40;&quot;lighthouse&quot;&#41;&#41;</code></pre>
+<p>We use RGBA since CUDA&#39;s texture hardware only supports 1, 2 or 4 channels. This support is also currently limited to &quot;plain&quot; types, so let&#39;s reinterpret the image:</p>
+<pre><code class="language-julia">julia&gt; img′ &#61; reinterpret&#40;NTuple&#123;4,UInt8&#125;, img&#41;</code></pre>
+<p>Now we can upload this image to the array, using the <code>CuTextureArray</code> type for optimized storage &#40;normal <code>CuArray</code>s are supported too&#41;, and bind it to a <code>CuTexture</code> object that we can pass to a kernel:</p>
+<pre><code class="language-julia-repl">julia&gt; texturearray &#61; CuTextureArray&#40;img′&#41;julia&gt; texture &#61; CuTexture&#40;texturearray; normalized_coordinates&#61;true&#41;
+512×768 4-channel CuTexture&#40;::CuTextureArray&#41; with eltype NTuple&#123;4,UInt8&#125;</code></pre>
+<p>Let&#39;s write and a kernel that warps this image. Since we specified <code>normalized_coordinates&#61;true</code>, we index the texture using values in <code>&#91;0,1&#93;</code>:</p>
+<pre><code class="language-julia">function warp&#40;dst, texture&#41;
+    tid &#61; threadIdx&#40;&#41;.x &#43; &#40;blockIdx&#40;&#41;.x - 1&#41; * blockDim&#40;&#41;.x
+    I &#61; CartesianIndices&#40;dst&#41;
+    @inbounds if tid &lt;&#61; length&#40;I&#41;
+        i,j &#61; Tuple&#40;I&#91;tid&#93;&#41;
+        u &#61; Float32&#40;i-1&#41; / Float32&#40;size&#40;dst, 1&#41;-1&#41;
+        v &#61; Float32&#40;j-1&#41; / Float32&#40;size&#40;dst, 2&#41;-1&#41;
+        x &#61; u &#43; 0.02f0 * CUDA.sin&#40;30v&#41;
+        y &#61; v &#43; 0.03f0 * CUDA.sin&#40;20u&#41;
+        dst&#91;i,j&#93; &#61; texture&#91;x,y&#93;
+    end
+    return
+end</code></pre>
+<p>The size of the output image determines how many elements we need to process. This needs to be translated to a number of threads and blocks, keeping in mind device and kernel characteristics. We automate this using the occupancy API:</p>
+<pre><code class="language-julia-repl">julia&gt; outimg_d &#61; CuArray&#123;eltype&#40;img′&#41;&#125;&#40;undef, 500, 1000&#41;;julia&gt; function configurator&#40;kernel&#41;
+           config &#61; launch_configuration&#40;kernel.fun&#41;           threads &#61; Base.min&#40;length&#40;outimg_d&#41;, config.threads&#41;
+           blocks &#61; cld&#40;length&#40;outimg_d&#41;, threads&#41;           return &#40;threads&#61;threads, blocks&#61;blocks&#41;
+       endjulia&gt; @cuda config&#61;configurator warp&#40;outimg_d, texture&#41;</code></pre>
+<p>Finally, we fetch and visualize the output:</p>
+<pre><code class="language-julia-repl">julia&gt; outimg &#61; Array&#40;outimg_d&#41;julia&gt; save&#40;&quot;imgwarp.png&quot;, reinterpret&#40;eltype&#40;img&#41;, outimg&#41;&#41;</code></pre>
+<figure>
+  <img src="https://juliagpu.org/post/2020-07-07-cuda_1.1/imgwarp.png" alt="Warped lighthouse">
+</figure><h2 id="minor_features">Minor features</h2>
+<p>The test-suite is now parallelized, using up-to <code>JULIA_NUM_THREADS</code> processes:</p>
+<pre><code class="language-julia">&#36; JULIA_NUM_THREADS&#61;4 julia -e &#39;using Pkg; Pkg.test&#40;&quot;CUDA&quot;&#41;;&#39;                                     |          | ---------------- GPU ---------------- | ---------------- CPU ---------------- |
+Test                        &#40;Worker&#41; | Time &#40;s&#41; | GC &#40;s&#41; | GC &#37; | Alloc &#40;MB&#41; | RSS &#40;MB&#41; | GC &#40;s&#41; | GC &#37; | Alloc &#40;MB&#41; | RSS &#40;MB&#41; |
+initialization                   &#40;2&#41; |     2.52 |   0.00 |  0.0 |       0.00 |   115.00 |   0.05 |  1.8 |     153.13 |   546.27 |
+apiutils                         &#40;4&#41; |     0.55 |   0.00 |  0.0 |       0.00 |   115.00 |   0.02 |  4.0 |      75.86 |   522.36 |
+codegen                          &#40;4&#41; |    14.81 |   0.36 |  2.5 |       0.00 |   157.00 |   0.62 |  4.2 |    1592.28 |   675.15 |
+...
+gpuarrays/mapreduce essentials   &#40;2&#41; |   113.52 |   0.01 |  0.0 |       3.19 |   641.00 |   2.61 |  2.3 |    8232.84 |  2449.35 |
+gpuarrays/mapreduce &#40;old tests&#41;  &#40;5&#41; |   138.35 |   0.01 |  0.0 |     130.20 |   507.00 |   2.94 |  2.1 |    8615.15 |  2353.62 |
+gpuarrays/mapreduce derivatives  &#40;3&#41; |   180.52 |   0.01 |  0.0 |       3.06 |   229.00 |   3.44 |  1.9 |   12262.67 |  1403.39 |Test Summary: |  Pass  Broken  Total
+  Overall     | 11213       3  11216
+    SUCCESS
+    Testing CUDA tests passed</code></pre>
+<p>A copy of <code>Base.versioninfo&#40;&#41;</code> is available to report on the CUDA toolchain and any devices:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.versioninfo&#40;&#41;
+CUDA toolkit 10.2.89, artifact installation
+CUDA driver 11.0.0
+NVIDIA driver 450.36.6Libraries:
+- CUBLAS: 10.2.2
+- CURAND: 10.1.2
+- CUFFT: 10.1.2
+- CUSOLVER: 10.3.0
+- CUSPARSE: 10.3.1
+- CUPTI: 12.0.0
+- NVML: 11.0.0&#43;450.36.6
+- CUDNN: 7.6.5 &#40;for CUDA 10.2.0&#41;
+- CUTENSOR: 1.1.0 &#40;for CUDA 10.2.0&#41;Toolchain:
+- Julia: 1.5.0-rc1.0
+- LLVM: 9.0.1
+- PTX ISA support: 3.2, 4.0, 4.1, 4.2, 4.3, 5.0, 6.0, 6.1, 6.3, 6.4
+- Device support: sm_35, sm_37, sm_50, sm_52, sm_53, sm_60, sm_61, sm_62, sm_70, sm_72, sm_751 device&#40;s&#41;:
+- Quadro RTX 5000 &#40;sm_75, 14.479 GiB / 15.744 GiB available&#41;</code></pre>
+<p>CUTENSOR artifacts have been upgraded to version 1.1.0.</p>
+<p>Benchmarking infrastructure based on the Codespeed project has been set-up at <a href="https://speed.juliagpu.org/">speed.juliagpu.org</a> to keep track of the performance of various operations.</p>
+]]></content:encoded>
+    
+  <pubDate>Tue, 07 Jul 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[CUDAnative.jl 3.0 and CuArrays.jl 2.0]]></title>
+  <link>https://juliagpu.org/post/2020-03-25-cudanative_3.0-cuarrays_2.0/index.html</link>
+  <guid>https://juliagpu.org/cudanative_3.0-cuarrays_2.0/</guid>
+  <description><![CDATA[This release of the Julia CUDA stack contains some exciting new features: automatic installation of CUDA using artifacts, full support for GPU method redefinitions, and experimental support for multitasking and multithreading. The release is technically breaking, but most end-users should not be affected.]]></description>  
+  
+  <content:encoded><![CDATA[<p>This release of the Julia CUDA stack contains some exciting new features: automatic installation of CUDA using artifacts, full support for GPU method redefinitions, and experimental support for multitasking and multithreading. The release is technically breaking, but most end-users should not be affected.</p>
+<h2 id="api_changes">API changes</h2>
+<p>Changes to certain APIs require these releases to be breaking, however, most users should not be affected and chances are you can just bump your Compat entries without any additional changes. Flux.jl users will have to wait a little longer though, as the package uses non-public APIs that have changed and <a href="https://github.com/FluxML/Flux.jl/pull/1050">requires an update</a>.</p>
+<h2 id="artifacts">Artifacts</h2>
+<p>CUDA and its dependencies will now be automatically installed using artifacts generated by BinaryBuilder.jl. This greatly improves usability, and only requires a functioning NVIDIA driver:</p>
+<pre><code class="language-julia-repl">julia&gt; ENV&#91;&quot;JULIA_DEBUG&quot;&#93; &#61; &quot;CUDAnative&quot;julia&gt; using CUDAnativejulia&gt; CUDAnative.version&#40;&#41;
+┌ Debug: Trying to use artifacts...
+└ @ CUDAnative CUDAnative/src/bindeps.jl:52
+┌ Debug: Using CUDA 10.2.89 from an artifact at /depot/artifacts/...
+└ @ CUDAnative CUDAnative/src/bindeps.jl:108
+v&quot;10.2.89&quot;</code></pre>
+<p>Use of a local installation is still possible by setting the environment variable <code>JULIA_CUDA_USE_BINARYBUILDER</code> to false. For more details, refer to <a href="https://cuda.juliagpu.org/stable/installation/overview/">the documentation</a>.</p>
+<p>Relevant PRs: <a href="https://github.com/JuliaGPU/CUDAnative.jl/pull/492">CUDAnative.jl#492</a> and <a href="https://github.com/JuliaGPU/CuArrays.jl/pull/490">CuArrays.jl#490</a></p>
+<h2 id="method_redefinitions">Method redefinitions</h2>
+<p>CUDAnative 3.0 now fully supports method redefinitions, commonly referred to as <a href="https://github.com/JuliaLang/julia/issues/265">Julia issue #265</a>, and makes it possible to use interactive programming tools like Revise.jl:</p>
+<pre><code class="language-julia-repl">julia&gt; child&#40;&#41; &#61; 0
+julia&gt; parent&#40;&#41; &#61; &#40;@cuprintln&#40;child&#40;&#41;&#41;; return&#41;
+julia&gt; @cuda parent&#40;&#41;
+0julia&gt; parent&#40;&#41; &#61; &#40;@cuprintln&#40;child&#40;&#41; &#43; 1&#41;; return&#41;
+julia&gt; @cuda parent&#40;&#41;
+1
+julia&gt; child&#40;&#41; &#61; 1
+julia&gt; @cuda parent&#40;&#41;
+2</code></pre>
+<p>Relevant PRs: <a href="https://github.com/JuliaGPU/CUDAnative.jl/pull/581">CUDAnative.jl#581</a></p>
+<h2 id="experimental_multitasking_and_multithreading">Experimental: Multitasking and multithreading</h2>
+<p>With CUDAnative 3.0 and CuArrays 2.0 you can now use Julia tasks and threads to organize your code. In combination with CUDA streams, this makes it possible to execute kernels and other GPU operations in parallel:</p>
+<pre><code class="language-julia">@sync begin
+    function my_expensive_kernel&#40;&#41;
+        return
+    end
+    @async @cuda stream&#61;CuStream&#40;&#41; my_expensive_kernel&#40;&#41;
+    @async @cuda stream&#61;CuStream&#40;&#41; my_expensive_kernel&#40;&#41;
+end</code></pre>
+<p>Every task, whether it runs on a separate thread or not, can work with a different device, as well as independently work with CUDA libraries like CUBLAS and CUFFT.</p>
+<p>Note that this support is experimental, and lacks certain features to be fully effective. For one, the CuArrays memory allocator is not device-aware, and it is currently not possible to configure the CUDA stream for operations like map or broadcast.</p>
+<p>Relevant PRs: <a href="https://github.com/JuliaGPU/CUDAnative.jl/pull/609">CUDAnative.jl#609</a> and <a href="https://github.com/JuliaGPU/CuArrays.jl/pull/645">CuArrays.jl#645</a></p>
+<h2 id="minor_changes">Minor changes</h2>
+<p>GPU kernels are now name-mangled like C&#43;&#43;, which offers better integration with NVIDIA tools &#40;<a href="https://github.com/JuliaGPU/CUDAnative.jl/pull/559">CUDAnative.jl#559</a>&#41;.</p>
+<p>A better N-dimensional <code>mapreducedim&#33;</code> kernel, properly integrating with all Base interfaces &#40;<a href="https://github.com/JuliaGPU/CuArrays.jl/pull/602">CuArrays.jl#602</a> and <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/246">GPUArrays#246</a>&#41;.</p>
+<p>A <code>CuIterator</code> type for batching arrays to the GPU &#40;by @jrevels, <a href="https://github.com/JuliaGPU/CuArrays.jl/pull/467">CuArrays.jl#467</a>&#41;.</p>
+<p>Integration with Base&#39;s 5-arg <code>mul&#33;</code> &#40;by @haampie, <a href="https://github.com/JuliaGPU/CuArrays.jl/pull/641">CuArrays.jl#641</a> and <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/253">GPUArrays#253</a>&#41;.</p>
+<p>Integration with Cthulhu.jl for interactive inspection of generated code &#40;<a href="https://github.com/JuliaGPU/CUDAnative.jl/issues/597">CUDAnative.jl#597</a>&#41;.</p>
+<h2 id="known_issues">Known issues</h2>
+<p>With a release as big as this one there&#39;s bound to be some bugs, e.g., with the installation of artifacts on exotic systems, or due to the many changes to make the libraries thread-safe. If you need absolute stability, please wait for a point release.</p>
+<p>There are also some known issues. CUDAnative is currently not compatible with Julia 1.5 due to Base compiler changes &#40;<a href="https://github.com/JuliaLang/julia/issues/34993">julia#34993</a>&#41;, the new <code>mapreducedim&#33;</code> kernel appears to be slower in some cases &#40;<a href="https://github.com/JuliaGPU/CuArrays.jl/issues/611">CuArrays.jl#611</a>&#41;, and there are some remaining thread-safety issues when using the non-default memory pool &#40;<a href="https://github.com/JuliaGPU/CuArrays.jl/issues/647">CuArrays.jl#647</a>&#41;.</p>
+]]></content:encoded>
+    
+  <pubDate>Wed, 25 Mar 2020 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
+  <title><![CDATA[New website for JuliaGPU]]></title>
+  <link>https://juliagpu.org/post/2019-12-12-new_site/index.html</link>
+  <guid>https://juliagpu.org/new_site/</guid>
+  <description><![CDATA[Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.]]></description>  
+  
+  <content:encoded><![CDATA[<p>Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.</p>
+<p>The sources for this website are hosted at <a href="https://github.com/JuliaGPU/juliagpu.org">GitHub</a> and generated using Hugo, feel free to open an issue or pull request if you think it could be improved.</p>
+]]></content:encoded>
+    
+  <pubDate>Thu, 12 Dec 2019 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+</channel></rss>

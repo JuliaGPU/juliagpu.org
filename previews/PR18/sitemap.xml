@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+<url>
+    <loc>https://juliagpu.org/post/index.html</loc>
+    <lastmod>0001-01-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/rocm/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/learn/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/404/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/cuda/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/oneapi/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+<url>
+    <loc>https://juliagpu.org/other/index.html</loc>
+    <lastmod>2021-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+</url>
+</urlset>
