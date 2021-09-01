@@ -24,7 +24,7 @@ Several GPU platforms are supported, but there are large differences in features
 ## Supported platforms
 
 The best supported GPU platform in Julia is [**NVIDIA CUDA**](/cuda/), with mature and full-featured packages for both low-level kernel programming as well as working with high-level operations on arrays.
-All versions of Julia are supported, and the functionality is actively used by a variety of applications and libraries.
+All versions of Julia are supported, on Linux and Windows, and the functionality is actively used by a variety of applications and libraries.
 
 Similar, but much newer capabilities exist for [**Intel GPUs with oneAPI**](/oneapi/). Currently, full-featured kernel programming capabilities are available, but there is no support for vendor libraries such as oneMKL or oneDNN yet.
 
