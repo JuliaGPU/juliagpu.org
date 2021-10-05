@@ -48,14 +48,11 @@ external_entries = [
   ]
 +++
 
-# Blog
+~~~
+<h1>
+  Blog
+  <a href=/post/index.xml><i data-feather=rss></i></a>
+</h1>
+~~~
 
 {{blogposts}}
-
-\\
-
-~~~
-<p align=center>
-  <a href=/post/index.xml><i data-feather=rss></i></a>
-<p>
-~~~
