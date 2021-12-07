@@ -19,4 +19,4 @@ accelerator hardware. The [ArrayFire.jl](https://github.com/JuliaGPU/ArrayFire.j
 
 ## SX-Aurora
 
-The [NEC SX-Aurora](https://github.com/sx-aurora-dev/VectorEngine.jl) Tsubasa is a PCIe card which works as a Vector Computer. At the moment a custom Julia build using a LLVM fork is required. Support is expected to improve due NECs involement.
+The [NEC SX-Aurora Tsubasa](https://www.nec.com/en/global/solutions/hpc/sx/index.html) is a PCIe card which works as a Vector Computer. It can be programmed from Julia using the [VectorEngine.jl](https://github.com/sx-aurora-dev/VectorEngine.jl) package, which at the moment requires a custom Julia build using a LLVM fork. Support is expected to improve due NECs involement.
