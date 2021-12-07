@@ -16,3 +16,7 @@ Programming OpenCL GPUs in Julia is much more limited than other supported platf
 
 ArrayFire is a general-purpose software library that targets CPUs, GPUs, and other
 accelerator hardware. The [ArrayFire.jl](https://github.com/JuliaGPU/ArrayFire.jl) package provides a Julia interface to this library, and makes it possible to program accelerators using an array abstraction built on the ArrayFire library.
+
+## SX-Aurora
+
+The [NEC SX-Aurora](https://github.com/sx-aurora-dev/VectorEngine.jl) Tsubasa is a PCIe card which works as a Vector Computer. At the moment a custom Julia build using a LLVM fork is required. Support is expected to improve due NECs involement.
