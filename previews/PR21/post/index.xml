@@ -20,8 +20,8 @@
 
 <item>
   <title><![CDATA[CUDA.jl 3.5-3.8]]></title>
-  <link>https://juliagpu.org/post/2022-01-28-cuda_3.5/index.html</link>
-  <guid>https://juliagpu.org/2022-01-28-cuda_3.5/</guid>
+  <link>https://juliagpu.org/post/2022-01-28-cuda_3.5_3.8/index.html</link>
+  <guid>https://juliagpu.org/2022-01-28-cuda_3.5_3.8/</guid>
   <description><![CDATA[CUDA.jl versions 3.5 to 3.8 have brought several new features to improve performance and productivity. This blog post will highlight a couple: direct copies between devices, better performance by preserving array index types and changing the memory pool, and a much-improved interface to the compute sanitizer utility.]]></description>  
   
   <content:encoded><![CDATA[
@@ -130,9 +130,9 @@ Memory pool usage: 0 bytes &#40;0 bytes reserved&#41;</code></pre>
 <p>With interactive Julia sessions, this function is called periodically so that the GPU&#39;s memory isn&#39;t held on to unnecessarily.</p>
 <h2 id="minor_changes_and_improvements">Minor changes and improvements</h2>
 <ul>
-<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1217">Bitonic sort</a> is now used instead of quicksort &#40;by <a href="https://github.com/xaellison">@xaellison</a>&#41;</p>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1217">Bitonic sort</a> is now used instead of quicksort &#40;by <a href="https://github.com/xaellison">@xaellison</a>&#41;.</p>
 </li>
-<li><p><code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1303">now stores the length of the array</a>, greatly speeding up indexing with high-dimensional arrays</p>
+<li><p><code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1303">now stores the length of the array</a>, greatly speeding up indexing with high-dimensional arrays.</p>
 </li>
 <li><p>Device intrinsics <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1305">cannot be called on the CPU anymore</a>, protecting against segfaults when something isn&#39;t dispatching correctly.</p>
 </li>

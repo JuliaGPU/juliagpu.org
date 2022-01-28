@@ -289,9 +289,9 @@ Memory pool usage: 0 bytes &#40;0 bytes reserved&#41;</code></pre>
 <p>With interactive Julia sessions, this function is called periodically so that the GPU&#39;s memory isn&#39;t held on to unnecessarily.</p>
 <h2 id="minor_changes_and_improvements"><a href="#minor_changes_and_improvements" class="header-anchor">Minor changes and improvements</a></h2>
 <ul>
-<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1217">Bitonic sort</a> is now used instead of quicksort &#40;by <a href="https://github.com/xaellison">@xaellison</a>&#41;</p>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1217">Bitonic sort</a> is now used instead of quicksort &#40;by <a href="https://github.com/xaellison">@xaellison</a>&#41;.</p>
 </li>
-<li><p><code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1303">now stores the length of the array</a>, greatly speeding up indexing with high-dimensional arrays</p>
+<li><p><code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1303">now stores the length of the array</a>, greatly speeding up indexing with high-dimensional arrays.</p>
 </li>
 <li><p>Device intrinsics <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1305">cannot be called on the CPU anymore</a>, protecting against segfaults when something isn&#39;t dispatching correctly.</p>
 </li>
