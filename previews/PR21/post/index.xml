@@ -27,7 +27,7 @@
   <content:encoded><![CDATA[
 <p>CUDA.jl versions 3.5 to 3.8 have brought several new features to improve performance and productivity. This blog post will highlight a couple: direct copies between devices, better performance by preserving array index types and changing the memory pool, and a much-improved interface to the compute sanitizer utility.</p>
 <h2 id="copies_between_devices">Copies between devices</h2>
-<p>Typically, when sending data between devices you need to stage through the CPU. CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1284">now does this automatically</a> &#40;with help from <a href="https://github.com/kshyatt">@kshyatt</a>&#41;, making it possible to directly copy between <code>CuArray</code>s on different devices:</p>
+<p>Typically, when sending data between devices you need to stage through the CPU. CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1284">now does this automatically</a>, making it possible to directly copy between <code>CuArray</code>s on different devices:</p>
 <pre><code class="language-julia-repl">julia&gt; device&#33;&#40;0&#41;;julia&gt; a &#61; CUDA.rand&#40;2,2&#41;
 2×2 CuArray&#123;Float32, 2, CUDA.Mem.DeviceBuffer&#125;:
  0.440147  0.986939
@@ -45,8 +45,9 @@ false</code></pre>
 CuDevice&#40;1&#41;: Tesla V100-PCIE-32GBjulia&gt; dst &#61; CuDevice&#40;2&#41;
 CuDevice&#40;2&#41;: Tesla V100-PCIE-16GBjulia&gt; can_access_peer&#40;src, dst&#41;
 true</code></pre>
+<p>Thanks to <a href="https://github.com/kshyatt">@kshyatt</a> for help with this change&#33;</p>
 <h2 id="helper_function_to_use_compute-sanitizer">Helper function to use <code>compute-sanitizer</code></h2>
-<p>The CUDA toolkit comes with a powerful tool to check GPU kernels for common issues like memory errors and race conditions: the <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">compute sanitizer</a>. To make it easier to use this tool, CUDA.jl now ships the binary as part of its artifacts, and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1340">provides a helper function</a> to re-launch Julia under the <code>compute-sanitizer</code>. Let&#39;s demonstrate, and trigger a memory error to show what the compute sanitizer can detect:</p>
+<p>The CUDA toolkit comes with a powerful tool to check GPU kernels for common issues like memory errors and race conditions: the <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">compute sanitizer</a>. To make it easier to use this tool, CUDA.jl now ships the binary as part of its artifacts, and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1340">provides a helper function</a> to restart Julia under the <code>compute-sanitizer</code>. Let&#39;s demonstrate, and trigger a memory error to show what the compute sanitizer can detect:</p>
 <pre><code class="language-julia-repl">julia&gt; using CUDAjulia&gt; CUDA.run_compute_sanitizer&#40;&#41;
 Re-starting your active Julia session...&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61; COMPUTE-SANITIZER
 julia&gt; using CUDAjulia&gt; unsafe_wrap&#40;CuArray, pointer&#40;CuArray&#40;&#91;1&#93;&#41;&#41;, 2&#41; .&#61; 1
@@ -55,20 +56,21 @@ julia&gt; using CUDAjulia&gt; unsafe_wrap&#40;CuArray, pointer&#40;CuArray&#40;&
 &#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     by thread &#40;1,0,0&#41; in block &#40;0,0,0&#41;
 &#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     Address 0xa64000008 is out of bounds
 &#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     and is 1 bytes after the nearest allocation at 0xa64000000 of size 8 bytes</code></pre>
+<p>Other tools are available too, e.g. <code>racecheck</code> for detecting races or <code>synccheck</code> for finding synchronization issues. These tools can be selected using the <code>tool</code> keyword argument to <code>run_compute_sanitizer</code>.</p>
 <h2 id="updated_binary_dependencies">Updated binary dependencies</h2>
-<p>As is common with every release, CUDA.jl now supports newer version of NVIDIA&#39;s tools and libraries:</p>
+<p>As is common with every release, CUDA.jl now supports newer versions of NVIDIA&#39;s tools and libraries:</p>
 <ul>
-<li><p>CUDA <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1256">11.5</a> and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1326">11.6</a></p>
+<li><p>CUDA toolkit <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1256">11.5</a> and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1326">11.6</a></p>
 </li>
 <li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1328">CUDNN 8.3.2</a></p>
 </li>
 <li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1327">CUTENSOR 1.4.0</a></p>
 </li>
 </ul>
-<p>The update to CUDA 11.6 comes with improved debug info compatibility. If you need to debug Julia GPU code with tools like <code>compute-sanitizer</code> or <code>cuda-gdb</code>, and you need debug info &#40;the equivalent of <code>nvcc -G</code>&#41;, ensure CUDA.jl can use the latest version of the CUDA toolkit.</p>
-<p>To make it easier to use the latest supported toolkit, CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1182">now implements</a> CUDA&#39;s so-called <strong>Forward Compatibility mode</strong>: When your driver is outdated, CUDA.jl will attempt to load a newer version of the CUDA driver library, enabling use of a newer CUDA toolkit and libraries. Note that this is only supported on select hardware, consult <a href="https://docs.nvidia.com/deploy/cuda-compatibility/#forward-compatibility-title">the NVIDIA documentation</a> for more details.</p>
-<h2 id="preserving_int32_indices">Preserving Int32 indices</h2>
-<p>Julia&#39;s integers are typically 64-bits wide, which can be wasteful when dealing with GPU indexing intrinsics that are typically only 32-bits wide. CUDA.jl&#39;s device array type <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1153">now carefully preserves the type of indices</a> so that 32-bits indices aren&#39;t unnecessarily promoted to their full 64-bit width. With some careful kernel programming &#40;note the use of <code>0x1</code> instead of <code>1</code> below&#41;, this makes it possible to significantly reduce the register pressure surrounding indexing operations, which may be useful in register-constrained situations:</p>
+<p>The update to CUDA toolkit 11.6 comes with improved debug info compatibility. If you need to debug Julia GPU code with tools like <code>compute-sanitizer</code> or <code>cuda-gdb</code>, and you need debug info &#40;the equivalent of <code>nvcc -G</code>&#41;, ensure CUDA.jl can use the latest version of the CUDA toolkit.</p>
+<p>To make it easier to use the latest supported toolkit, CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1182">now implements</a> CUDA&#39;s so-called <strong>Forward Compatibility mode</strong>: When your driver is outdated, CUDA.jl will attempt to load a newer version of the CUDA driver library, enabling use of a newer CUDA toolkit and libraries. Note that this is only supported on select hardware, refer to <a href="https://docs.nvidia.com/deploy/cuda-compatibility/#forward-compatibility-title">the NVIDIA documentation</a> for more details.</p>
+<h2 id="preserving_array_indices">Preserving array indices</h2>
+<p>Julia&#39;s integers are typically 64-bits wide, which can be wasteful when dealing with GPU indexing intrinsics that are typically only 32-bits wide. CUDA.jl&#39;s device array type <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1153">now carefully preserves the type of indices</a> so that 32-bits indices aren&#39;t unnecessarily promoted to 64-bits. With some careful kernel programming &#40;note the use of <code>0x1</code> instead of <code>1</code> below&#41;, this makes it possible to significantly reduce the register pressure surrounding indexing operations, which may be useful in register-constrained situations:</p>
 <pre><code class="language-julia-repl">julia&gt; function memset&#40;arr, val&#41;
            i &#61; &#40;blockIdx&#40;&#41;.x-0x1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
            @inbounds arr&#91;i&#93; &#61; val
@@ -119,15 +121,15 @@ julia&gt; Base.format_bytes&#40;sizeof&#40;a&#41;&#41;
 julia&gt; GC.gc&#40;&#41;julia&gt; CUDA.memory_status&#40;&#41;
 Effective GPU memory usage: 40.59&#37; &#40;5.988 GiB/14.751 GiB&#41;
 Memory pool usage: 0 bytes &#40;4.000 GiB reserved&#41;</code></pre>
-<p>So far so good. On previous versions of CUDA.jl, any subsequent synchronization of the GPU &#40;e.g., by copying memory to the CPU&#41; would have resulted in a release of this reserved memory. This is not the case anymore:</p>
-<pre><code class="language-julia-repl">julia&gt; synchronize&#40;context&#40;&#41;&#41;julia&gt; CUDA.memory_status&#40;&#41;
+<p>So far nothing new. On previous versions of CUDA.jl however, any subsequent synchronization of the GPU &#40;e.g., by copying memory to the CPU&#41; would have resulted in a release of this reserved memory. This is not the case anymore:</p>
+<pre><code class="language-julia-repl">julia&gt; synchronize&#40;&#41;julia&gt; CUDA.memory_status&#40;&#41;
 Effective GPU memory usage: 40.59&#37; &#40;5.988 GiB/14.751 GiB&#41;
 Memory pool usage: 0 bytes &#40;4.000 GiB reserved&#41;</code></pre>
 <p>If you still want to release this memory, you can call the <code>reclaim&#40;&#41;</code> function:</p>
 <pre><code class="language-julia-repl">julia&gt; CUDA.reclaim&#40;&#41;julia&gt; CUDA.memory_status&#40;&#41;
 Effective GPU memory usage: 13.48&#37; &#40;1.988 GiB/14.751 GiB&#41;
 Memory pool usage: 0 bytes &#40;0 bytes reserved&#41;</code></pre>
-<p>With interactive Julia sessions, this function is called periodically so that the GPU&#39;s memory isn&#39;t held on to unnecessarily.</p>
+<p>With interactive Julia sessions, this function is called periodically so that the GPU&#39;s memory isn&#39;t held on to unnecessarily. Otherwise it shouldn&#39;t be necessary to call this function, as memory is freed automatically when it is needed.</p>
 <h2 id="minor_changes_and_improvements">Minor changes and improvements</h2>
 <ul>
 <li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1217">Bitonic sort</a> is now used instead of quicksort &#40;by <a href="https://github.com/xaellison">@xaellison</a>&#41;.</p>
