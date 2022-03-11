@@ -1,4 +1,5 @@
 +++
+title = "Blog"
 external_entries = [
     (
       Date(2020, 1, 14),
