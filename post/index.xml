@@ -19,6 +19,55 @@
 
 
 <item>
+  <title><![CDATA[oneAPI.jl status update]]></title>
+  <link>https://juliagpu.org/post/2022-04-06-oneapi_update/index.html</link>
+  <guid>https://juliagpu.org/2022-04-06-oneapi_update/</guid>
+  <description><![CDATA[It has been over a year since the last update on oneAPI.jl, the Julia package for programming Intel GPUs &#40;and other accelerators&#41; using the oneAPI toolkit. Since then, the package has been under steady development, and several new features have been added to improve the developer experience and usability of the package.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>It has been over a year since the last update on oneAPI.jl, the Julia package for programming Intel GPUs &#40;and other accelerators&#41; using the oneAPI toolkit. Since then, the package has been under steady development, and several new features have been added to improve the developer experience and usability of the package.</p>
+<h2 id="atomic_intrinsics"><code>@atomic</code> intrinsics</h2>
+<p>oneAPI.jl <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/85">now supports</a> atomic operations, which are required to implement a variety of parallel algorithms. Low-level atomic functions &#40;<code>atomic_add&#33;</code>, <code>atomic_xchg&#33;</code>, etc&#41; are available as unexported methods in the oneAPI module:</p>
+<pre><code class="language-julia">a &#61; oneArray&#40;Int32&#91;0&#93;&#41;function kernel&#40;a&#41;
+    oneAPI.atomic_add&#33;&#40;pointer&#40;a&#41;, Int32&#40;1&#41;&#41;
+    return
+end@oneapi items&#61;256 kernel&#40;a&#41;
+@test Array&#40;a&#41;&#91;1&#93; &#61;&#61; 256</code></pre>
+<p>Note that these methods are only available for those types that are supported by the underlying OpenCL intrinsics. For example, the <code>atomic_add&#33;</code> from above can only be used with <code>Int32</code> and <code>UInt32</code> inputs.</p>
+<p>Most users will instead rely on the higher-level <code>@atomic</code> macro, which can be easily put in front of many array operations to make them behave atomically. To avoid clashing with the new <code>@atomic</code> macro in Julia 1.7, this macro is also unexported:</p>
+<pre><code class="language-julia">a &#61; oneArray&#40;Int32&#91;0&#93;&#41;function kernel&#40;a&#41;
+    oneAPI.@atomic a&#91;1&#93; &#43;&#61; Int32&#40;1&#41;
+    return
+end@oneapi items&#61;256 kernel&#40;a&#41;
+@test Array&#40;a&#41;&#91;1&#93; &#61;&#61; 512</code></pre>
+<p>When used with operations that are supported by OpenCL, this macro will lower to calls like <code>atomic_add&#33;</code>. For other operations, a compare-and-exchange loop will be used. Note that for now, this is still restricted to 32-bit operations, as we do not support the <code>cl_khr_int64_base_atomics</code> extension for 64-bit atomics.</p>
+<h2 id="initial_integration_with_vendor_libraries">Initial integration with vendor libraries</h2>
+<p>One significant missing features is the integration with vendor libraries like oneMKL. These integrations are required to ensure good performance for important operations like matrix multiplication, which currently fall-back to generic implementations in Julia that may not always perform as good.</p>
+<p>To improve this situation, we <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/97">are working on</a> a wrapper library that allows us to integrate with oneMKL and other oneAPI and SYCL libraries. Currently, only matrix multiplication is supported, but once the infrastructural issues are worked out we expect to quickly support many more operations.</p>
+<p>If you need support for specific libraries, please have a look at this PR. As the API surface is significant, we will need help to extend the wrapper library and integrate it with high-level Julia libraries like LinearAlgebra.jl.</p>
+<h2 id="correctness_issues">Correctness issues</h2>
+<p>In porting existing Julia GPU applications to oneAPI.jl, we fixed several issues that caused correctness issues when executing code on Intel GPUs:</p>
+<ul>
+<li><p>when the garbage collector frees GPU memory, <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/157">it now blocks</a> until all outstanding commands &#40;which may include uses of said memory&#41; are completes</p>
+</li>
+<li><p>the <code>barrier</code> function to synchronize threads <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/162">is now</a> marked as <code>convert</code> to avoid LLVM miscompilations</p>
+</li>
+</ul>
+<p>Note that if you are using Tiger Lake hardware, there is currently a <a href="https://github.com/intel/compute-runtime/issues/522">known issue</a> in the back-end Intel compiler that affects oneAPI.jl, causing correctness issues that can be spotted by running the oneAPI.jl test suite.</p>
+<h2 id="future_work">Future work</h2>
+<p>To significantly improve usability of oneAPI.jl, we will add support to the KernelAbstraction.jl package. This library is used by <a href="https://juliahub.com/ui/Packages/KernelAbstractions/aywHT/0.7.2?page&#61;2">many other packages</a> for adding GPU acceleration to algorithms that cannot be easily expressed using only array operations. As such, support for oneAPI.jl will make it possible to use your oneAPI GPUs with all of these packages.</p>
+]]></content:encoded>
+    
+  <pubDate>Wed, 06 Apr 2022 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 3.5-3.8]]></title>
   <link>https://juliagpu.org/post/2022-01-28-cuda_3.5_3.8/index.html</link>
   <guid>https://juliagpu.org/2022-01-28-cuda_3.5_3.8/</guid>
