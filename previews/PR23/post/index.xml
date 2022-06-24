@@ -19,7 +19,7 @@
 
 
 <item>
-  <title><![CDATA[Technical preview: Metal.jl]]></title>
+  <title><![CDATA[Technical preview: Programming Apple M1 GPUs in Julia with Metal.jl]]></title>
   <link>https://juliagpu.org/post/2022-06-24-metal/index.html</link>
   <guid>https://juliagpu.org/2022-06-24-metal/</guid>
   <description><![CDATA[Julia has gained a new GPU back-end: Metal.jl, for working with Apple&#39;s M1   GPUs. The back-end is built on the same foundations that make up existing   GPU packages like CUDA.jl and AMDGPU.jl, so it should be familiar to anybody   who&#39;s already programmed GPUs in Julia. In the following post I&#39;ll demonstrate   some of that functionality and explain how it works.]]></description>  
