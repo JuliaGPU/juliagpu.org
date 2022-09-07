@@ -40,6 +40,7 @@ capabilities, such as:
 - [DiffEqGPU.jl](https://github.com/JuliaDiffEq/DiffEqGPU.jl) as part of the DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers
 - [Oceananigans.jl](https://github.com/climate-machine/Oceananigans.jl) to accelerate a non-hydrostatic ocean modeling application
 - [GPUifyLoops.jl](https://github.com/vchuravy/GPUifyLoops.jl/) and [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for working with CPUs and GPUs alike using vendor-neutral abstractions
+- [GemmKernels.jl](https://github.com/JuliaGPU/GemmKernels.jl) providing flexible and performant GEMM kernels
 
 Many other Julia applications and libraries can be used with GPUs, too: By means of GPU-specific array types like CuArray from CUDA.jl or ROCArray from AMDGPU.jl, existing software that uses the Julia array interfaces can often be executed as-is on a GPU.
 
@@ -50,10 +51,9 @@ to help support it, please star the relevant repositories as such metrics may he
 funding in the future. If you use our software as part of your research, teaching, or other
 activities, we would be grateful if you could cite our work:
 
-[compiler-paper]: https://www.sciencedirect.com/science/article/pii/S0965997818310123
-
 - Tim Besard, Christophe Foket, and Bjorn De Sutter. "[Effective extensible programming: Unleashing Julia on GPUs.](https://ieeexplore.ieee.org/abstract/document/8471188)" *IEEE Transactions on Parallel and Distributed Systems* (2018).
-- Tim Besard, Valentin Churavy, Alan Edelman and Bjorn De Sutter. "[Rapid software prototyping for heterogeneous and distributed platforms.][compiler-paper]" *Advances in Engineering Software* (2019).
+- Tim Besard, Valentin Churavy, Alan Edelman and Bjorn De Sutter. "[Rapid software prototyping for heterogeneous and distributed platforms.](https://www.sciencedirect.com/science/article/pii/S0965997818310123)" *Advances in Engineering Software* (2019).
+- Thomas Faingnaert, Tim Besard, and Bjorn De Sutter. "[Flexible Performant GEMM Kernels on GPUs.](https://ieeexplore.ieee.org/document/9655458)" *IEEE Transactions on Parallel and Distributed Systems* (2021).
 
 ## Community
 
