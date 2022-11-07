@@ -32,7 +32,7 @@ Experimental support exists for [**AMD GPUs**](/rocm/) running on the ROCm stack
 
 ## Applications
 
-There are [many Julia applications and libraries](https://juliahub.com/ui/Packages/CUDA/oWw5k/3.12.0?page=2) that rely on the language's GPU
+There are [many Julia applications and libraries](https://juliahub.com/ui/Packages/CUDA/oWw5k?page=2) that rely on the language's GPU
 capabilities, such as:
 
 - [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
