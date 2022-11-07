@@ -30,15 +30,17 @@ Similar, but much newer capabilities exist for [**Intel GPUs with oneAPI**](/one
 
 Experimental support exists for [**AMD GPUs**](/rocm/) running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using array operations, but these capabilities are under heavy development and are not ready for general consumption yet.
 
+Experimental support also exists for [**Apple GPUs**](/metal/). Array programming and kernel programming are both supported.
+
 ## Applications
 
-There are [many Julia applications and libraries](https://juliahub.com/ui/Packages/CUDA/oWw5k?page=2) that rely on the language's GPU
-capabilities, such as:
+Almost [200 packages](https://juliahub.com/ui/Packages/CUDA/oWw5k?page=2) rely directly or indirectly on Julia's GPU
+capabilities. A few noteworthy examples are:
 
-- [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
-- [Yao.jl](https://github.com/QuantumBFS/Yao.jl) framework for quantum information research
 - [DiffEqGPU.jl](https://github.com/JuliaDiffEq/DiffEqGPU.jl) as part of the DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers
+- [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
 - [Oceananigans.jl](https://github.com/climate-machine/Oceananigans.jl) to accelerate a non-hydrostatic ocean modeling application
+- [Yao.jl](https://github.com/QuantumBFS/Yao.jl) framework for quantum information research
 - [GPUifyLoops.jl](https://github.com/vchuravy/GPUifyLoops.jl/) and [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for working with CPUs and GPUs alike using vendor-neutral abstractions
 - [GemmKernels.jl](https://github.com/JuliaGPU/GemmKernels.jl) providing flexible and performant GEMM kernels
 
