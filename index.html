@@ -160,16 +160,17 @@ li p {
 <p>The best supported GPU platform in Julia is <a href="/cuda/"><strong>NVIDIA CUDA</strong></a>, with mature and full-featured packages for both low-level kernel programming as well as working with high-level operations on arrays. All versions of Julia are supported, on Linux and Windows, and the functionality is actively used by a variety of applications and libraries.</p>
 <p>Similar, but much newer capabilities exist for <a href="/oneapi/"><strong>Intel GPUs with oneAPI</strong></a>. Currently, full-featured kernel programming capabilities are available, but there is no support for vendor libraries such as oneMKL or oneDNN yet.</p>
 <p>Experimental support exists for <a href="/rocm/"><strong>AMD GPUs</strong></a> running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using array operations, but these capabilities are under heavy development and are not ready for general consumption yet.</p>
+<p>Experimental support also exists for <a href="/metal/"><strong>Apple GPUs</strong></a>. Array programming and kernel programming are both supported.</p>
 <h2 id="applications"><a href="#applications" class="header-anchor">Applications</a></h2>
-<p>There are <a href="https://juliahub.com/ui/Packages/CUDA/oWw5k?page&#61;2">many Julia applications and libraries</a> that rely on the language&#39;s GPU capabilities, such as:</p>
+<p>Almost <a href="https://juliahub.com/ui/Packages/CUDA/oWw5k?page&#61;2">200 packages</a> rely directly or indirectly on Julia&#39;s GPU capabilities. A few noteworthy examples are:</p>
 <ul>
-<li><p><a href="https://github.com/FluxML/Flux.jl">Flux.jl</a> library for machine-learning</p>
-</li>
-<li><p><a href="https://github.com/QuantumBFS/Yao.jl">Yao.jl</a> framework for quantum information research</p>
-</li>
 <li><p><a href="https://github.com/JuliaDiffEq/DiffEqGPU.jl">DiffEqGPU.jl</a> as part of the DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers</p>
 </li>
+<li><p><a href="https://github.com/FluxML/Flux.jl">Flux.jl</a> library for machine-learning</p>
+</li>
 <li><p><a href="https://github.com/climate-machine/Oceananigans.jl">Oceananigans.jl</a> to accelerate a non-hydrostatic ocean modeling application</p>
+</li>
+<li><p><a href="https://github.com/QuantumBFS/Yao.jl">Yao.jl</a> framework for quantum information research</p>
 </li>
 <li><p><a href="https://github.com/vchuravy/GPUifyLoops.jl/">GPUifyLoops.jl</a> and <a href="https://github.com/JuliaGPU/KernelAbstractions.jl">KernelAbstractions.jl</a> for working with CPUs and GPUs alike using vendor-neutral abstractions</p>
 </li>
