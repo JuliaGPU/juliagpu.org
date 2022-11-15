@@ -34,7 +34,7 @@ Experimental support also exists for [**Apple GPUs**](/metal/). Array programmin
 
 ## Applications
 
-Almost [200 packages](https://juliahub.com/ui/Packages/CUDA/oWw5k?page=2) rely directly or indirectly on Julia's GPU
+Almost [300 packages](https://juliahub.com/ui/Packages/CUDA/oWw5k?page=2) rely directly or indirectly on Julia's GPU
 capabilities. A few noteworthy examples are:
 
 - [DiffEqGPU.jl](https://github.com/JuliaDiffEq/DiffEqGPU.jl) as part of the DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers
