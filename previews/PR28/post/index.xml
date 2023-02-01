@@ -31,10 +31,10 @@
 <p>With CUDA.jl 4.0, we now use JLLs to load the CUDA driver and toolkit. Specifically, there are two JLLs in play: <code>CUDA_Driver_jll</code> and <code>CUDA_Runtime_jll</code>. The former is responsible for loading the CUDA driver library &#40;possibly upgrading it using a forward-compatible version&#41;, and determining the CUDA compatibility version that your set-up supports:</p>
 <pre><code class="language-julia">❯ JULIA_DEBUG&#61;CUDA_Driver_jll julia
 julia&gt; using CUDA_Driver_jll
-┌ Debug: System CUDA driver found at libcuda.so.1, detected as version 12.0.0
-└ @ CUDA_Driver_jll ~/Julia/depot/packages/CUDA_Driver_jll/vpay8/src/wrappers/x86_64-linux-gnu.jl:76
-┌ Debug: System CUDA driver is recent enough; not using forward-compatible driver
-└ @ CUDA_Driver_jll ~/Julia/depot/packages/CUDA_Driver_jll/vpay8/src/wrappers/x86_64-linux-gnu.jl:94</code></pre>
+┌ System CUDA driver found at libcuda.so.1, detected as version 12.0.0
+└ @ CUDA_Driver_jll
+┌ System CUDA driver is recent enough; not using forward-compatible driver
+└ @ CUDA_Driver_jll</code></pre>
 <p>With the driver identified and loaded, CUDA<em>Runtime</em>jll can select a compatible toolkit. By default, it uses the latest supported toolkit that is compatible with the driver:</p>
 <pre><code class="language-julia">julia&gt; using CUDA_Runtime_jlljulia&gt; CUDA_Runtime_jll.cuda_toolkits
 10-element Vector&#123;VersionNumber&#125;:
@@ -48,37 +48,39 @@ julia&gt; using CUDA_Driver_jll
  v&quot;11.6.0&quot;
  v&quot;11.7.0&quot;
  v&quot;11.8.0&quot;julia&gt; CUDA_Runtime_jll.host_platform
-Linux x86_64 &#123;cuda&#61;11.8, cxxstring_abi&#61;cxx11, julia_version&#61;1.9.0, libc&#61;glibc, libgfortran_version&#61;5.0.0, libstdcxx_version&#61;3.4.30&#125;</code></pre>
+Linux x86_64 &#123;cuda&#61;11.8&#125;</code></pre>
 <p>As you can see, the selected CUDA toolkit is encoded in the host platform. This makes it possible for Julia to automatically select compatible versions of other binary packages. For example, if we install and load SuiteSparse<em>GPU</em>jll, which right now <a href="https://github.com/JuliaPackaging/Yggdrasil/blob/2f5a64d9f61d0f1b619367b03b5cecae979ed6d1/S/SuiteSparse/SuiteSparse_GPU/build_tarballs.jl#L104-L126">provides builds</a> for CUDA 10.2, 11.0 and 12.0, the artifact resolution code knows to load the build for CUDA 11.0 which is compatible with the selected CUDA toolkit 11.8:</p>
 <pre><code class="language-julia">julia&gt; using SuiteSparse_GPU_jlljulia&gt; SuiteSparse_GPU_jll.best_wrapper
-&quot;~/Julia/depot/packages/SuiteSparse_GPU_jll/uSnIk/src/wrappers/x86_64-linux-gnu-cuda&#43;11.0.jl&quot;</code></pre>
+&quot;~/.julia/packages/SuiteSparse_GPU_jll/.../x86_64-linux-gnu-cuda&#43;11.0.jl&quot;</code></pre>
 <p>The change to JLLs requires a breaking change: the <code>JULIA_CUDA_VERSION</code> and <code>JULIA_CUDA_USE_BINARYBUILDER</code> environment variables have been removed, and are replaced by preferences that are set in the current environment. For convenience, you can set these preferences by calling <code>CUDA.set_runtime_version&#33;</code>:</p>
 <pre><code class="language-julia">❯ julia --project
 julia&gt; using CUDA
 julia&gt; CUDA.runtime_version&#40;&#41;
 v&quot;11.8.0&quot;julia&gt; CUDA.set_runtime_version&#33;&#40;v&quot;11.7&quot;&#41;
-&#91; Info: Set CUDA Runtime version preference to 11.7, please re-start Julia for this to take effect.❯ julia --project
+┌ Set CUDA Runtime version preference to 11.7,
+└ please re-start Julia for this to take effect.❯ julia --project
 julia&gt; using CUDA
 julia&gt; CUDA.runtime_version&#40;&#41;
 v&quot;11.7.0&quot;julia&gt; using CUDA_Runtime_jll
 julia&gt; CUDA_Runtime_jll.host_platform
-Linux x86_64 &#123;cuda&#61;11.7, cxxstring_abi&#61;cxx11, julia_version&#61;1.9.0, libc&#61;glibc, libgfortran_version&#61;5.0.0, libstdcxx_version&#61;3.4.30&#125;</code></pre>
+Linux x86_64 &#123;cuda&#61;11.7&#125;</code></pre>
 <p>The changed preference is reflected in the host platform, which means that you can use this mechanism to load a different builds of other binary packages. For example, if you rely on a package or JLL that does not yet have a build for CUDA 12, you could set the preference to <code>v&quot;11.x&quot;</code> to load an available build.</p>
 <p>For discovering a local toolkit, you can set the version to <code>&quot;local&quot;</code>, which will replace the use of <code>CUDA_Runtime_jll</code> by <code>CUDA_Runtime_discovery.jl</code>, an API-compatible package that replaces the JLL with a local toolkit discovery mechanism:</p>
 <pre><code class="language-julia">❯ julia --project
 julia&gt; CUDA.set_runtime_version&#33;&#40;&quot;local&quot;&#41;
-&#91; Info: Set CUDA Runtime version preference to local, please re-start Julia for this to take effect.❯ JULIA_DEBUG&#61;CUDA_Runtime_Discovery julia --project
+┌ Set CUDA Runtime version preference to local,
+└ please re-start Julia for this to take effect.❯ JULIA_DEBUG&#61;CUDA_Runtime_Discovery julia --project
 julia&gt; using CUDA
-┌ Debug: Looking for CUDA toolkit via environment variables CUDA_PATH
-└ @ CUDA_Runtime_Discovery ~/Julia/depot/packages/CUDA_Runtime_Discovery/gMXw1/src/CUDA_Runtime_Discovery.jl:280
-┌ Debug: Looking for binary ptxas in /opt/cuda
+┌ Looking for CUDA toolkit via environment variables CUDA_PATH
+└ @ CUDA_Runtime_Discovery
+┌ Looking for binary ptxas in /opt/cuda
 │   all_locations &#61;
 │    2-element Vector&#123;String&#125;:
 │     &quot;/opt/cuda&quot;
 │     &quot;/opt/cuda/bin&quot;
-└ @ CUDA_Runtime_Discovery ~/Julia/depot/packages/CUDA_Runtime_Discovery/gMXw1/src/CUDA_Runtime_Discovery.jl:156
+└ @ CUDA_Runtime_Discovery
 ┌ Debug: Found ptxas at /opt/cuda/bin/ptxas
-└ @ CUDA_Runtime_Discovery ~/Julia/depot/packages/CUDA_Runtime_Discovery/gMXw1/src/CUDA_Runtime_Discovery.jl:162
+└ @ CUDA_Runtime_Discovery
 ...</code></pre>
 <h2 id="memory_limits">Memory limits</h2>
 <p>By popular demand, support for memory limits has been reinstated. This functionality had been removed after the switch to CUDA memory pools, as the memory pool allocator does not yet support memory limits. Awaiting improvements by NVIDIA, we have added functionality to impose memory limits from the Julia side, in the form of two environment variables:</p>
