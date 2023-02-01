@@ -152,14 +152,14 @@ Tim Besard
 <h2 id="jlls_for_cuda_artifacts"><a href="#jlls_for_cuda_artifacts" class="header-anchor">JLLs for CUDA artifacts</a></h2>
 <p>While CUDA.jl has been using binary artifacts for a while, it was manually managing installation and selection of them, i.e., not by using standardised JLL packages. This complicated use of the artifacts by other packages, and made it difficult to build other binary packages against the CUDA toolkit.</p>
 <p>With CUDA.jl 4.0, we now use JLLs to load the CUDA driver and toolkit. Specifically, there are two JLLs in play: <code>CUDA_Driver_jll</code> and <code>CUDA_Runtime_jll</code>. The former is responsible for loading the CUDA driver library &#40;possibly upgrading it using a forward-compatible version&#41;, and determining the CUDA compatibility version that your set-up supports:</p>
-<pre><code class="language-julia">❯ JULIA_DEBUG&#61;CUDA_Driver_jll julia
+<pre><code class="language-julia-repl">❯ JULIA_DEBUG&#61;CUDA_Driver_jll julia
 julia&gt; using CUDA_Driver_jll
 ┌ System CUDA driver found at libcuda.so.1, detected as version 12.0.0
 └ @ CUDA_Driver_jll
 ┌ System CUDA driver is recent enough; not using forward-compatible driver
 └ @ CUDA_Driver_jll</code></pre>
-<p>With the driver identified and loaded, CUDA<em>Runtime</em>jll can select a compatible toolkit. By default, it uses the latest supported toolkit that is compatible with the driver:</p>
-<pre><code class="language-julia">julia&gt; using CUDA_Runtime_jll
+<p>With the driver identified and loaded, <code>CUDA_Runtime_jll</code> can select a compatible toolkit. By default, it uses the latest supported toolkit that is compatible with the driver:</p>
+<pre><code class="language-julia-repl">julia&gt; using CUDA_Runtime_jll
 
 julia&gt; CUDA_Runtime_jll.cuda_toolkits
 10-element Vector&#123;VersionNumber&#125;:
@@ -176,13 +176,13 @@ julia&gt; CUDA_Runtime_jll.cuda_toolkits
 
 julia&gt; CUDA_Runtime_jll.host_platform
 Linux x86_64 &#123;cuda&#61;11.8&#125;</code></pre>
-<p>As you can see, the selected CUDA toolkit is encoded in the host platform. This makes it possible for Julia to automatically select compatible versions of other binary packages. For example, if we install and load SuiteSparse<em>GPU</em>jll, which right now <a href="https://github.com/JuliaPackaging/Yggdrasil/blob/2f5a64d9f61d0f1b619367b03b5cecae979ed6d1/S/SuiteSparse/SuiteSparse_GPU/build_tarballs.jl#L104-L126">provides builds</a> for CUDA 10.2, 11.0 and 12.0, the artifact resolution code knows to load the build for CUDA 11.0 which is compatible with the selected CUDA toolkit 11.8:</p>
+<p>As you can see, the selected CUDA toolkit is encoded in the host platform. This makes it possible for Julia to automatically select compatible versions of other binary packages. For example, if we install and load <code>SuiteSparse_GPU_jll</code>, which right now <a href="https://github.com/JuliaPackaging/Yggdrasil/blob/2f5a64d9f61d0f1b619367b03b5cecae979ed6d1/S/SuiteSparse/SuiteSparse_GPU/build_tarballs.jl#L104-L126">provides builds</a> for CUDA 10.2, 11.0 and 12.0, the artifact resolution code knows to load the build for CUDA 11.0 which is compatible with the selected CUDA toolkit 11.8:</p>
 <pre><code class="language-julia">julia&gt; using SuiteSparse_GPU_jll
 
 julia&gt; SuiteSparse_GPU_jll.best_wrapper
 &quot;~/.julia/packages/SuiteSparse_GPU_jll/.../x86_64-linux-gnu-cuda&#43;11.0.jl&quot;</code></pre>
 <p>The change to JLLs requires a breaking change: the <code>JULIA_CUDA_VERSION</code> and <code>JULIA_CUDA_USE_BINARYBUILDER</code> environment variables have been removed, and are replaced by preferences that are set in the current environment. For convenience, you can set these preferences by calling <code>CUDA.set_runtime_version&#33;</code>:</p>
-<pre><code class="language-julia">❯ julia --project
+<pre><code class="language-julia-repl">❯ julia --project
 julia&gt; using CUDA
 julia&gt; CUDA.runtime_version&#40;&#41;
 v&quot;11.8.0&quot;
@@ -201,7 +201,7 @@ julia&gt; CUDA_Runtime_jll.host_platform
 Linux x86_64 &#123;cuda&#61;11.7&#125;</code></pre>
 <p>The changed preference is reflected in the host platform, which means that you can use this mechanism to load a different builds of other binary packages. For example, if you rely on a package or JLL that does not yet have a build for CUDA 12, you could set the preference to <code>v&quot;11.x&quot;</code> to load an available build.</p>
 <p>For discovering a local toolkit, you can set the version to <code>&quot;local&quot;</code>, which will replace the use of <code>CUDA_Runtime_jll</code> by <code>CUDA_Runtime_discovery.jl</code>, an API-compatible package that replaces the JLL with a local toolkit discovery mechanism:</p>
-<pre><code class="language-julia">❯ julia --project
+<pre><code class="language-julia-repl">❯ julia --project
 julia&gt; CUDA.set_runtime_version&#33;&#40;&quot;local&quot;&#41;
 ┌ Set CUDA Runtime version preference to local,
 └ please re-start Julia for this to take effect.
