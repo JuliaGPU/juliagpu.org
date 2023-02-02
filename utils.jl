@@ -69,7 +69,9 @@ function blogpost_entry(fpath)
         rpath = joinpath(rpath, "index.md")
     end
     hidden = pagevar(rpath, :hidden)
-    !isnothing(hidden) && hidden && return nothing
+    if hidden === true
+        return nothing
+    end
     title = pagevar(rpath, :title)::String
     y, m, d = getdate(fpath)
     rpath = replace(fpath, r"\.md$" => "")
@@ -84,7 +86,10 @@ end
 
 function hfun_blogposts()
     io = IOBuffer()
-    elements = filter!(!=("index.md"), readdir("post"))
+    elements = filter(readdir("post")) do entry
+        entry in ("index.md", ".DS_Store") && return false
+        return true
+    end
     entries = [blogpost_entry(fp) for fp in elements]
     entries = [e for e in entries if !isnothing(e)]
     append!(entries, blogpost_external_entries())
