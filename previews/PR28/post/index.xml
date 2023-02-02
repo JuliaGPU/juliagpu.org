@@ -113,7 +113,7 @@ julia&gt; using CUDA
 </ul>
 <h2 id="other_changes">Other changes</h2>
 <ul>
-<li><p>Removal of the CUDNN, CUTENSOR and CUTENSORNET submodules: These have been moved into their own packages;</p>
+<li><p>Removal of the CUDNN, CUTENSOR, CUTENSORNET and CUSTATEVEC submodules: These have been moved into their own packages, respectively cuDNN.jl, cuTENSOR.jl, cuTensorNet.jl and cuStateVec.jl &#40;note the change in capitalization, now following NVIDIA&#39;s naming scheme&#41;;</p>
 </li>
 <li><p>Removal of the NVTX submodule: NVTX.jl should be used instead, which is a more complete implementation of the NVTX API;</p>
 </li>
