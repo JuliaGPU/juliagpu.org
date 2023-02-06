@@ -41,7 +41,7 @@ capabilities. A few noteworthy examples are:
 - [Flux.jl](https://github.com/FluxML/Flux.jl) library for machine-learning
 - [Oceananigans.jl](https://github.com/climate-machine/Oceananigans.jl) to accelerate a non-hydrostatic ocean modeling application
 - [Yao.jl](https://github.com/QuantumBFS/Yao.jl) framework for quantum information research
-- [GPUifyLoops.jl](https://github.com/vchuravy/GPUifyLoops.jl/) and [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for working with CPUs and GPUs alike using vendor-neutral abstractions
+- [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) for working with CPUs and GPUs alike using vendor-neutral abstractions
 - [GemmKernels.jl](https://github.com/JuliaGPU/GemmKernels.jl) providing flexible and performant GEMM kernels
 
 Many other Julia applications and libraries can be used with GPUs, too: By means of GPU-specific array types like CuArray from CUDA.jl or ROCArray from AMDGPU.jl, existing software that uses the Julia array interfaces can often be executed as-is on a GPU.
