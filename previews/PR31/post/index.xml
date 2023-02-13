@@ -50,7 +50,7 @@ julia&gt; C &#61; A * B;julia&gt; Array&#40;C&#41; ≈ Array&#40;A&#41; * Array&
 true</code></pre>
 <p>The most frequently used oneMKL BLAS functions have been wrapped and integrated with Julia’s standard linear algebra libraries. If you run into a missing function, please file a request to add it, or take a look at the source and contribute to oneAPI.jl&#33; The current state of the wrappers should make it easy to extend their functionality, as well as form a good basis for integrating with other libraries like oneDNN.</p>
 <h2 id="intel_arc_support">Intel Arc support</h2>
-<p>The new Arc series of discrete Intel GPUs are now fully supported by oneAPI.jl. These GPUs offer a significant performance improvement over their typically integrated predecessors:</p>
+<p>The new Arc series of discrete Intel GPUs are now fully supported by oneAPI.jl. These GPUs offer a significant performance improvement over their integrated predecessors:</p>
 <pre><code class="language-julia-repl">julia&gt; using oneAPI
 julia&gt; oneAPI.versioninfo&#40;&#41;
 1 device:
@@ -68,8 +68,8 @@ BenchmarkTools.Trial: 1510 samples with 1 evaluation.
   3.23 ms        Histogram: frequency by time        3.47 ms &lt; Memory estimate: 272 bytes, allocs estimate: 11.julia&gt; flops &#61; n*m*&#40;2p-1&#41;
 17175674880julia&gt; flops / &#40;minimum&#40;bench.times&#41;/1e9&#41;
 5.3131281169900205e12</code></pre>
-<p>For example, here we&#39;re getting 5 TFlops of Float32 performance, which is over 10x faster than the Intel Xe Graphics G7 we had been previously using for oneAPI.jl development. At the same time, the A770 used above should be able to deliver close to 20 TFlops, so there&#39;s still room for improvement.</p>
-<p>To use oneAPI.jl with an Arc series GPU, you need to use Linux 6.2. At the time of writing, that version is still in beta, so refer to your distribution&#39;s documentation for how to install it. For example, on Arch Linux you can use the <a href="https://aur.archlinux.org/packages/linux-mainline"><code>linux-mainline</code> package from the AUR</a>, Ubuntu has the <a href="https://wiki.ubuntu.com/Kernel/MainlineBuilds"><code>kernel-ppa</code> archive</a>, Fedora provides the <a href="https://fedoraproject.org/wiki/Kernel_Vanilla_Repositories"><code>stable-rc</code> repository</a>, etc.</p>
+<p>For example, here we&#39;re getting over 5 TFlops of Float32 performance, which is over 10x faster than the Intel Xe Graphics G7 we had been previously using for oneAPI.jl development. At the same time, the A770 used above should be able to deliver close to 20 TFlops, so there&#39;s still room for improvement in our software stack.</p>
+<p>To use oneAPI.jl with an Arc series GPU, you need to run Linux 6.2. At the time of writing, that kernel is still in beta, so refer to your distribution&#39;s documentation for how to install it. For example, on Arch Linux you can use the <a href="https://aur.archlinux.org/packages/linux-mainline"><code>linux-mainline</code> package from the AUR</a>, Ubuntu has the <a href="https://wiki.ubuntu.com/Kernel/MainlineBuilds"><code>kernel-ppa</code> archive</a>, Fedora provides the <a href="https://fedoraproject.org/wiki/Kernel_Vanilla_Repositories"><code>stable-rc</code> repository</a>, etc.</p>
 <h2 id="other_changes">Other changes</h2>
 <ul>
 <li><p>Support for Julia 1.9 has been added.</p>
