@@ -27,8 +27,8 @@
   <content:encoded><![CDATA[
 <p>The release of oneAPI.jl 1.0 adds integration with the oneAPI Math Kernel Library &#40;oneMKL&#41; to accelerate linear algebra operations on Intel GPUs. It also brings support for Julia 1.9 and Intel Arc GPUs.</p>
 <h2 id="onemkl_integration">oneMKL integration</h2>
-<p>oneAPI.jl now uses the Intel oneAPI Math Kernel Library &#40;oneMKL&#41;, automatically downloaded via <code>oneAPI_Support_jll.jl</code>, to provide a great number of BLAS and LAPACK operations on Intel GPUs. Similar to how it is implemented in our other GPU back-ends, these wrappers are available at different levels.</p>
-<p>At the lowest level, we provide a C library that provides BLAS and LAPACK-like functions that the oneMKL C&#43;&#43; APIs. For example, the <code>oneapi::mkl::blas::column_major::gemm</code> function for matrix-matrix multiplication is wrapped by the C functions <code>onemklSgemm</code>, <code>onemklDgemm</code>, etc. These wrappers are used to implement low-level methods like <code>oneMKL.gemm&#33;</code>:</p>
+<p>oneAPI.jl now uses the Intel oneAPI Math Kernel Library &#40;oneMKL&#41;, automatically downloaded as part of <code>oneAPI_Support_jll.jl</code>, to provide a great number of BLAS and LAPACK operations that are accelerated on Intel GPUs. Similar to how it is implemented in our other GPU back-ends, these wrappers are available at different levels of abstraction.</p>
+<p>At the lowest level, we use a C library that provides BLAS and LAPACK-like functions wrapping the oneMKL C&#43;&#43; APIs. For example, the <code>oneapi::mkl::blas::column_major::gemm</code> function for matrix-matrix multiplication is wrapped by the C functions <code>onemklSgemm</code>, <code>onemklDgemm</code>, etc. These wrappers are used to implement low-level methods like <code>oneMKL.gemm&#33;</code>:</p>
 <pre><code class="language-julia-repl">julia&gt; using oneAPIjulia&gt; A &#61; oneArray&#40;rand&#40;Float32, 2, 3&#41;&#41;;
 2×3 oneMatrix&#123;Float32, oneAPI.oneL0.DeviceBuffer&#125;:
  0.44302   0.125576  0.859145
