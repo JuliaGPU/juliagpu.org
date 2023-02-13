@@ -48,11 +48,30 @@ true</code></pre>
 julia&gt; B &#61; oneArray&#40;rand&#40;Float32, 3, 4&#41;&#41;;julia&gt; using LinearAlgebra
 julia&gt; C &#61; A * B;julia&gt; Array&#40;C&#41; ≈ Array&#40;A&#41; * Array&#40;B&#41;
 true</code></pre>
-<p>Not all oneMKL functionality has been wrapped yet, and not every wrapper has been properly hooked up to Julia&#39;s standard libraries either. If you run into an issue, please consider taking a look at the source and contributing to oneAPI.jl&#33; The current state of the wrappers should make it easy to extend their functionality, as well as form a good basis for integrating with other libraries like oneDNN.</p>
+<p>The most frequently used oneMKL BLAS functions have been wrapped and integrated with Julia’s standard linear algebra libraries. If you run into a missing function, please file a request to add it, or take a look at the source and contribute to oneAPI.jl&#33; The current state of the wrappers should make it easy to extend their functionality, as well as form a good basis for integrating with other libraries like oneDNN.</p>
+<h2 id="intel_arc_support">Intel Arc support</h2>
+<p>The new Arc series of discrete Intel GPUs are now fully supported by oneAPI.jl. These GPUs offer a significant performance improvement over their typically integrated predecessors:</p>
+<pre><code class="language-julia-repl">julia&gt; using oneAPI
+julia&gt; oneAPI.versioninfo&#40;&#41;
+1 device:
+- Intel&#40;R&#41; Arc&#40;TM&#41; A770 Graphics &#91;0x56a0&#93;julia&gt; T &#61; Float32;
+julia&gt; n &#61; p &#61; m &#61; 2048;
+julia&gt; a &#61; oneArray&#40;rand&#40;T, n, p&#41;&#41;;
+julia&gt; b &#61; oneArray&#40;rand&#40;T, p, m&#41;&#41;;
+julia&gt; c &#61; oneArray&#40;zeros&#40;T, n, m&#41;&#41;;julia&gt; using BenchmarkTools, LinearAlgebra
+julia&gt; bench &#61; @benchmark oneAPI.@sync mul&#33;&#40;c, a, b&#41;
+BenchmarkTools.Trial: 1510 samples with 1 evaluation.
+ Range &#40;min … max&#41;:  3.233 ms …  3.791 ms  ┊ GC &#40;min … max&#41;: 0.00&#37; … 0.00&#37;
+ Time  &#40;median&#41;:     3.298 ms              ┊ GC &#40;median&#41;:    0.00&#37;
+ Time  &#40;mean ± σ&#41;:   3.308 ms ± 48.426 μs  ┊ GC &#40;mean ± σ&#41;:  0.00&#37; ± 0.00&#37;        ▁▃▄▇█▅▄▃▂   ▁▁▁
+  ▁▁▃▃▅▇██████████████████▇▇▇▅▆▄▅▅▄▂▃▂▂▂▂▂▂▁▂▂▂▁▂▁▂▁▂▂▂▂▁▁▂▂ ▃
+  3.23 ms        Histogram: frequency by time        3.47 ms &lt; Memory estimate: 272 bytes, allocs estimate: 11.julia&gt; flops &#61; n*m*&#40;2p-1&#41;
+17175674880julia&gt; flops / &#40;minimum&#40;bench.times&#41;/1e9&#41;
+5.3131281169900205e12</code></pre>
+<p>For example, here we&#39;re getting 5 TFlops of Float32 performance, which is over 10x faster than the Intel Xe Graphics G7 we had been previously using for oneAPI.jl development. At the same time, the A770 used above should be able to deliver close to 20 TFlops, so there&#39;s still room for improvement.</p>
+<p>To use oneAPI.jl with an Arc series GPU, you need to use Linux 6.2. At the time of writing, that version is still in beta, so refer to your distribution&#39;s documentation for how to install it. For example, on Arch Linux you can use the <a href="https://aur.archlinux.org/packages/linux-mainline"><code>linux-mainline</code> package from the AUR</a>, Ubuntu has the <a href="https://wiki.ubuntu.com/Kernel/MainlineBuilds"><code>kernel-ppa</code> archive</a>, Fedora provides the <a href="https://fedoraproject.org/wiki/Kernel_Vanilla_Repositories"><code>stable-rc</code> repository</a>, etc.</p>
 <h2 id="other_changes">Other changes</h2>
 <ul>
-<li><p>oneAPI.jl&#39;s toolchain has also been updated to support the new Arc series of discrete Intel GPUs. Note that these require the upcoming Linux 6.2 kernel.</p>
-</li>
 <li><p>Support for Julia 1.9 has been added.</p>
 </li>
 </ul>
