@@ -19,6 +19,74 @@
 
 
 <item>
+  <title><![CDATA[oneAPI.jl 1.0: oneMKL, Intel Arc and Julia 1.9]]></title>
+  <link>https://juliagpu.org/post/2023-02-08-oneapi_1.0/index.html</link>
+  <guid>https://juliagpu.org/2023-02-08-oneapi_1.0/</guid>
+  <description><![CDATA[The release of oneAPI.jl 1.0 adds integration with the oneAPI Math Kernel Library &#40;oneMKL&#41; to accelerate linear algebra operations on Intel GPUs. It also brings support for Julia 1.9 and Intel Arc GPUs.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>The release of oneAPI.jl 1.0 adds integration with the oneAPI Math Kernel Library &#40;oneMKL&#41; to accelerate linear algebra operations on Intel GPUs. It also brings support for Julia 1.9 and Intel Arc GPUs.</p>
+<h2 id="onemkl_integration">oneMKL integration</h2>
+<p>oneAPI.jl now uses the Intel oneAPI Math Kernel Library &#40;oneMKL&#41;, automatically downloaded as part of <code>oneAPI_Support_jll.jl</code>, to accelerate a great number of BLAS and LAPACK operations on Intel GPUs. Similar to how it is implemented in our other GPU back-ends, these wrappers are available at different levels of abstraction.</p>
+<p>At the lowest level, we use a C library that wraps the oneMKL C&#43;&#43; APIs. For example, the <code>oneapi::mkl::blas::column_major::gemm</code> function for matrix-matrix multiplication is wrapped by the C functions <code>onemklSgemm</code>, <code>onemklDgemm</code>, etc. These wrappers are used to implement low-level methods like <code>oneMKL.gemm&#33;</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; using oneAPIjulia&gt; A &#61; oneArray&#40;rand&#40;Float32, 2, 3&#41;&#41;;
+2×3 oneMatrix&#123;Float32, oneAPI.oneL0.DeviceBuffer&#125;:
+ 0.44302   0.125576  0.859145
+ 0.674291  0.428346  0.0400119
+julia&gt; B &#61; oneArray&#40;rand&#40;Float32, 3, 4&#41;&#41;
+3×4 oneMatrix&#123;Float32, oneAPI.oneL0.DeviceBuffer&#125;:
+ 0.592748   0.529413   0.0323396  0.659528
+ 0.22489    0.0872259  0.253291   0.376519
+ 0.0121506  0.591135   0.706755   0.751686
+julia&gt; C &#61; similar&#40;B, &#40;2, 4&#41;&#41;;julia&gt; oneMKL.gemm&#33;&#40;&#39;N&#39;, &#39;N&#39;, true, A, B, true, C&#41;
+2×4 oneMatrix&#123;Float32, oneAPI.oneL0.DeviceBuffer&#125;:
+ 0.301279  0.753365  0.65334   0.985274
+ 0.496501  0.417994  0.158581  0.63607julia&gt; Array&#40;C&#41; ≈ Array&#40;A&#41; * Array&#40;B&#41;
+true</code></pre>
+<p>Of course, these low-level functions aren&#39;t very user-friendly, so we also integrate with Julia&#39;s standard libraries where possible:</p>
+<pre><code class="language-julia-repl">julia&gt; A &#61; oneArray&#40;rand&#40;Float32, 2, 3&#41;&#41;;
+julia&gt; B &#61; oneArray&#40;rand&#40;Float32, 3, 4&#41;&#41;;julia&gt; using LinearAlgebra
+julia&gt; C &#61; A * B;julia&gt; Array&#40;C&#41; ≈ Array&#40;A&#41; * Array&#40;B&#41;
+true</code></pre>
+<p>The most frequently used oneMKL BLAS functions have been wrapped and integrated with Julia’s standard linear algebra libraries. If you run into a missing function, please file a request to add it, or take a look at the source and contribute to oneAPI.jl&#33; The current state of the wrappers should make it easy to extend their functionality, as well as form a good basis for integrating with other libraries like oneDNN.</p>
+<h2 id="intel_arc_support">Intel Arc support</h2>
+<p>The new Arc series of discrete Intel GPUs are now fully supported by oneAPI.jl. These GPUs offer a significant performance improvement over their integrated predecessors:</p>
+<pre><code class="language-julia-repl">julia&gt; using oneAPI
+julia&gt; oneAPI.versioninfo&#40;&#41;
+1 device:
+- Intel&#40;R&#41; Arc&#40;TM&#41; A770 Graphics &#91;0x56a0&#93;julia&gt; T &#61; Float32;
+julia&gt; n &#61; p &#61; m &#61; 2048;
+julia&gt; a &#61; oneArray&#40;rand&#40;T, n, p&#41;&#41;;
+julia&gt; b &#61; oneArray&#40;rand&#40;T, p, m&#41;&#41;;
+julia&gt; c &#61; oneArray&#40;zeros&#40;T, n, m&#41;&#41;;julia&gt; using BenchmarkTools, LinearAlgebra
+julia&gt; bench &#61; @benchmark oneAPI.@sync mul&#33;&#40;c, a, b&#41;
+BenchmarkTools.Trial: 1510 samples with 1 evaluation.
+ Range &#40;min … max&#41;:  3.233 ms …  3.791 ms  ┊ GC &#40;min … max&#41;: 0.00&#37; … 0.00&#37;
+ Time  &#40;median&#41;:     3.298 ms              ┊ GC &#40;median&#41;:    0.00&#37;
+ Time  &#40;mean ± σ&#41;:   3.308 ms ± 48.426 μs  ┊ GC &#40;mean ± σ&#41;:  0.00&#37; ± 0.00&#37;        ▁▃▄▇█▅▄▃▂   ▁▁▁
+  ▁▁▃▃▅▇██████████████████▇▇▇▅▆▄▅▅▄▂▃▂▂▂▂▂▂▁▂▂▂▁▂▁▂▁▂▂▂▂▁▁▂▂ ▃
+  3.23 ms        Histogram: frequency by time        3.47 ms &lt; Memory estimate: 272 bytes, allocs estimate: 11.julia&gt; flops &#61; n*m*&#40;2p-1&#41;
+17175674880julia&gt; flops / &#40;minimum&#40;bench.times&#41;/1e9&#41;
+5.3131281169900205e12</code></pre>
+<p>For example, here we&#39;re getting over 5 TFlops of Float32 performance, which is over 10x faster than the Intel Xe Graphics G7 we had been previously using for oneAPI.jl development. At the same time, the A770 used above should be able to deliver close to 20 TFlops, so there&#39;s still room for improvement in our software stack.</p>
+<p>To use oneAPI.jl with an Arc series GPU, you need to run Linux 6.2. At the time of writing, that kernel is still in beta, so refer to your distribution&#39;s documentation for how to install it. For example, on Arch Linux you can use the <a href="https://aur.archlinux.org/packages/linux-mainline"><code>linux-mainline</code> package from the AUR</a>, Ubuntu has the <a href="https://wiki.ubuntu.com/Kernel/MainlineBuilds"><code>kernel-ppa</code> archive</a>, Fedora provides the <a href="https://fedoraproject.org/wiki/Kernel_Vanilla_Repositories"><code>stable-rc</code> repository</a>, etc.</p>
+<h2 id="other_changes">Other changes</h2>
+<ul>
+<li><p>Support for Julia 1.9 has been added.</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Wed, 08 Feb 2023 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 4.0]]></title>
   <link>https://juliagpu.org/post/2023-02-01-cuda_4.0/index.html</link>
   <guid>https://juliagpu.org/2023-02-01-cuda_4.0/</guid>
