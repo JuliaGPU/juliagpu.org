@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR32/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR32/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR32/css/bootstrap.min.css">
+  
+  
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+    <title>JuliaGPU</title>
+  
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR32/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+<!-- Content appended here -->
+
+
+<div id=home-jumbotron class="jumbotron text-center">
+  <h1><img height=70 src="/previews/PR32/assets/logo_crop.png">
+      JuliaGPU</h1>
+  <p class=font-125>
+    High-performance GPU programming in a high-level language.
+  </p>
+</div>
+
+<p>JuliaGPU is a Github organization created to unify the many packages for programming GPUs in Julia. With its high-level syntax and flexible compiler, Julia is well positioned to productively program hardware accelerators like GPUs without sacrificing performance.</p>
+<p>Several GPU platforms are supported, but there are large differences in features and stability. On this website, you can find a brief introduction of the supported platforms and links to the respective home pages.</p>
+<div style=position:relative;padding-bottom:56.25%;height:0;overflow:hidden>
+  <iframe
+    src=https://www.youtube.com/embed/Hz9IMJuW5hU
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;"
+    allowfullscreen
+    title="YouTube Video">
+  </iframe>
+</div>
+
+<p><br /></p>
+<h2 id="supported_platforms"><a href="#supported_platforms" class="header-anchor">Supported platforms</a></h2>
+<p>The best supported GPU platform in Julia is <a href="/previews/PR32/cuda/"><strong>NVIDIA CUDA</strong></a>, with mature and full-featured packages for both low-level kernel programming as well as working with high-level operations on arrays. All versions of Julia are supported, on Linux and Windows, and the functionality is actively used by a variety of applications and libraries.</p>
+<p>Similar, but much newer capabilities exist for <a href="/previews/PR32/oneapi/"><strong>Intel GPUs with oneAPI</strong></a>. Currently, full-featured kernel programming capabilities are available, but there is no support for vendor libraries such as oneMKL or oneDNN yet.</p>
+<p>Experimental support exists for <a href="/previews/PR32/rocm/"><strong>AMD GPUs</strong></a> running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using array operations, but these capabilities are under heavy development and are not ready for general consumption yet.</p>
+<p>Experimental support also exists for <a href="/previews/PR32/metal/"><strong>Apple GPUs</strong></a>. Array programming and kernel programming are both supported.</p>
+<h2 id="applications"><a href="#applications" class="header-anchor">Applications</a></h2>
+<p>Almost <a href="https://juliahub.com/ui/Packages/CUDA/oWw5k?page&#61;2">300 packages</a> rely directly or indirectly on Julia&#39;s GPU capabilities. A few noteworthy examples are:</p>
+<ul>
+<li><p><a href="https://github.com/JuliaDiffEq/DiffEqGPU.jl">DiffEqGPU.jl</a> as part of the DifferentialEquations.jl ecosystem, for using GPUs in differential equation solvers</p>
+</li>
+<li><p><a href="https://github.com/FluxML/Flux.jl">Flux.jl</a> library for machine-learning</p>
+</li>
+<li><p><a href="https://github.com/climate-machine/Oceananigans.jl">Oceananigans.jl</a> to accelerate a non-hydrostatic ocean modeling application</p>
+</li>
+<li><p><a href="https://github.com/QuantumBFS/Yao.jl">Yao.jl</a> framework for quantum information research</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/KernelAbstractions.jl">KernelAbstractions.jl</a> for working with CPUs and GPUs alike using vendor-neutral abstractions</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/GemmKernels.jl">GemmKernels.jl</a> providing flexible and performant GEMM kernels</p>
+</li>
+</ul>
+<p>Many other Julia applications and libraries can be used with GPUs, too: By means of GPU-specific array types like CuArray from CUDA.jl or ROCArray from AMDGPU.jl, existing software that uses the Julia array interfaces can often be executed as-is on a GPU.</p>
+<h2 id="publications"><a href="#publications" class="header-anchor">Publications</a></h2>
+<p>Much of Julia&#39;s GPU support was developed as part of academic research. If you would like to help support it, please star the relevant repositories as such metrics may help us secure funding in the future. If you use our software as part of your research, teaching, or other activities, we would be grateful if you could cite our work:</p>
+<ul>
+<li><p>Tim Besard, Christophe Foket, and Bjorn De Sutter. &quot;<a href="https://ieeexplore.ieee.org/abstract/document/8471188">Effective extensible programming: Unleashing Julia on GPUs.</a>&quot; <em>IEEE Transactions on Parallel and Distributed Systems</em> &#40;2018&#41;.</p>
+</li>
+<li><p>Tim Besard, Valentin Churavy, Alan Edelman and Bjorn De Sutter. &quot;<a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">Rapid software prototyping for heterogeneous and distributed platforms.</a>&quot; <em>Advances in Engineering Software</em> &#40;2019&#41;.</p>
+</li>
+<li><p>Thomas Faingnaert, Tim Besard, and Bjorn De Sutter. &quot;<a href="https://ieeexplore.ieee.org/document/9655458">Flexible Performant GEMM Kernels on GPUs.</a>&quot; <em>IEEE Transactions on Parallel and Distributed Systems</em> &#40;2021&#41;.</p>
+</li>
+</ul>
+<h2 id="community"><a href="#community" class="header-anchor">Community</a></h2>
+<p>If you need help, or have questions about GPU programming in Julia, you can find members of the community at:</p>
+<ul>
+<li><p>Julia Discourse, with a dedicated <a href="https://discourse.julialang.org/c/domain/gpu/11">GPU section</a></p>
+</li>
+<li><p>Julia Slack &#40;<a href="https://slackinvite.julialang.org/">register here</a>&#41;, on the <a href="https://julialang.slack.com/messages/C689Y34LE/">#gpu channel</a></p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR32/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>

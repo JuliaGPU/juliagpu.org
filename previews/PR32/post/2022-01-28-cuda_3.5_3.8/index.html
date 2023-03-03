@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR32/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR32/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR32/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR32/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 3.5-3.8 ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR32/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR32/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 3.5-3.8</h1>
+      <i data-feather=calendar></i>
+<time datetime=2022-1-28>Jan 28, 2022</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl versions 3.5 to 3.8 have brought several new features to improve performance and productivity. This blog post will highlight a couple: direct copies between devices, better performance by preserving array index types and changing the memory pool, and a much-improved interface to the compute sanitizer utility.</p>
+<h2 id="copies_between_devices"><a href="#copies_between_devices" class="header-anchor">Copies between devices</a></h2>
+<p>Typically, when sending data between devices you need to stage through the CPU. CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1284">now does this automatically</a>, making it possible to directly copy between <code>CuArray</code>s on different devices:</p>
+<pre><code class="language-julia-repl">julia&gt; device&#33;&#40;0&#41;;
+
+julia&gt; a &#61; CUDA.rand&#40;2,2&#41;
+2×2 CuArray&#123;Float32, 2, CUDA.Mem.DeviceBuffer&#125;:
+ 0.440147  0.986939
+ 0.622901  0.698119
+
+julia&gt; device&#33;&#40;1&#41;;
+
+julia&gt; b &#61; CUDA.zeros&#40;2,2&#41;;
+
+julia&gt; copyto&#33;&#40;b, a&#41;
+2×2 CuArray&#123;Float32, 2, CUDA.Mem.DeviceBuffer&#125;:
+ 0.440147  0.986939
+ 0.622901  0.698119</code></pre>
+<p>When your hardware supports it, CUDA.jl will automatically enable so-called peer-to-peer mode, making it possible to copy data directly without going through the CPU. This can result in significant bandwidth and latency reductions. You can check if this mode of communication is possible:</p>
+<pre><code class="language-julia-repl">julia&gt; src &#61; CuDevice&#40;0&#41;
+CuDevice&#40;0&#41;: NVIDIA A100-PCIE-40GB
+
+julia&gt; dst &#61; CuDevice&#40;1&#41;
+CuDevice&#40;1&#41;: Tesla V100-PCIE-32GB
+
+julia&gt; can_access_peer&#40;src, dst&#41;
+false</code></pre>
+<p>In this case, peer-to-peer communication is not possible because the devices have a different compute capability major revision number. With a compatible device, the function reports <code>true</code>:</p>
+<pre><code class="language-julia">julia&gt; src &#61; CuDevice&#40;1&#41;
+CuDevice&#40;1&#41;: Tesla V100-PCIE-32GB
+
+julia&gt; dst &#61; CuDevice&#40;2&#41;
+CuDevice&#40;2&#41;: Tesla V100-PCIE-16GB
+
+julia&gt; can_access_peer&#40;src, dst&#41;
+true</code></pre>
+<p>Thanks to <a href="https://github.com/kshyatt">@kshyatt</a> for help with this change&#33;</p>
+<h2 id="helper_function_to_use_compute-sanitizer"><a href="#helper_function_to_use_compute-sanitizer" class="header-anchor">Helper function to use <code>compute-sanitizer</code></a></h2>
+<p>The CUDA toolkit comes with a powerful tool to check GPU kernels for common issues like memory errors and race conditions: the <a href="https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html">compute sanitizer</a>. To make it easier to use this tool, CUDA.jl now ships the binary as part of its artifacts, and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1340">provides a helper function</a> to restart Julia under the <code>compute-sanitizer</code>. Let&#39;s demonstrate, and trigger a memory error to show what the compute sanitizer can detect:</p>
+<pre><code class="language-julia-repl">julia&gt; using CUDA
+
+julia&gt; CUDA.run_compute_sanitizer&#40;&#41;
+Re-starting your active Julia session...
+
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61; COMPUTE-SANITIZER
+julia&gt; using CUDA
+
+julia&gt; unsafe_wrap&#40;CuArray, pointer&#40;CuArray&#40;&#91;1&#93;&#41;&#41;, 2&#41; .&#61; 1
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61; Invalid __global__ write of size 8 bytes
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     at 0x2a0 in LLVM/src/interop/base.jl:45:julia_broadcast_kernel_1892&#40;CuKernelContext, CuDeviceArray&lt;Int64, &#40;int&#41;1, &#40;int&#41;1&gt;, Broadcasted&lt;void, Tuple&lt;OneTo&lt;Int64&gt;&gt;, _identity, Broadcasted&lt;Int64&gt;&gt;, Int64&#41;
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     by thread &#40;1,0,0&#41; in block &#40;0,0,0&#41;
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     Address 0xa64000008 is out of bounds
+&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;     and is 1 bytes after the nearest allocation at 0xa64000000 of size 8 bytes</code></pre>
+<p>Other tools are available too, e.g. <code>racecheck</code> for detecting races or <code>synccheck</code> for finding synchronization issues. These tools can be selected using the <code>tool</code> keyword argument to <code>run_compute_sanitizer</code>.</p>
+<h2 id="updated_binary_dependencies"><a href="#updated_binary_dependencies" class="header-anchor">Updated binary dependencies</a></h2>
+<p>As is common with every release, CUDA.jl now supports newer versions of NVIDIA&#39;s tools and libraries:</p>
+<ul>
+<li><p>CUDA toolkit <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1256">11.5</a> and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1326">11.6</a></p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1328">CUDNN 8.3.2</a></p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1327">CUTENSOR 1.4.0</a></p>
+</li>
+</ul>
+<p>The update to CUDA toolkit 11.6 comes with improved debug info compatibility. If you need to debug Julia GPU code with tools like <code>compute-sanitizer</code> or <code>cuda-gdb</code>, and you need debug info &#40;the equivalent of <code>nvcc -G</code>&#41;, ensure CUDA.jl can use the latest version of the CUDA toolkit.</p>
+<p>To make it easier to use the latest supported toolkit, CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1182">now implements</a> CUDA&#39;s so-called <strong>Forward Compatibility mode</strong>: When your driver is outdated, CUDA.jl will attempt to load a newer version of the CUDA driver library, enabling use of a newer CUDA toolkit and libraries. Note that this is only supported on select hardware, refer to <a href="https://docs.nvidia.com/deploy/cuda-compatibility/#forward-compatibility-title">the NVIDIA documentation</a> for more details.</p>
+<h2 id="preserving_array_indices"><a href="#preserving_array_indices" class="header-anchor">Preserving array indices</a></h2>
+<p>Julia&#39;s integers are typically 64-bits wide, which can be wasteful when dealing with GPU indexing intrinsics that are typically only 32-bits wide. CUDA.jl&#39;s device array type <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1153">now carefully preserves the type of indices</a> so that 32-bits indices aren&#39;t unnecessarily promoted to 64-bits. With some careful kernel programming &#40;note the use of <code>0x1</code> instead of <code>1</code> below&#41;, this makes it possible to significantly reduce the register pressure surrounding indexing operations, which may be useful in register-constrained situations:</p>
+<pre><code class="language-julia-repl">julia&gt; function memset&#40;arr, val&#41;
+           i &#61; &#40;blockIdx&#40;&#41;.x-0x1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+           @inbounds arr&#91;i&#93; &#61; val
+           return
+       end
+
+julia&gt; CUDA.code_ptx&#40;memset, Tuple&#123;CuDeviceArray&#123;Float32,1,AS.Global&#125;,Float32&#125;&#41;
+.func julia_memset&#40;.param .b64 arr, .param .b32 val&#41; &#123;
+        .reg .f32       &#37;f&lt;2&gt;;
+        .reg .b32       &#37;r&lt;5&gt;;
+        .reg .b64       &#37;rd&lt;5&gt;;
+
+        ld.param.u64    &#37;rd1, &#91;arr&#93;;
+        ld.param.f32    &#37;f1, &#91;val&#93;;
+        mov.u32         &#37;r1, &#37;ctaid.x;
+        mov.u32         &#37;r2, &#37;ntid.x;
+        mov.u32         &#37;r3, &#37;tid.x;
+        mad.lo.s32      &#37;r4, &#37;r2, &#37;r1, &#37;r3;
+        ld.u64          &#37;rd2, &#91;&#37;rd1&#93;;
+        mul.wide.s32    &#37;rd3, &#37;r4, 4;
+        add.s64         &#37;rd4, &#37;rd2, &#37;rd3;
+        st.global.f32   &#91;&#37;rd4&#93;, &#37;f1;
+        ret;
+&#125;</code></pre>
+<p>On CUDA.jl 3.4, this simple function used 3 more 64-bit registers:</p>
+<pre><code class="language-julia">.func julia_memset&#40;.param .b64 arr, .param .b32 val&#41; &#123;
+        .reg .f32       &#37;f&lt;2&gt;;
+        .reg .b32       &#37;r&lt;5&gt;;
+        .reg .b64       &#37;rd&lt;8&gt;;
+
+        ld.param.u64    &#37;rd1, &#91;arr&#93;;
+        ld.param.f32    &#37;f1, &#91;val&#93;;
+        mov.u32         &#37;r1, &#37;ctaid.x;
+        mov.u32         &#37;r2, &#37;ntid.x;
+        mul.wide.u32    &#37;rd2, &#37;r2, &#37;r1;
+        mov.u32         &#37;r3, &#37;tid.x;
+        add.s32         &#37;r4, &#37;r3, 1;
+        cvt.u64.u32     &#37;rd3, &#37;r4;
+        ld.u64          &#37;rd4, &#91;&#37;rd1&#93;;
+        add.s64         &#37;rd5, &#37;rd2, &#37;rd3;
+        shl.b64         &#37;rd6, &#37;rd5, 2;
+        add.s64         &#37;rd7, &#37;rd4, &#37;rd6;
+        st.global.f32   &#91;&#37;rd7&#43;-4&#93;, &#37;f1;
+        ret;
+&#125;</code></pre>
+<h2 id="more_aggressive_memory_management"><a href="#more_aggressive_memory_management" class="header-anchor">More aggressive memory management</a></h2>
+<p>Starting with CUDA 3.8, the memory pool used to allocate <code>CuArray</code>s will be configured differently: The pool will now be <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1344">allowed to use all available GPU memory</a>, whereas previously all cached memory was released at each synchronization point. This can significantly improve performance, and makes synchronization much cheaper.</p>
+<p>This behavior can be observed by calling the <code>memory_status&#40;&#41;</code> function:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.memory_status&#40;&#41;
+Effective GPU memory usage: 13.57&#37; &#40;2.001 GiB/14.751 GiB&#41;
+Memory pool usage: 0 bytes &#40;0 bytes reserved&#41;
+
+julia&gt; a &#61; CuArray&#123;Float32&#125;&#40;undef, &#40;1024, 1024, 1024&#41;&#41;;
+julia&gt; Base.format_bytes&#40;sizeof&#40;a&#41;&#41;
+&quot;4.000 GiB&quot;
+
+julia&gt; a &#61; nothing
+julia&gt; GC.gc&#40;&#41;
+
+julia&gt; CUDA.memory_status&#40;&#41;
+Effective GPU memory usage: 40.59&#37; &#40;5.988 GiB/14.751 GiB&#41;
+Memory pool usage: 0 bytes &#40;4.000 GiB reserved&#41;</code></pre>
+<p>So far nothing new. On previous versions of CUDA.jl however, any subsequent synchronization of the GPU &#40;e.g., by copying memory to the CPU&#41; would have resulted in a release of this reserved memory. This is not the case anymore:</p>
+<pre><code class="language-julia-repl">julia&gt; synchronize&#40;&#41;
+
+julia&gt; CUDA.memory_status&#40;&#41;
+Effective GPU memory usage: 40.59&#37; &#40;5.988 GiB/14.751 GiB&#41;
+Memory pool usage: 0 bytes &#40;4.000 GiB reserved&#41;</code></pre>
+<p>If you still want to release this memory, you can call the <code>reclaim&#40;&#41;</code> function:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.reclaim&#40;&#41;
+
+julia&gt; CUDA.memory_status&#40;&#41;
+Effective GPU memory usage: 13.48&#37; &#40;1.988 GiB/14.751 GiB&#41;
+Memory pool usage: 0 bytes &#40;0 bytes reserved&#41;</code></pre>
+<p>With interactive Julia sessions, this function is called periodically so that the GPU&#39;s memory isn&#39;t held on to unnecessarily. Otherwise it shouldn&#39;t be necessary to call this function, as memory is freed automatically when it is needed.</p>
+<h2 id="minor_changes_and_improvements"><a href="#minor_changes_and_improvements" class="header-anchor">Minor changes and improvements</a></h2>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1217">Bitonic sort</a> is now used instead of quicksort &#40;by <a href="https://github.com/xaellison">@xaellison</a>&#41;.</p>
+</li>
+<li><p><code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1303">now stores the length of the array</a>, greatly speeding up indexing with high-dimensional arrays.</p>
+</li>
+<li><p>Device intrinsics <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1305">cannot be called on the CPU anymore</a>, protecting against segfaults when something isn&#39;t dispatching correctly.</p>
+</li>
+<li><p>Support for Multi-GPU instances <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1199">has been improved</a>, providing the <code>parent_uuid</code> function to look up the UUID of the parent device.</p>
+</li>
+<li><p><code>randn</code> and <code>randexp</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1236">are now supported in kernel code</a>, which should help with initial support of Distributions.jl-based operations.</p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR32/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR32/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
