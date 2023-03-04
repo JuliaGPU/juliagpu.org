@@ -28,7 +28,8 @@
 <p>Metal.jl 0.2 marks a significant milestone in the development of the Metal.jl package. The release comes with initial support for the Metal Perform Shaders &#40;MPS&#41; framework for accelerating common operations like matrix multiplications, as well as various improvements for writing Metal kernels in Julia.</p>
 <h2 id="metal_performance_shaders">Metal Performance Shaders</h2>
 <p>Quoting the <a href="https://developer.apple.com/documentation/metalperformanceshaders">Apple documentation</a>, The Metal Performance Shaders &#40;MPS&#41; framework contains a collection of highly optimized compute and graphics shaders for use in Metal applications. With Metal.jl 0.2, we have added initial support for this framework, and used it to accelerate the matrix multiplication operation:</p>
-<pre><code class="language-julia-repl">julia&gt; n &#61; p &#61; m &#61; 2048
+<pre><code class="language-julia-repl">julia&gt; using Metal, BenchmarkTools
+julia&gt; n &#61; p &#61; m &#61; 2048
 julia&gt; flops &#61; n*m*&#40;2p-1&#41;
 17175674880julia&gt; a &#61; MtlArray&#40;rand&#40;Float32, n, p&#41;&#41;;
 julia&gt; b &#61; MtlArray&#40;rand&#40;Float32, p, m&#41;&#41;;
