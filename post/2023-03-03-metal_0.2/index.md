@@ -20,6 +20,7 @@ graphics shaders for use in Metal applications. With Metal.jl 0.2, we have added
 support for this framework, and used it to accelerate the matrix multiplication operation:
 
 ```julia-repl
+julia> using Metal, BenchmarkTools
 julia> n = p = m = 2048
 julia> flops = n*m*(2p-1)
 17175674880
