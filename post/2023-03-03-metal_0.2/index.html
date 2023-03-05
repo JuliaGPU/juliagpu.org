@@ -160,6 +160,7 @@ julia&gt; a &#61; MtlArray&#40;rand&#40;Float32, n, p&#41;&#41;;
 julia&gt; b &#61; MtlArray&#40;rand&#40;Float32, p, m&#41;&#41;;
 julia&gt; c &#61; MtlArray&#40;zeros&#40;Float32, n, m&#41;&#41;;
 
+julia&gt; using LinearAlgebra
 julia&gt; bench &#61; @benchmark Metal.@sync mul&#33;&#40;c, a, b&#41;
 BenchmarkTools.Trial: 518 samples with 1 evaluation.
  Range &#40;min … max&#41;:  9.366 ms …  13.354 ms  ┊ GC &#40;min … max&#41;: 0.00&#37; … 0.00&#37;
