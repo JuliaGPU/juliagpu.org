@@ -29,6 +29,7 @@ julia> a = MtlArray(rand(Float32, n, p));
 julia> b = MtlArray(rand(Float32, p, m));
 julia> c = MtlArray(zeros(Float32, n, m));
 
+julia> using LinearAlgebra
 julia> bench = @benchmark Metal.@sync mul!(c, a, b)
 BenchmarkTools.Trial: 518 samples with 1 evaluation.
  Range (min … max):  9.366 ms …  13.354 ms  ┊ GC (min … max): 0.00% … 0.00%
