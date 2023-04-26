@@ -35,6 +35,6 @@ Introduction to concurrent GPU computing:
 * Performance killers and tools for optimization
 * Demonstration
 
-{{youtube 7Yq1UyncDNc}}
+{{youtube AKhcF0yNvJE}}
 
 \\
