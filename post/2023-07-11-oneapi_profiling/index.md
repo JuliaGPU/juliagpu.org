@@ -75,7 +75,7 @@ There are several ways to profile this application. We'll start by demonstrating
 the command-line interface:
 
 ```
-$ vtune -collect gpu-hotspots julia vadd.jl
+$ vtune -collect gpu-offload julia vadd.jl
 
 vtune: Collection started.
 vtune: Collection stopped.
@@ -134,7 +134,7 @@ Here, the `IntelITT.@profile` macro will start and stop the profiler, so we
 should launch VTune with the `-start-paused` option:
 
 ```
-$ vtune -collect gpu-hotspots -start-paused julia vadd.jl
+$ vtune -collect gpu-offload -start-paused julia vadd.jl
 ```
 
 In the GUI, we can now clearly see a nicely packed stream of API calls, grouped
