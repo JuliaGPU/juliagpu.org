@@ -147,6 +147,20 @@ application.
 ![VTune timeline](vtune_timeline.png)
 
 
+## Kernel details
+
+The timeline view is great for getting an application-level overview of what is
+happening, but once you've isolated a kernel that doesn't perform as expected,
+you may want to switch from the GPU Offload to the GPU Compute Hotspots
+analysis. Here, you get a more detailed view of what's happening during
+execution on the GPU, including the memory bandwidth and execution properties:
+
+![VTune timeline](vtune_gpu_hotspots.png)
+
+Many of these analysis can be configured to collect more or less data, at the
+cost of more or less overhead.
+
+
 ## Working remotely
 
 In many cases, your local system will not have a GPU, and you will want to
