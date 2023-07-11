@@ -87,6 +87,10 @@ IntelITT.@profile main&#40;&#41;</code></pre>
 <pre><code class="language-julia">&#36; vtune -collect gpu-offload -start-paused julia vadd.jl</code></pre>
 <p>In the GUI, we can now clearly see a nicely packed stream of API calls, grouped under the <code>vadd</code> range we added. Note that because API calls are asynchronous, i.e. they return immediately before the GPU has executed them, I grouped them under a <code>oneAPI.@sync</code> call so that the range not only captures the time spent on the CPU, but also the time spent on the GPU. This may not be wanted for your application.</p>
 <p><img src="vtune_timeline.png" alt="VTune timeline" /></p>
+<h2 id="kernel_details">Kernel details</h2>
+<p>The timeline view is great for getting an application-level overview of what is happening, but once you&#39;ve isolated a kernel that doesn&#39;t perform as expected, you may want to switch from the GPU Offload to the GPU Compute Hotspots analysis. Here, you get a more detailed view of what&#39;s happening during execution on the GPU, including the memory bandwidth and execution properties:</p>
+<p><img src="vtune_gpu_hotspots.png" alt="VTune timeline" /></p>
+<p>Many of these analysis can be configured to collect more or less data, at the cost of more or less overhead.</p>
 <h2 id="working_remotely">Working remotely</h2>
 <p>In many cases, your local system will not have a GPU, and you will want to profile an application running on a remote system. As shown above, you can use the <code>vtune</code> CLI to create a trace and open that locally using <code>vtune-gui</code>, however there is an easier way: The <code>vtune-backend</code> daemon.</p>
 <p>Start by launching the VTune back-end on the remote system:</p>
