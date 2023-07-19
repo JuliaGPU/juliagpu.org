@@ -20,8 +20,8 @@
 
 <item>
   <title><![CDATA[Profiling oneAPI.jl applications with VTune]]></title>
-  <link>https://juliagpu.org/post/2023-07-11-oneapi_profiling/index.html</link>
-  <guid>https://juliagpu.org/2023-07-11-oneapi_profiling/</guid>
+  <link>https://juliagpu.org/post/2023-07-19-oneapi_profiling/index.html</link>
+  <guid>https://juliagpu.org/2023-07-19-oneapi_profiling/</guid>
   <description><![CDATA[Profiling GPU applications is hard, so this post shows how to use Intel&#39;s VTune Profiler to profile GPU applications written in Julia with oneAPI.jl.]]></description>  
   
   <content:encoded><![CDATA[
@@ -79,16 +79,17 @@ FPU Utilization: 0.0&#37; of Elapsed time with GPU busy
 <pre><code class="language-julia">using oneAPI, IntelITT# ...function main&#40;N&#61;256&#41;
     a &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
     b &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
-    c &#61; IntelITT.@range &quot;vadd&quot; oneAPI.@sync vadd&#40;a, b&#41;
+    c &#61; IntelITT.@task &quot;vadd&quot; oneAPI.@sync vadd&#40;a, b&#41;
 end# warm-up
 main&#40;&#41;# actual profile
-IntelITT.@profile main&#40;&#41;</code></pre>
-<p>Here, the <code>IntelITT.@profile</code> macro will start and stop the profiler, so we should launch VTune with the <code>-start-paused</code> option:</p>
+IntelITT.@collect main&#40;&#41;</code></pre>
+<p>Here, the <code>IntelITT.@collect</code> macro will start and stop the collection, so we should launch VTune with the <code>-start-paused</code> option:</p>
 <pre><code class="language-julia">&#36; vtune -collect gpu-offload -start-paused julia vadd.jl</code></pre>
-<p>In the GUI, we can now clearly see a nicely packed stream of API calls, grouped under the <code>vadd</code> range we added. Note that because API calls are asynchronous, i.e. they return immediately before the GPU has executed them, I grouped them under a <code>oneAPI.@sync</code> call so that the range not only captures the time spent on the CPU, but also the time spent on the GPU. This may not be wanted for your application.</p>
+<p>In the GUI, we can now clearly see a nicely packed stream of API calls, grouped under the <code>vadd</code> task we added. Note that because API calls are asynchronous, i.e. they return immediately before the GPU has executed them, I grouped them under a <code>oneAPI.@sync</code> call so that the task not only captures the time spent on the CPU, but also the time spent on the GPU. This may not be wanted for your application.</p>
 <p><img src="vtune_timeline.png" alt="VTune timeline" /></p>
 <h2 id="kernel_details">Kernel details</h2>
 <p>The timeline view is great for getting an application-level overview of what is happening, but once you&#39;ve isolated a kernel that doesn&#39;t perform as expected, you may want to switch from the GPU Offload to the GPU Compute Hotspots analysis. Here, you get a more detailed view of what&#39;s happening during execution on the GPU, including the memory bandwidth and execution properties:</p>
+<pre><code class="language-julia">&#36; vtune -collect gpu-hotspots -start-paused julia vadd.jl</code></pre>
 <p><img src="vtune_gpu_hotspots.png" alt="VTune timeline" /></p>
 <p>Many of these analysis can be configured to collect more or less data, at the cost of more or less overhead.</p>
 <h2 id="working_remotely">Working remotely</h2>
@@ -106,7 +107,7 @@ IntelITT.@profile main&#40;&#41;</code></pre>
 <p>If you have access to an Intel GPU and want to gain experience profiling GPU applications with VTune, we encourage you to get involved&#33; A good starting point would be analyzing some of oneAPI.jl&#39;s array operations like <code>mapreduce</code> or <code>broadcast</code> to identify potential bottlenecks. For more information or any queries, feel free to open an issue on GitHub, or join the discussion on Slack or Discourse. Your input could make a significant difference&#33;</p>
 ]]></content:encoded>
     
-  <pubDate>Tue, 11 Jul 2023 00:00:00 +0000</pubDate>  
+  <pubDate>Wed, 19 Jul 2023 00:00:00 +0000</pubDate>  
   
   
   <atom:author>
