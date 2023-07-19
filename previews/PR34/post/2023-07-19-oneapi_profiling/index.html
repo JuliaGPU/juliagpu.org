@@ -186,7 +186,7 @@ function main&#40;N&#61;256&#41;
     c &#61; vadd&#40;a, b&#41;
 end
 main&#40;&#41;</code></pre>
-<p>We&#39;ve tweaked this example to make it more suited for profiling: We&#39;ve enclosed the main application in a function for performance improvement, and we&#39;ve increased the array sizes to make the GPU work harder.</p>
+<p>We&#39;ve tweaked this example to make it more suited for profiling: We&#39;ve enclosed the main application in a function so that it gets compiled, and we&#39;ve increased the array sizes to make the GPU work harder.</p>
 <p>There are several ways to profile this application. We&#39;ll start by demonstrating the command-line interface:</p>
 <pre><code class="language-julia">&#36; vtune -collect gpu-offload julia vadd.jl
 
@@ -210,10 +210,10 @@ FPU Utilization: 0.0&#37; of Elapsed time with GPU busy
 <li><p>add markers to the trace to indicate what is happening.</p>
 </li>
 </ul>
-<p>We can interface with the ITT APIs using the IntelITT.jl package. Let&#39;s update our example:</p>
+<p>We can interface with the ITT APIs using the <a href="https://github.com/JuliaPerf/IntelITT.jl">IntelITT.jl</a> package. Let&#39;s update our example:</p>
 <pre><code class="language-julia">using oneAPI, IntelITT
 
-# ...
+# same as before
 
 function main&#40;N&#61;256&#41;
     a &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
@@ -238,16 +238,16 @@ IntelITT.@collect main&#40;&#41;</code></pre>
 <h2 id="working_remotely"><a href="#working_remotely" class="header-anchor">Working remotely</a></h2>
 <p>In many cases, your local system will not have a GPU, and you will want to profile an application running on a remote system. As shown above, you can use the <code>vtune</code> CLI to create a trace and open that locally using <code>vtune-gui</code>, however there is an easier way: The <code>vtune-backend</code> daemon.</p>
 <p>Start by launching the VTune back-end on the remote system:</p>
-<pre><code class="language-julia">&#36; vtune-backend --enable-server-profiling --web-port 8443 --log-to-console&quot;</code></pre>
-<p>If your remote system is directly reachable, you want to add <code>--allow-remote-access --base-url &quot;https://remoteServer:8443</code>. However, most people will need to set-up an SSH tunnel:</p>
+<pre><code class="language-julia">&#36; vtune-backend --enable-server-profiling --web-port 8443 --log-to-console</code></pre>
+<p>If your remote system is directly reachable, you want to add <code>--allow-remote-access --base-url &quot;https://remoteServer:8443&quot;</code>. However, most people will need to set-up an SSH tunnel:</p>
 <pre><code class="language-julia">&#36; ssh -L 8443:localhost:8443 remoteServer</code></pre>
 <p>You can now access the VTune GUI at <code>https://localhost:8443/</code>. Note that the first time you connect, you will need to do so using the one-time URL that is shown in the terminal where you launched the <code>vtune-backend</code> daemon.</p>
 <p>The web interface that <code>vtune-backend</code> provides is identical to the GUI from <code>vtune-gui</code>: Start by creating a new project, and configuring an analysis: Select the local VTune profile server, enter the path to the Julia executable along with arguments and a working directory, and select the GPU Offload analysis type:</p>
 <p><img src="vtune_webui.png" alt="VTune WebUI" /></p>
-<p>To start the analysis, click the big blue play button. If you use <code>IntelITT.@profile</code> to restrict the trace to the code of interest, use the second button with the pause symbol.</p>
+<p>To start the analysis, click the big blue play button. If you use <code>IntelITT.@collect</code> to restrict the trace to the code of interest, use the second button with the pause symbol.</p>
 <h2 id="give_it_a_try"><a href="#give_it_a_try" class="header-anchor">Give it a try&#33;</a></h2>
 <p>Hopefully, this guide has shed some light on how to accurately profile oneAPI.jl applications using Intel&#39;s VTune Profiler. It turns out that one package could significantly benefit from some rigorous profiling: oneAPI.jl&#33; Until now, development has focussed on correctness and usability, leaving considerable room for performance enhancements.</p>
-<p>If you have access to an Intel GPU and want to gain experience profiling GPU applications with VTune, we encourage you to get involved&#33; A good starting point would be analyzing some of oneAPI.jl&#39;s array operations like <code>mapreduce</code> or <code>broadcast</code> to identify potential bottlenecks. For more information or any queries, feel free to open an issue on GitHub, or join the discussion on Slack or Discourse. Your input could make a significant difference&#33;</p>
+<p>If you have access to an Intel GPU and want to gain experience profiling GPU applications with VTune, we encourage you to get involved&#33; A good starting point would be analyzing some of oneAPI.jl&#39;s array operations like <code>mapreduce</code> or <code>broadcast</code> to identify potential bottlenecks. For more information or any queries, feel free to open an issue on GitHub, or join the discussion on Slack or Discourse. Your help could make a significant difference&#33;</p>
 <!-- CONTENT ENDS HERE -->
       </main>
     </div> <!-- class="container" -->
