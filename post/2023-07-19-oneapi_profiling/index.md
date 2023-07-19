@@ -68,8 +68,8 @@ main()
 ```
 
 We've tweaked this example to make it more suited for profiling: We've enclosed
-the main application in a function for performance improvement, and we've
-increased the array sizes to make the GPU work harder.
+the main application in a function so that it gets compiled, and we've increased
+the array sizes to make the GPU work harder.
 
 There are several ways to profile this application. We'll start by demonstrating
 the command-line interface:
@@ -109,28 +109,29 @@ instrument our application with Intel's Instrumentation and Tracing Technology
 - only start the profiler when we're running code of interest;
 - add markers to the trace to indicate what is happening.
 
-We can interface with the ITT APIs using the IntelITT.jl package. Let's update
+We can interface with the ITT APIs using the
+[IntelITT.jl](https://github.com/JuliaPerf/IntelITT.jl) package. Let's update
 our example:
 
 ```julia
 using oneAPI, IntelITT
 
-# ...
+# same as before
 
 function main(N=256)
     a = round.(rand(Float32, N) * 100)
     b = round.(rand(Float32, N) * 100)
-    c = IntelITT.@range "vadd" oneAPI.@sync vadd(a, b)
+    c = IntelITT.@task "vadd" oneAPI.@sync vadd(a, b)
 end
 
 # warm-up
 main()
 
 # actual profile
-IntelITT.@profile main()
+IntelITT.@collect main()
 ```
 
-Here, the `IntelITT.@profile` macro will start and stop the profiler, so we
+Here, the `IntelITT.@collect` macro will start and stop the collection, so we
 should launch VTune with the `-start-paused` option:
 
 ```
@@ -138,9 +139,9 @@ $ vtune -collect gpu-offload -start-paused julia vadd.jl
 ```
 
 In the GUI, we can now clearly see a nicely packed stream of API calls, grouped
-under the `vadd` range we added. Note that because API calls are asynchronous,
+under the `vadd` task we added. Note that because API calls are asynchronous,
 i.e. they return immediately before the GPU has executed them, I grouped them
-under a `oneAPI.@sync` call so that the range not only captures the time spent
+under a `oneAPI.@sync` call so that the task not only captures the time spent
 on the CPU, but also the time spent on the GPU. This may not be wanted for your
 application.
 
@@ -154,6 +155,10 @@ happening, but once you've isolated a kernel that doesn't perform as expected,
 you may want to switch from the GPU Offload to the GPU Compute Hotspots
 analysis. Here, you get a more detailed view of what's happening during
 execution on the GPU, including the memory bandwidth and execution properties:
+
+```
+$ vtune -collect gpu-hotspots -start-paused julia vadd.jl
+```
 
 ![VTune timeline](vtune_gpu_hotspots.png)
 
@@ -171,11 +176,11 @@ however there is an easier way: The `vtune-backend` daemon.
 Start by launching the VTune back-end on the remote system:
 
 ```
-$ vtune-backend --enable-server-profiling --web-port 8443 --log-to-console"
+$ vtune-backend --enable-server-profiling --web-port 8443 --log-to-console
 ```
 
 If your remote system is directly reachable, you want to add
-`--allow-remote-access --base-url "https://remoteServer:8443`. However,
+`--allow-remote-access --base-url "https://remoteServer:8443"`. However,
 most people will need to set-up an SSH tunnel:
 
 ```
@@ -195,7 +200,7 @@ analysis type:
 ![VTune WebUI](vtune_webui.png)
 
 To start the analysis, click the big blue play button. If you use
-`IntelITT.@profile` to restrict the trace to the code of interest, use the
+`IntelITT.@collect` to restrict the trace to the code of interest, use the
 second button with the pause symbol.
 
 
@@ -212,4 +217,4 @@ applications with VTune, we encourage you to get involved! A good starting point
 would be analyzing some of oneAPI.jl's array operations like `mapreduce` or
 `broadcast` to identify potential bottlenecks. For more information or any
 queries, feel free to open an issue on GitHub, or join the discussion on Slack
-or Discourse. Your input could make a significant difference!
+or Discourse. Your help could make a significant difference!
