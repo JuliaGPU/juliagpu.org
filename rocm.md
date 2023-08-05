@@ -41,7 +41,7 @@ written using AMDGPU.jl, where we show preliminary performance to approach that 
 HIP C++ on a memcopy and 2D diffusion kernel:
 
 <div class="card mb-3">
-  <a href="/assets/img/cuda-performance.png">
+  <a href="/assets/img/amdgpu-performance.png">
     <img src="/assets/img/amdgpu-performance.png" class=card-img-top alt>
   </a>
   <div class=card-body>
