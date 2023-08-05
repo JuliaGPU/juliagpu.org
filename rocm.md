@@ -18,19 +18,36 @@ title = "AMD ROCm"
 The Julia programming support for AMD GPUs based on the ROCm platform aims to
 provide similar capabilities as the [NVIDIA CUDA](/cuda/) stack, with support
 for both low-level kernel programming as well as an array-oriented interface.
+[AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) offers comparable performance
+as HIP C++. The toolchain can easily be installed on latest version of Julia 
+using the integrated package manager.
 
-Julia support exists in the form of a single package:
+AMDGPU.jl makes it possible to program AMD GPUs at different abstraction levels:
 
-- [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl)
+- by using the `ROCArray` type, providing a user-friendly yet powerful abstraction
+  that does not require any GPU programming experience;
+- by writing ROC kernels, with similar performance as kernels written in HIP C++;
+- by interfacing with HIP APIs and libraries directly, similar level of flexibility
+  you would expect from a C-based programming environment.
 
-This package contains everything needed to access the HSA runtime, program GPU
-kernels, and utilize a user-friendly array-based interface.
-The stack originally was divided into 3 separate packages, which still exist and may be of use for interested users and developers:
+The [documentation](https://amdgpu.juliagpu.org/stable/) of AMDGPU.jl demonstrates
+each of these approaches.
 
-- [HSARuntime.jl](https://github.com/JuliaGPU/HSARuntime.jl): interfacing with the HSA runtime
-- [AMDGPUnative.jl](https://github.com/JuliaGPU/AMDGPUnative.jl): GPU kernel programming support
-- [ROCArrays.jl](https://github.com/JuliaGPU/ROCArrays.jl): array programming interface
+# Performance
 
-At this point, the toolchain is a work in progress, although it is quite
-functional for simple usecases. We only officially support Julia 1.4 and Julia
-1.5.
+Julia on the CPU is known for its good performance, approaching that of statically
+compiled languages like C. The same holds for programming AMD GPUs with kernels
+written using AMDGPU.jl, where we show preliminary performance to approach that of
+HIP C++ on a memcopy and 2D diffusion kernel:
+
+<div class="card mb-3">
+  <a href="/assets/img/cuda-performance.png">
+    <img src="/assets/img/amdgpu-performance.png" class=card-img-top alt>
+  </a>
+  <div class=card-body>
+    <p class=card-text>
+      Preliminary performance of a memcopy and 2D diffusion kernel implemented in
+      Julia with AMDGPU.jl and executed on a MI250x GPU.
+    </p>
+  </div>
+</div>
