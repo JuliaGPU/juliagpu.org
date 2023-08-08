@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR36/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR36/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR36/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR36/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>Profiling oneAPI.jl applications with VTune ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR36/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR36/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>Profiling oneAPI.jl applications with VTune</h1>
+      <i data-feather=calendar></i>
+<time datetime=2023-7-19>Jul 19, 2023</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>Profiling GPU applications is hard, so this post shows how to use Intel&#39;s VTune Profiler to profile GPU applications written in Julia with oneAPI.jl.</p>
+<p>Because of the asynchronous nature of GPU execution, profiling GPU applications with Julia&#39;s tried and tested tools like <code>@profile</code> or even <code>@time</code> can be misleading: They will only show the time spent on the CPU, and will likely report that your application is spending most of its time waiting for the GPU.</p>
+<p>To get a better understanding of what is happening on the GPU, we need specialized tools. In this post, we&#39;ll show how to use Intel&#39;s VTune Profiler to profile GPU applications written in Julia using oneAPI.jl.</p>
+<h2 id="set-up"><a href="#set-up" class="header-anchor">Set-up</a></h2>
+<p>Start by downloading and installing the <a href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler-download.html">Intel VTune Profiler</a>. This does not require administrative permissions, and will install in your home folder under the <code>intel</code> directory. On Linux, binaries will appear in <code>~/intel/oneapi/vtune/latest/bin64</code>. There are three that are particularly important:</p>
+<ul>
+<li><p><code>vtune</code>: a command-line tool to profile applications;</p>
+</li>
+<li><p><code>vtune-gui</code>: a graphical user interface to profile applications, or to visualize the results of a command-line profiling session;</p>
+</li>
+<li><p><code>vtune-backend</code>: a daemon that creates a web interface for VTune, which you can use to profile applications both locally and remotely.</p>
+</li>
+</ul>
+<h2 id="hello_vtune"><a href="#hello_vtune" class="header-anchor">Hello VTune&#33;</a></h2>
+<p>Let&#39;s start with a simple example: A Julia program that computes the sum of two arrays &#40;i.e., the <a href="https://github.com/JuliaGPU/oneAPI.jl/blob/master/examples/vadd.jl"><code>vadd</code> example</a> from the oneAPI repository&#41;:</p>
+<pre><code class="language-julia">using oneAPI
+
+function kernel&#40;a, b, c&#41;
+    i &#61; get_global_id&#40;&#41;
+    @inbounds c&#91;i&#93; &#61; a&#91;i&#93; &#43; b&#91;i&#93;
+    return
+end
+
+function vadd&#40;a, b&#41;
+    d_a &#61; oneArray&#40;a&#41;
+    d_b &#61; oneArray&#40;b&#41;
+    d_c &#61; similar&#40;d_a&#41;
+
+    @oneapi items&#61;size&#40;d_c&#41; kernel&#40;d_a, d_b, d_c&#41;
+    Array&#40;d_c&#41;
+end
+
+function main&#40;N&#61;256&#41;
+    a &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
+    b &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
+    c &#61; vadd&#40;a, b&#41;
+end
+main&#40;&#41;</code></pre>
+<p>We&#39;ve tweaked this example to make it more suited for profiling: We&#39;ve enclosed the main application in a function so that it gets compiled, and we&#39;ve increased the array sizes to make the GPU work harder.</p>
+<p>There are several ways to profile this application. We&#39;ll start by demonstrating the command-line interface:</p>
+<pre><code class="language-julia">&#36; vtune -collect gpu-offload julia vadd.jl
+
+vtune: Collection started.
+vtune: Collection stopped.
+
+vtune: Using result path &#96;/home/tim/Julia/pkg/oneAPI/r000gh&#39;
+    GPU Time: 0.002s
+EU Array Stalled/Idle: 100.0&#37; of Elapsed time with GPU busy
+ | The percentage of time when the EUs were stalled or idle is high, which has a
+ | negative impact on compute-bound applications.
+FPU Utilization: 0.0&#37; of Elapsed time with GPU busy
+...</code></pre>
+<p>This will run the application, and collect a number of GPU-related metrics. A summary is shown in the terminal, and a more detailed report will be written to a directory in the current working directory. You can open that report with the graphical user interface, possibly even on a different machine:</p>
+<pre><code class="language-julia">&#36; vtune-gui r000gh</code></pre>
+<h2 id="instrumenting_the_application"><a href="#instrumenting_the_application" class="header-anchor">Instrumenting the application</a></h2>
+<p>The trace we just collected includes the time spent compiling our application, making it difficult to analyze what is happening. To refine the trace, we can instrument our application with Intel&#39;s Instrumentation and Tracing Technology &#40;ITT&#41; APIs:</p>
+<ul>
+<li><p>only start the profiler when we&#39;re running code of interest;</p>
+</li>
+<li><p>add markers to the trace to indicate what is happening.</p>
+</li>
+</ul>
+<p>We can interface with the ITT APIs using the <a href="https://github.com/JuliaPerf/IntelITT.jl">IntelITT.jl</a> package. Let&#39;s update our example:</p>
+<pre><code class="language-julia">using oneAPI, IntelITT
+
+# same as before
+
+function main&#40;N&#61;256&#41;
+    a &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
+    b &#61; round.&#40;rand&#40;Float32, N&#41; * 100&#41;
+    c &#61; IntelITT.@task &quot;vadd&quot; oneAPI.@sync vadd&#40;a, b&#41;
+end
+
+# warm-up
+main&#40;&#41;
+
+# actual profile
+IntelITT.@collect main&#40;&#41;</code></pre>
+<p>Here, the <code>IntelITT.@collect</code> macro will start and stop the collection, so we should launch VTune with the <code>-start-paused</code> option:</p>
+<pre><code class="language-julia">&#36; vtune -collect gpu-offload -start-paused julia vadd.jl</code></pre>
+<p>In the GUI, we can now clearly see a nicely packed stream of API calls, grouped under the <code>vadd</code> task we added. Note that because API calls are asynchronous, i.e. they return immediately before the GPU has executed them, I grouped them under a <code>oneAPI.@sync</code> call so that the task not only captures the time spent on the CPU, but also the time spent on the GPU. This may not be wanted for your application.</p>
+<p><img src="vtune_timeline.png" alt="VTune timeline" /></p>
+<h2 id="kernel_details"><a href="#kernel_details" class="header-anchor">Kernel details</a></h2>
+<p>The timeline view is great for getting an application-level overview of what is happening, but once you&#39;ve isolated a kernel that doesn&#39;t perform as expected, you may want to switch from the GPU Offload to the GPU Compute Hotspots analysis. Here, you get a more detailed view of what&#39;s happening during execution on the GPU, including the memory bandwidth and execution properties:</p>
+<pre><code class="language-julia">&#36; vtune -collect gpu-hotspots -start-paused julia vadd.jl</code></pre>
+<p><img src="vtune_gpu_hotspots.png" alt="VTune timeline" /></p>
+<p>Many of these analysis can be configured to collect more or less data, at the cost of more or less overhead.</p>
+<h2 id="working_remotely"><a href="#working_remotely" class="header-anchor">Working remotely</a></h2>
+<p>In many cases, your local system will not have a GPU, and you will want to profile an application running on a remote system. As shown above, you can use the <code>vtune</code> CLI to create a trace and open that locally using <code>vtune-gui</code>, however there is an easier way: The <code>vtune-backend</code> daemon.</p>
+<p>Start by launching the VTune back-end on the remote system:</p>
+<pre><code class="language-julia">&#36; vtune-backend --enable-server-profiling --web-port 8443 --log-to-console</code></pre>
+<p>If your remote system is directly reachable, you want to add <code>--allow-remote-access --base-url &quot;https://remoteServer:8443&quot;</code>. However, most people will need to set-up an SSH tunnel:</p>
+<pre><code class="language-julia">&#36; ssh -L 8443:localhost:8443 remoteServer</code></pre>
+<p>You can now access the VTune GUI at <code>https://localhost:8443/</code>. Note that the first time you connect, you will need to do so using the one-time URL that is shown in the terminal where you launched the <code>vtune-backend</code> daemon.</p>
+<p>The web interface that <code>vtune-backend</code> provides is identical to the GUI from <code>vtune-gui</code>: Start by creating a new project, and configuring an analysis: Select the local VTune profile server, enter the path to the Julia executable along with arguments and a working directory, and select the GPU Offload analysis type:</p>
+<p><img src="vtune_webui.png" alt="VTune WebUI" /></p>
+<p>To start the analysis, click the big blue play button. If you use <code>IntelITT.@collect</code> to restrict the trace to the code of interest, use the second button with the pause symbol.</p>
+<h2 id="give_it_a_try"><a href="#give_it_a_try" class="header-anchor">Give it a try&#33;</a></h2>
+<p>Hopefully, this guide has shed some light on how to accurately profile oneAPI.jl applications using Intel&#39;s VTune Profiler. It turns out that one package could significantly benefit from some rigorous profiling: oneAPI.jl&#33; Until now, development has focussed on correctness and usability, leaving considerable room for performance enhancements.</p>
+<p>If you have access to an Intel GPU and want to gain experience profiling GPU applications with VTune, we encourage you to get involved&#33; A good starting point would be analyzing some of oneAPI.jl&#39;s array operations like <code>mapreduce</code> or <code>broadcast</code> to identify potential bottlenecks. For more information or any queries, feel free to open an issue on GitHub, or join the discussion on Slack or Discourse. Your help could make a significant difference&#33;</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR36/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR36/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
