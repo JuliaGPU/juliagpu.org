@@ -28,7 +28,7 @@ All versions of Julia are supported, on Linux and Windows, and the functionality
 
 Similar, but much newer capabilities exist for [**Intel GPUs with oneAPI**](/oneapi/). Currently, full-featured kernel programming capabilities are available, but there is no support for vendor libraries such as oneMKL or oneDNN yet.
 
-Maturing support exists for [**AMD GPUs**](/rocm/) running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using high-level operations on arrays. Latest versions of Julia are supported, and the functionality is increasingly used by a variety of applications and libraries.
+Experimental support exists for [**AMD GPUs**](/rocm/) running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using array operations, but these capabilities are under heavy development and are not ready for general consumption yet.
 
 Experimental support also exists for [**Apple GPUs**](/metal/). Array programming and kernel programming are both supported.
 
