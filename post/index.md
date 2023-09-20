@@ -2,6 +2,11 @@
 title = "Blog"
 external_entries = [
     (
+      Date(2023, 9, 19),
+      "CUDA.jl 5.0: Integrated Profiles and Task Synchronization Changes",
+      "https://info.juliahub.com/cuda-jl-5-0-changes"
+      ),
+    (
       Date(2020, 1, 14),
       "Julia's Dramatic Rise in HPC and Elsewhere",
       "https://www.hpcwire.com/2020/01/14/julia-programmings-dramatic-rise-in-hpc-and-elsewhere/"
