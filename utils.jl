@@ -27,6 +27,27 @@ function getdate(fname)
     return parse.(Int, (y, m, d))
 end
 
+function hfun_redirect(params)
+    url = params[1]
+
+    # XXX: is this safe?
+    #Franklin.set_var!(Franklin.LOCAL_VARS, "fd_full_url", url)
+
+    return """
+        <meta http-equiv="refresh" content="0;url=$url">
+
+        <!-- fallback 1: use Javscript, in case the browser doesn't like meta tags in the body -->
+        <script>
+            window.onload = function() {
+                window.location.href = "$url";
+            }
+        </script>
+
+        <!-- fallback 2: provide a visual element, in case Javascript is disabled -->
+        <p>This blog post is located at <a href="$url">$url</a></p>
+        """
+end
+
 function hfun_post_date()
     # capture the RSS publication date from the file name
     fd_url = locvar(:fd_url)::String
@@ -72,11 +93,12 @@ function blogpost_entry(fpath)
     if hidden === true
         return nothing
     end
+    ext = something(pagevar(rpath, :external), false)
     title = pagevar(rpath, :title)::String
     y, m, d = getdate(fpath)
     rpath = replace(fpath, r"\.md$" => "")
     date = Date(y, m, d)
-    return (date, blogpost_entry_html("/post/$rpath/", title, y, m, d))
+    return (date, blogpost_entry_html("/post/$rpath/", title, y, m, d; ext))
 end
 
 function blogpost_external_entries()
