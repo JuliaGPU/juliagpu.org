@@ -19,6 +19,31 @@
 
 
 <item>
+  <title><![CDATA[CUDA.jl 5.0: Integrated profiler and task synchronization changes]]></title>
+  <link>https://juliagpu.org/post/2023-09-19-cuda_5.0/index.html</link>
+  <guid>https://juliagpu.org/2023-09-19-cuda_5.0/</guid>
+  <description><![CDATA[CUDA.jl 5.0 is an major release that adds an integrated profiler to CUDA.jl, and reworks how tasks are synchronized. The release is slightly breaking, as it changes how local toolkits are handled and raises the minimum Julia and CUDA versions.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl 5.0 is an major release that adds an integrated profiler to CUDA.jl, and reworks how tasks are synchronized. The release is slightly breaking, as it changes how local toolkits are handled and raises the minimum Julia and CUDA versions.</p>
+<meta http-equiv="refresh" content="0;url=https://info.juliahub.com/cuda-jl-5-0-changes"><!-- fallback 1: use Javscript, in case the browser doesn't like meta tags in the body -->
+<script>
+    window.onload = function() {
+        window.location.href = "https://info.juliahub.com/cuda-jl-5-0-changes";
+    }
+</script><!-- fallback 2: provide a visual element, in case Javascript is disabled -->
+<p>This blog post is located at <a href="https://info.juliahub.com/cuda-jl-5-0-changes">https://info.juliahub.com/cuda-jl-5-0-changes</a></p>]]></content:encoded>
+    
+  <pubDate>Tue, 19 Sep 2023 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[Profiling oneAPI.jl applications with VTune]]></title>
   <link>https://juliagpu.org/post/2023-07-19-oneapi_profiling/index.html</link>
   <guid>https://juliagpu.org/2023-07-19-oneapi_profiling/</guid>
@@ -1544,7 +1569,14 @@ NVIDIA driver 450.36.6Libraries:
   <guid>https://juliagpu.org/cudanative_3.0-cuarrays_2.0/</guid>
   <description><![CDATA[This release of the Julia CUDA stack contains some exciting new features: automatic installation of CUDA using artifacts, full support for GPU method redefinitions, and experimental support for multitasking and multithreading. The release is technically breaking, but most end-users should not be affected.]]></description>  
   
-  <content:encoded><![CDATA[<p>This release of the Julia CUDA stack contains some exciting new features: automatic installation of CUDA using artifacts, full support for GPU method redefinitions, and experimental support for multitasking and multithreading. The release is technically breaking, but most end-users should not be affected.</p>
+  <content:encoded><![CDATA[
+<meta http-equiv="refresh" content="0;url=https://juliagpu.org/cudanative_3.0-cuarrays_2.0/"><!-- fallback 1: use Javscript, in case the browser doesn't like meta tags in the body -->
+<script>
+    window.onload = function() {
+        window.location.href="https://juliagpu.org/cudanative_3.0-cuarrays_2.0/";
+    }
+</script><!-- fallback 2: provide a visual element, in case Javascript is disabled -->
+<p>This blog post is located at <a href="https://juliagpu.org/cudanative_3.0-cuarrays_2.0/">/cudanative_3.0-cuarrays_2.0/</a></p><p>This release of the Julia CUDA stack contains some exciting new features: automatic installation of CUDA using artifacts, full support for GPU method redefinitions, and experimental support for multitasking and multithreading. The release is technically breaking, but most end-users should not be affected.</p>
 <h2 id="api_changes">API changes</h2>
 <p>Changes to certain APIs require these releases to be breaking, however, most users should not be affected and chances are you can just bump your Compat entries without any additional changes. Flux.jl users will have to wait a little longer though, as the package uses non-public APIs that have changed and <a href="https://github.com/FluxML/Flux.jl/pull/1050">requires an update</a>.</p>
 <h2 id="artifacts">Artifacts</h2>
@@ -1607,7 +1639,14 @@ end</code></pre>
   <guid>https://juliagpu.org/new_site/</guid>
   <description><![CDATA[Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.]]></description>  
   
-  <content:encoded><![CDATA[<p>Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.</p>
+  <content:encoded><![CDATA[
+<meta http-equiv="refresh" content="0;url=https://juliagpu.org/new_site/"><!-- fallback 1: use Javscript, in case the browser doesn't like meta tags in the body -->
+<script>
+    window.onload = function() {
+        window.location.href="https://juliagpu.org/new_site/";
+    }
+</script><!-- fallback 2: provide a visual element, in case Javascript is disabled -->
+<p>This blog post is located at <a href="https://juliagpu.org/new_site/">/new_site/</a></p><p>Welcome to the new landing page for the JuliaGPU organization. This website serves as an introduction to the several packages for programming GPUs in Julia, with pointers to relevant resources for new users.</p>
 <p>The sources for this website are hosted at <a href="https://github.com/JuliaGPU/juliagpu.org">GitHub</a> and generated using Hugo, feel free to open an issue or pull request if you think it could be improved.</p>
 ]]></content:encoded>
     
