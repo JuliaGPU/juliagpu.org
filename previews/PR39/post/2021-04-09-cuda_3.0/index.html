@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR39/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR39/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR39/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR39/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 3.0 ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR39/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR39/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 3.0</h1>
+      <i data-feather=calendar></i>
+<time datetime=2021-4-9>Apr 9, 2021</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator, compiler tooling for GPU method overrides, device-side random number generation and a completely revamped cuDNN interface.</p>
+<h2 id="improved_multi-tasking_and_multi-threading"><a href="#improved_multi-tasking_and_multi-threading" class="header-anchor">Improved multi-tasking and multi-threading</a></h2>
+<p>Before this release, CUDA operations were enqueued on a single global stream, and many of these operations &#40;like copying memory, or synchronizing execution&#41; were fully blocking. This posed difficulties when using multiple tasks to perform independent operations: Blocking operations prevent all tasks from making progress, and using the same stream introduces unintended dependencies on otherwise independend operations. <strong>CUDA.jl now uses <a href="https://github.com/JuliaGPU/CUDA.jl/pull/662">private streams for each Julia task</a>, and avoids blocking operations where possible, enabling task-based concurrent execution.</strong> It is also possible to use different devices on each task, and there is experimental support for executing those tasks from different threads.</p>
+<p>A <s>picture</s> snippet of code is worth a thousand words, so let&#39;s demonstrate using a computation that uses both a library function &#40;GEMM from CUBLAS&#41; and a native Julia broadcast kernel:</p>
+<pre><code class="language-julia">using CUDA, LinearAlgebra
+
+function compute&#40;a,b,c&#41;
+    mul&#33;&#40;c, a, b&#41;
+    broadcast&#33;&#40;sin, c, c&#41;
+    synchronize&#40;&#41;
+    c
+end</code></pre>
+<p>To execute multiple invocations of this function concurrently, we can simply use Julia&#39;s task-based programming interfaces and wrap each call to <code>compute</code> in an <code>@async</code> block. Then, we synchronize execution again by wrapping in a <code>@sync</code> block:</p>
+<pre><code class="language-julia">function iteration&#40;a,b,c&#41;
+    results &#61; Vector&#123;Any&#125;&#40;undef, 2&#41;
+    NVTX.@range &quot;computation&quot; @sync begin
+        @async begin
+            results&#91;1&#93; &#61; compute&#40;a,b,c&#41;
+        end
+        @async begin
+            results&#91;2&#93; &#61; compute&#40;a,b,c&#41;
+        end
+    end
+    NVTX.@range &quot;comparison&quot; Array&#40;results&#91;1&#93;&#41; &#61;&#61; Array&#40;results&#91;2&#93;&#41;
+end</code></pre>
+<p>The calls to the <code>@range</code> macro from NVTX, a submodule of CUDA.jl, will visualize the different phases of execution when we profile our program. We now invoke our function using some random data:</p>
+<pre><code class="language-julia">function main&#40;N&#61;1024&#41;
+    a &#61; CUDA.rand&#40;N,N&#41;
+    b &#61; CUDA.rand&#40;N,N&#41;
+    c &#61; CUDA.rand&#40;N,N&#41;
+
+    # make sure this data can be used by other tasks&#33;
+    synchronize&#40;&#41;
+
+    # warm-up
+    iteration&#40;a,b,c&#41;
+    GC.gc&#40;true&#41;
+
+    NVTX.@range &quot;main&quot; iteration&#40;a,b,c&#41;
+end</code></pre>
+<p>The snippet above illustrates one breaking aspect of this release: Because each task uses its own stream, <strong>you now need to synchronize when re-using data in another task.</strong> Although it is unlikely that any user code was relying on the old behavior, it is technically a breaking change, and as such we are bumping the major version of the CUDA.jl package.</p>
+<p>If we profile these our program using NSight Systems, we can see how the execution of both calls to <code>compute</code> was overlapped:</p>
+<figure>
+  <img src="/previews/PR39/post/2021-04-09-cuda_3.0/task_based_concurrency.png" alt="Overlapping execution on the GPU using task-based concurrency">
+</figure>
+
+<p>The region highlighted in green was spent enqueueing operations from the CPU, which includes the call to <code>synchronize&#40;&#41;</code>. This used to be a blocking operation, whereas now it only synchronizes the task-local stream while yielding to the Julia scheduler so that it can continue execution on another task. <strong>For synchronizing the entire device, use the new <code>device_synchronize&#40;&#41;</code> function.</strong></p>
+<p>The remainder of computation was then spent executing kernels. Here, execution was overlapped, but that obviously depends on the exact characteristics of the computations and your GPU. Also note that copying to and from the CPU is always going to block for some time, unless the memory was page-locked. CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/760">now supports</a> locking memory like that using the <code>pin</code> function; for more details refer to <a href="https://juliagpu.github.io/CUDA.jl/dev/usage/multitasking/">the CUDA.jl documentation on tasks and threads</a>.</p>
+<h2 id="cuda_112_and_stream-ordered_allocations"><a href="#cuda_112_and_stream-ordered_allocations" class="header-anchor">CUDA 11.2 and stream-ordered allocations</a></h2>
+<p>CUDA.jl now also fully supports CUDA 11.2, and it will default to using that version of the toolkit if your driver supports it. The release came with several new features, such as <a href="https://developer.nvidia.com/blog/enhancing-memory-allocation-with-new-cuda-11-2-features/">the new stream-ordered memory allocator</a>. Without going into details, it is now possible to asynchonously allocate memory, obviating much of the need to cache those allocations in a memory pool. Initial benchmarks have shown nice speed-ups from using this allocator, while lowering memory pressure and thus reducing invocations of the Julia garbage collector.</p>
+<p>When using CUDA 11.2, CUDA.jl will <a href="https://github.com/JuliaGPU/CUDA.jl/pull/679">default to the CUDA-backed memory pool</a> and disable its own caching layer. If you want to compare performance, you can still use the old allocator and caching memory pool by setting the <code>JULIA_CUDA_MEMORY_POOL</code> environment variable to, e.g. <code>binned</code>. On older versions of CUDA, the <code>binned</code> pool is still used by default.</p>
+<h2 id="gpu_method_overrides"><a href="#gpu_method_overrides" class="header-anchor">GPU method overrides</a></h2>
+<p>With the new <code>AbstractInterpreter</code> functionality in Julia 1.6, it is now much easier to further customize the Base compiler. This has enabled us to develop <a href="https://github.com/JuliaGPU/GPUCompiler.jl/pull/151">a mechanism for overriding methods with GPU-specific counterparts</a>. It used to be required to explicitly pick CUDA-specific versions, e.g. <code>CUDA.sin</code>, because the Base version performed some GPU-incompatible operation. This was problematic as it did not compose with generic code, and the CUDA-specific versions often lacked support for specific combinations of argument types &#40;for example, <code>CUDA.sin&#40;::Complex&#41;</code> was not supported&#41;.</p>
+<p>With CUDA 3.0, it is possible to <strong>define GPU-specific methods that override an existing definition, without requiring a new function type</strong>. For now, this functionality is private to CUDA.jl, but we expect to make it available to other packages starting with Julia 1.7.</p>
+<p>This functionality has unblocked <em>many</em> issues, as can be seen in the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/750">corresponding pull request</a>. It is now no longer needed to prefix a call with the CUDA module to ensure a GPU-compatible version is used. Furthermore, it also protects users from accidentally calling GPU intrinsics, as doing so will now result in an error instead of a crash:</p>
+<pre><code class="language-text">julia&gt; CUDA.saturate&#40;1f0&#41;
+ERROR: This function is not intended for use on the CPU
+Stacktrace:
+ &#91;1&#93; error&#40;s::String&#41;
+   @ Base ./error.jl:33
+ &#91;2&#93; saturate&#40;x::Float32&#41;
+   @ CUDA ~/Julia/pkg/CUDA/src/device/intrinsics.jl:23
+ &#91;3&#93; top-level scope
+   @ REPL&#91;10&#93;:1</code></pre>
+<h2 id="device-side_random_number_generation"><a href="#device-side_random_number_generation" class="header-anchor">Device-side random number generation</a></h2>
+<p>As an illustration of the value of GPU method overrides, CUDA.jl now provides a device-side random number generator that is accessible by simply calling <code>rand&#40;&#41;</code> from a kernel:</p>
+<pre><code class="language-julia">julia&gt; function kernel&#40;&#41;
+         @cushow rand&#40;&#41;
+         return
+       end
+kernel &#40;generic function with 1 method&#41;
+
+julia&gt; @cuda kernel&#40;&#41;
+rand&#40;&#41; &#61; 0.668274</code></pre>
+<p>This works by overriding the <code>Random.default_rng&#40;&#41;</code> method, and providing a GPU-compatible random number generator: Building on <a href="https://github.com/JuliaGPU/CUDA.jl/pull/772">exploratory work</a> by <a href="https://github.com/S-D-R">@S-D-R</a>, the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/788">current generator</a> is a maximally equidistributed combined Tausworthe RNG that shares 32-bytes of random state across threads in a warp for performance. The generator performs well, but <a href="https://github.com/JuliaGPU/CUDA.jl/issues/803">does not pass</a> the Crush battery of tests, so PRs are welcome here to improve the implementation&#33;</p>
+<p>Note that for host-side operations, e.g. <code>rand&#33;&#40;::CuArray&#41;</code>, the generator is not yet used by default. Instead, we use CURAND whenever possible, and fall back to the slower but more full-featured GPUArrays.jl-generator in other cases.</p>
+<h2 id="revamped_cudnn_interface"><a href="#revamped_cudnn_interface" class="header-anchor">Revamped cuDNN interface</a></h2>
+<p>Finally, the cuDNN wrappers have been <a href="https://github.com/JuliaGPU/CUDA.jl/pull/523">completely revamped</a> by <a href="https://github.com/denizyuret">@denizyuret</a>. The goal of the redesign is to more faithfully map the cuDNN API to more natural Julia functions, so that packages like Knet.jl or NNlib.jl can more easily use advanced cuDNN features without having to resort to low-level C calls. For more details, refer to <a href="https://github.com/JuliaGPU/CUDA.jl/blob/da7c6eee82d6ea0eee1cb75c8589c8a92b0bc474/lib/cudnn/README.md">the design document</a>. As part of this redesign, the high-level wrappers of CUDNN <a href="https://github.com/FluxML/NNlib.jl/pull/286">have been moved to</a> a subpackage of NNlib.jl.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR39/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR39/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
