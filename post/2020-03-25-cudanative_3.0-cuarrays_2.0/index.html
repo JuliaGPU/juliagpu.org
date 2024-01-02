@@ -148,18 +148,7 @@ Tim Besard
     
 <!-- Content appended here -->
 
-<meta http-equiv="refresh" content="0;url=/cudanative_3.0-cuarrays_2.0/">
-
-<!-- fallback 1: use Javscript, in case the browser doesn't like meta tags in the body -->
-<script>
-    window.onload = function() {
-        window.location.href = "/cudanative_3.0-cuarrays_2.0/";
-    }
-</script>
-
-<!-- fallback 2: provide a visual element, in case Javascript is disabled -->
-<p>This blog post is located at <a href="/cudanative_3.0-cuarrays_2.0/">/cudanative_3.0-cuarrays_2.0/</a></p>
-
+<p>This post is located at <a href="/cudanative_3.0-cuarrays_2.0/">/cudanative_3.0-cuarrays_2.0/</a></p>
 <p>This release of the Julia CUDA stack contains some exciting new features: automatic installation of CUDA using artifacts, full support for GPU method redefinitions, and experimental support for multitasking and multithreading. The release is technically breaking, but most end-users should not be affected.</p>
 <h2 id="api_changes"><a href="#api_changes" class="header-anchor">API changes</a></h2>
 <p>Changes to certain APIs require these releases to be breaking, however, most users should not be affected and chances are you can just bump your Compat entries without any additional changes. Flux.jl users will have to wait a little longer though, as the package uses non-public APIs that have changed and <a href="https://github.com/FluxML/Flux.jl/pull/1050">requires an update</a>.</p>
