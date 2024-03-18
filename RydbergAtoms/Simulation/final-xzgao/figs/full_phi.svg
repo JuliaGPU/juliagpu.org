@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="500" height="150" viewBox="0 0 500 150">
+<defs>
+<g>
+<g id="glyph-0-0">
+<path d="M 1.398438 -10.398438 L 3.203125 -10.398438 L 3.203125 -4.796875 C 3.203125 -4.105469 3.289062 -3.546875 3.457031 -3.117188 C 3.632812 -2.691406 3.859375 -2.359375 4.140625 -2.117188 C 4.421875 -1.890625 4.753906 -1.730469 5.136719 -1.640625 C 5.5 -1.550781 5.894531 -1.480469 6.320312 -1.4375 L 6.320312 -12.960938 L 8.117188 -12.960938 L 8.117188 -1.4375 C 8.558594 -1.480469 8.972656 -1.550781 9.355469 -1.640625 C 9.734375 -1.730469 10.0625 -1.890625 10.34375 -2.117188 C 10.636719 -2.359375 10.859375 -2.691406 11.015625 -3.117188 C 11.164062 -3.546875 11.242188 -4.105469 11.242188 -4.796875 L 11.242188 -10.398438 L 13.039062 -10.398438 L 13.039062 -4.257812 C 13.023438 -2.78125 12.570312 -1.722656 11.679688 -1.085938 C 10.800781 -0.425781 9.613281 -0.0664062 8.117188 0 L 8.117188 3.914062 L 6.320312 3.914062 L 6.320312 0 C 4.855469 -0.0664062 3.679688 -0.425781 2.804688 -1.085938 C 1.878906 -1.722656 1.410156 -2.78125 1.398438 -4.257812 Z M 1.398438 -10.398438 "/>
+</g>
+</g>
+</defs>
+<rect x="-50" y="-15" width="600" height="180" fill="rgb(100%, 100%, 100%)" fill-opacity="1"/>
+<path fill="none" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 250 105 L 35 105 C 29.476562 105 25 100.523438 25 95 L 25 55 C 25 49.476562 29.476562 45 35 45 L 465 45 C 470.523438 45 475 49.476562 475 55 L 475 95 C 475 100.523438 470.523438 105 465 105 Z M 250 105 "/>
+<g fill="rgb(0%, 0%, 0%)" fill-opacity="1">
+<use xlink:href="#glyph-0-0" x="250" y="75"/>
+</g>
+<path fill="none" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 50 25 L 50 45 "/>
+<path fill="none" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 150 25 L 150 45 "/>
+<path fill="none" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 250 25 L 250 45 "/>
+<path fill="none" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 350 25 L 350 45 "/>
+<path fill="none" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(0%, 0%, 0%)" stroke-opacity="1" stroke-miterlimit="10" d="M 450 25 L 450 45 "/>
+</svg>
