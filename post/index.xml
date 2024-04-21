@@ -26,7 +26,92 @@
   
   <content:encoded><![CDATA[
 <p>CUDA.jl 5.1 greatly improves the support of two important parts of the CUDA toolkit: unified memory, for accessing GPU memory on the CPU and vice-versa, and cooperative groups which offer a more modular approach to kernel programming.</p>
-<p>This post is located at <a href="https://info.juliahub.com/cuda-jl-5-1-unified-memory">https://info.juliahub.com/cuda-jl-5-1-unified-memory</a></p>
+<h1 id="cudajl_51_unified_memory_and_cooperative_groups">CUDA.jl 5.1: Unified memory and cooperative groups</h1>
+<p>CUDA.jl 5.1 greatly improves the support of two important parts of the CUDA toolkit: unified memory, for accessing GPU memory on the CPU and vice-versa, and cooperative groups which offer a more modular approach to kernel programming.</p>
+<h2 id="unified_memory">Unified memory</h2>
+<p>Unified memory is a feature of CUDA that allows the programmer to <strong>access memory from both the CPU and GPU</strong>, relying on the driver to move data between the two. This can be useful for a variety of reasons: to avoid explicit memory copies, to use more memory than the GPU has available, or to be able to incrementally port code to the GPU and still have parts of the application run on the CPU.</p>
+<p>CUDA.jl did already support unified memory, but only for the most basic use cases. With CUDA.jl 5.1, it is now easier to allocate unified memory, and more convenient to use that memory from the CPU:</p>
+<pre><code class="language-julia-repl">julia&gt; gpu &#61; cu&#40;&#91;1., 2.&#93;; unified&#61;true&#41;
+2-element CuArray&#123;Float32, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 1.0
+ 2.0julia&gt; # accessing GPU memory from the CPU
+       gpu&#91;1&#93; &#61; 3;julia&gt; gpu
+2-element CuArray&#123;Float32, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 3.0
+ 2.0</code></pre>
+<p>Accessing GPU memory like this used to throw an error, but with CUDA.jl 5.1 it is <strong>safe and efficient to perform scalar iteration on <code>CuArray</code>s backed by unified memory</strong>. This greatly simplifies porting applications to the GPU, as it no longer is a problem when code uses <code>AbstractArray</code> fallbacks from Base that process element by element.</p>
+<p>In addition, CUDA.jl 5.1 also makes it <strong>easier to convert <code>CuArray</code>s to <code>Array</code> objects</strong>. This is important when wanting to use high-performance CPU libraries like BLAS or LAPACK which do not support <code>CuArray</code>s:</p>
+<pre><code class="language-julia-repl">julia&gt; cpu &#61; unsafe_wrap&#40;Array, gpu&#41;
+2-element Vector&#123;Float32&#125;:
+ 3.0
+ 2.0julia&gt; LinearAlgebra.BLAS.scal&#33;&#40;2f0, cpu&#41;;julia&gt; gpu
+2-element CuArray&#123;Float32, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 6.0
+ 4.0</code></pre>
+<p>The reverse is also possible: CPU-based <code>Array</code>s can now trivially be converted to <code>CuArray</code> objects for use on the GPU, <strong>without the need to explicitly allocate unified memory</strong>. This further simplifies memory management, as it makes it possible to use the GPU inside of an existing application without having to copy data into a <code>CuArray</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; gpu &#61; unsafe_wrap&#40;CuArray, cpu&#41;
+2-element CuArray&#123;Int64, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 1
+ 2julia&gt; CUDA.@sync gpu .&#43;&#61; 1;julia&gt; cpu
+2-element Vector&#123;Int64&#125;:
+ 2
+ 3</code></pre>
+<p>Note that the above methods are prefixed <code>unsafe</code> because of how they require <strong>careful management of object lifetimes</strong>: When creating an <code>Array</code> from a <code>CuArray</code>, the <code>CuArray</code> must be kept alive for as long as the <code>Array</code> is used, and vice-versa when creating a <code>CuArray</code> from an <code>Array</code>. Explicit synchronization &#40;i.e. waiting for the GPU to finish computing&#41; is also required, as CUDA.jl cannot synchronize automatically when accessing GPU memory through a CPU pointer.</p>
+<p>For now, CUDA.jl still defaults to device memory for unspecified allocations. This can be changed using the <code>default_memory</code> <a href="https://github.com/JuliaPackaging/Preferences.jl">preference</a> of the CUDA.jl module, which can be set to either <code>&quot;device&quot;</code>, <code>&quot;unified&quot;</code> or <code>&quot;host&quot;</code>. When these changes have been sufficiently tested, and the remaining rough edges have been smoothed out, we may consider switching the default allocator.</p>
+<h2 id="cooperative_groups">Cooperative groups</h2>
+<p>Another major improvement in CUDA.jl 5.1 are the greatly expanded wrappers for the CUDA cooperative groups API. Cooperative groups are a low-level feature of CUDA that make it possible to <strong>write kernels that are more flexible than the traditional approach</strong> of differentiating computations based on thread and block indices. Instead, cooperative groups allow the programmer to use objects representing groups of threads, pass those around, and differentiate computations based on queries on those objects.</p>
+<p>For example, let&#39;s port the example from the <a href="https://developer.nvidia.com/blog/cooperative-groups/">introductory NVIDIA blogpost post</a>, which provides a function to compute the sum of an array in parallel:</p>
+<pre><code class="language-julia">function reduce_sum&#40;group, temp, val&#41;
+    lane &#61; CG.thread_rank&#40;group&#41;    # Each iteration halves the number of active threads
+    # Each thread adds its partial sum&#91;i&#93; to sum&#91;lane&#43;i&#93;
+    i &#61; CG.num_threads&#40;group&#41; ÷ 2
+    while i &gt; 0
+        temp&#91;lane&#93; &#61; val
+        CG.sync&#40;group&#41;
+        if lane &lt;&#61; i
+            val &#43;&#61; temp&#91;lane &#43; i&#93;
+        end
+        CG.sync&#40;group&#41;
+        i ÷&#61; 2
+    end    return val  # note: only thread 1 will return full sum
+end</code></pre>
+<p>When the threads of a group call this function, they cooperatively compute the sum of the values passed by each thread in the group. For example, let&#39;s write a kernel that calls this function using a group representing the current thread block:</p>
+<pre><code class="language-julia">function sum_kernel_block&#40;sum::AbstractArray&#123;T&#125;,
+                          input::AbstractArray&#123;T&#125;&#41; where T
+    # have each thread compute a partial sum
+    my_sum &#61; thread_sum&#40;input&#41;    # perform a cooperative summation
+    temp &#61; CuStaticSharedArray&#40;T, 256&#41;
+    g &#61; CG.this_thread_block&#40;&#41;
+    block_sum &#61; reduce_sum&#40;g, temp, my_sum&#41;    # combine the block sums
+    if CG.thread_rank&#40;g&#41; &#61;&#61; 1
+        CUDA.@atomic sum&#91;&#93; &#43;&#61; block_sum
+    end    return
+endfunction thread_sum&#40;input::AbstractArray&#123;T&#125;&#41; where T
+    sum &#61; zero&#40;T&#41;    i &#61; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+    stride &#61; blockDim&#40;&#41;.x * gridDim&#40;&#41;.x
+    while i &lt;&#61; length&#40;input&#41;
+        sum &#43;&#61; input&#91;i&#93;
+        i &#43;&#61; stride
+    end    return sum
+endn &#61; 1&lt;&lt;24
+threads &#61; 256
+blocks &#61; cld&#40;n, threads&#41;data &#61; CUDA.rand&#40;n&#41;
+sum &#61; CUDA.fill&#40;zero&#40;eltype&#40;data&#41;&#41;, 1&#41;
+@cuda threads&#61;threads blocks&#61;blocks sum_kernel_block&#40;sum, data&#41;</code></pre>
+<p>This style of programming makes it possible to write kernels that are safer and more modular than traditional kernels. Some CUDA features also require the use of cooperative groups, for example, asynchronous memory copies between global and shared memory are done using the <code>CG.memcpy_async</code> function.</p>
+<p>With CUDA.jl 5.1, it is now possible to use a large part of these APIs from Julia. Support has been added for implicit groups &#40;with the exception of cluster groups and the deprecated multi-grid groups&#41;, all relevant queries on these groups, as well as the many important collective functions, such as <code>shuffle</code>, <code>vote</code>, and <code>memcpy_async</code>. Support for explicit groups is still missing, as are collectives like <code>reduce</code> and <code>invoke</code>. For more information, refer to <a href="https://cuda.juliagpu.org/dev/development/kernel/#Cooperative-groups">the CUDA.jl documentation</a>.</p>
+<h2 id="other_updates">Other updates</h2>
+<p>Apart from these two major features, CUDA.jl 5.1 also includes a number of smaller fixes and improvements:</p>
+<ul>
+<li><p>Support for CUDA 12.3</p>
+</li>
+<li><p>Performance improvements related to memory copies, which regressed in CUDA 5.0</p>
+</li>
+<li><p>Improvements to the native profiler &#40;<code>CUDA.@profiler</code>&#41;, now also showing local memory usage, supporting more NVTX metadata, and with better support for Pluto.jl and Jupyter</p>
+</li>
+<li><p>Many CUSOLVER and CUSPARSE improvements by <a href="https://github.com/amontoison">@amontoison</a></p>
+</li>
+</ul>
 ]]></content:encoded>
     
   <pubDate>Tue, 07 Nov 2023 00:00:00 +0000</pubDate>  
@@ -46,7 +131,82 @@
   
   <content:encoded><![CDATA[
 <p>CUDA.jl 5.0 is an major release that adds an integrated profiler to CUDA.jl, and reworks how tasks are synchronized. The release is slightly breaking, as it changes how local toolkits are handled and raises the minimum Julia and CUDA versions.</p>
-<p>This post is located at <a href="https://info.juliahub.com/cuda-jl-5-0-changes">https://info.juliahub.com/cuda-jl-5-0-changes</a></p>
+<h2 id="integrated_profiler">Integrated profiler</h2>
+<p>The most exciting new feature in CUDA.jl 5.0 is <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2024">the new integrated profiler</a>, which is similar to the <code>@profile</code> macro from the Julia standard library. The profiler can be used by simply prefixing any code that uses the CUDA libraries with <code>CUDA.@profile</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.@profile CUDA.rand&#40;1&#41;.&#43;1
+Profiler ran for 268.46 µs, capturing 21 events.Host-side activity: calling CUDA APIs took 230.79 µs &#40;85.97&#37; of the trace&#41;
+┌──────────┬───────────┬───────┬───────────┬───────────┬───────────┬─────────────────────────┐
+│ Time &#40;&#37;&#41; │      Time │ Calls │  Avg time │  Min time │  Max time │ Name                    │
+├──────────┼───────────┼───────┼───────────┼───────────┼───────────┼─────────────────────────┤
+│   76.47&#37; │ 205.28 µs │     1 │ 205.28 µs │ 205.28 µs │ 205.28 µs │ cudaLaunchKernel        │
+│    5.42&#37; │  14.54 µs │     2 │   7.27 µs │   5.01 µs │   9.54 µs │ cuMemAllocFromPoolAsync │
+│    2.93&#37; │   7.87 µs │     1 │   7.87 µs │   7.87 µs │   7.87 µs │ cuLaunchKernel          │
+│    0.36&#37; │ 953.67 ns │     2 │ 476.84 ns │    0.0 ns │ 953.67 ns │ cudaGetLastError        │
+└──────────┴───────────┴───────┴───────────┴───────────┴───────────┴─────────────────────────┘Device-side activity: GPU was busy for 2.15 µs &#40;0.80&#37; of the trace&#41;
+┌──────────┬───────────┬───────┬───────────┬───────────┬───────────┬──────────────────────────────
+│ Time &#40;&#37;&#41; │      Time │ Calls │  Avg time │  Min time │  Max time │ Name                        ⋯
+├──────────┼───────────┼───────┼───────────┼───────────┼───────────┼──────────────────────────────
+│    0.44&#37; │   1.19 µs │     1 │   1.19 µs │   1.19 µs │   1.19 µs │ _Z13gen_sequencedI17curandS ⋯
+│    0.36&#37; │ 953.67 ns │     1 │ 953.67 ns │ 953.67 ns │ 953.67 ns │ _Z16broadcast_kernel15CuKer ⋯
+└──────────┴───────────┴───────┴───────────┴───────────┴───────────┴──────────────────────────────
+                                                                                  1 column omitted
+1-element CuArray&#123;Float32, 1, CUDA.Mem.DeviceBuffer&#125;:
+ 1.7242923</code></pre>
+<p>The output shown above is a summary of what happened during the execution of the code. It is split into two sections: <strong>host-side activity</strong>, i.e., API calls to the CUDA libraries, and the resulting <strong>device-side activity</strong>. As part of each section, the output shows the time spent and the ratio to the total execution time. These ratios are important, and a good tool to quickly assess the performance of your code. For example, in the above output, we see that most of the time is spent on the host calling the CUDA libraries, and only very little time is actually spent computing things on the GPU. This indicates that the GPU is severely underutilized, which can be solved by increasing the problem size.</p>
+<p>Instead of a summary, it is also possible to view a <strong>chronological trace</strong> by passing the <code>trace&#61;true</code> keyword argument:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.@profile trace&#61;true CUDA.rand&#40;1&#41;.&#43;1;
+Profiler ran for 262.98 µs, capturing 21 events.Host-side activity: calling CUDA APIs took 227.21 µs &#40;86.40&#37; of the trace&#41;
+┌────┬───────────┬───────────┬─────────────────────────┬────────────────────────┐
+│ ID │     Start │      Time │                    Name │ Details                │
+├────┼───────────┼───────────┼─────────────────────────┼────────────────────────┤
+│  5 │   6.44 µs │   9.06 µs │ cuMemAllocFromPoolAsync │ 4 bytes, device memory │
+│  7 │  19.31 µs │ 715.26 ns │        cudaGetLastError │ -                      │
+│  8 │  22.41 µs │ 204.09 µs │        cudaLaunchKernel │ -                      │
+│  9 │ 227.21 µs │    0.0 ns │        cudaGetLastError │ -                      │
+│ 14 │  232.7 µs │   3.58 µs │ cuMemAllocFromPoolAsync │ 4 bytes, device memory │
+│ 18 │ 250.34 µs │   7.39 µs │          cuLaunchKernel │ -                      │
+└────┴───────────┴───────────┴─────────────────────────┴────────────────────────┘Device-side activity: GPU was busy for 2.38 µs &#40;0.91&#37; of the trace&#41;
+┌────┬───────────┬─────────┬─────────┬────────┬──────┬────────────────────────────────────────────
+│ ID │     Start │    Time │ Threads │ Blocks │ Regs │ Name                                      ⋯
+├────┼───────────┼─────────┼─────────┼────────┼──────┼────────────────────────────────────────────
+│  8 │ 225.31 µs │ 1.19 µs │      64 │     64 │   38 │ _Z13gen_sequencedI17curandStateXORWOWfiXa ⋯
+│ 18 │ 257.73 µs │ 1.19 µs │       1 │      1 │   18 │ _Z16broadcast_kernel15CuKernelContext13Cu ⋯
+└────┴───────────┴─────────┴─────────┴────────┴──────┴────────────────────────────────────────────
+                                                                                  1 column omitted</code></pre>
+<p>Here, we can see a list of events that the profiler captured. Each event has a unique ID, which can be used to corelate host-side and device-side events. For example, we can see that event 8 on the host is a call to <code>cudaLaunchKernel</code>, which corresponds to to the execution of a CURAND kernel on the device.</p>
+<p>The integrated profiler is a great tool to quickly assess the performance of your GPU application, identify bottlenecks, and find opportunities for optimization. For complex applications, however, it is still recommended to use NVIDIA&#39;s NSight Systems or Compute profilers, which provide a more detailed, graphical view of what is happening on the GPU.</p>
+<h2 id="synchronization_on_worker_threads">Synchronization on worker threads</h2>
+<p>Another noteworthy change affects how tasks are synchronized. To enable concurrent execution, i.e., to make it possible for other Julia tasks to execute while waiting for the GPU to finish, CUDA.jl used to rely on so-called stream callbacks. These callbacks were a significant source of latency, at least 25us per invocation but sometimes <em>much</em> longer, and have also been slated for deprecation and eventual removal from the CUDA toolkit.</p>
+<p>Instead, on Julia 1.9 and later, CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2025">now uses</a> worker threads to wait for GPU operations to finish. This mechanism is significantly faster, taking around 5us per invocation, but more importantly offers a much more reliable and predictable latency. You can observe this mechanism using the integrated profiler:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; CUDA.rand&#40;1024, 1024, 1024&#41;
+julia&gt; CUDA.@profile trace&#61;true CUDA.@sync a .&#43; a
+Profiler ran for 12.29 ms, capturing 527 events.Host-side activity: calling CUDA APIs took 11.75 ms &#40;95.64&#37; of the trace&#41;
+┌─────┬───────────┬───────────┬────────┬─────────────────────────┐
+│  ID │     Start │      Time │ Thread │                    Name │
+├─────┼───────────┼───────────┼────────┼─────────────────────────┤
+│   5 │   6.91 µs │  13.59 µs │      1 │ cuMemAllocFromPoolAsync │
+│   9 │  36.72 µs │ 199.56 µs │      1 │          cuLaunchKernel │
+│ 525 │ 510.69 µs │  11.75 ms │      2 │     cuStreamSynchronize │
+└─────┴───────────┴───────────┴────────┴─────────────────────────┘</code></pre>
+<p>For some users, this may still be too slow, so we have added two mechanisms that disable nonblocking synchronization and simply block the calling thread until the GPU operation finishes. The first is a global setting, which can be enabled by setting the <code>nonblocking_synchronization</code> preference to <code>false</code>, which can be done using Preferences.jl. <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2060">The second</a> is a fine-grained flag to pass to synchronization functions: <code>synchronize&#40;x; blocking&#61;true&#41;</code>, <code>CUDA.@sync blocking&#61;true
+...</code>, etc. Both these mechanisms should <em>not</em> be used widely, and are only intended for use in latency-critical code, e.g., when benchmarking or profiling.</p>
+<h2 id="local_toolkit_discovery">Local toolkit discovery</h2>
+<p>One of the breaking changes involves <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2058">how local toolkits are discovered</a>, when opting out of the use of artifacts. Previously, this could be enabled by calling <code>CUDA.set_runtime_version&#33;&#40;&quot;local&quot;&#41;</code>, which generated a <code>version &#61; &quot;local&quot;</code> preference. We are now changing this into two separate preferences, <code>version</code> and <code>local</code>, where the <code>version</code> preference overrides the version of the CUDA toolkit, and the <code>local</code> preference independently indicates whether to use a local CUDA toolkit or not.</p>
+<p>Concretely, this means that you will now need to call <code>CUDA.set_runtime_version&#33;&#40;local_toolkit&#61;true&#41;</code> to enable the use of a local toolkit. The toolkit version will be auto-detected, but can be overridden by also passing a version: <code>CUDA.set_runtime_version&#33;&#40;version; local_toolkit&#61;true&#41;</code>. This may be necessary when CUDA is not available during precompilation, e.g., on the log-in node of a cluster, or when building a container image.</p>
+<h2 id="raised_minimum_requirements">Raised minimum requirements</h2>
+<p>Finally, CUDA.jl 5.0 raises the minimum Julia and CUDA versions. The minimum Julia version is now 1.8, which should be enforced by the Julia package manager. The minimum CUDA toolkit version is now 11.4, but this cannot be enforced by the package manager. As a result, if you need to use an older version of the CUDA toolkit, you will need to pin CUDA.jl to v4.4 or below. <a href="https://github.com/JuliaGPU/CUDA.jl/blob/master/README.md">The README</a> will maintain a table of supported CUDA toolkit versions.</p>
+<p>Most users will not be affected by this change: If you use the artifact-provided CUDA toolkit, you will automatically get the latest version supported by your CUDA driver.</p>
+<h2 id="other_changes">Other changes</h2>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/2034">Support for CUDA 12.2</a>;</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/2040">Memory limits</a> are now enforced by CUDA, resulting in better performance;</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/1946">Support for Julia 1.10</a> &#40;with help from <a href="https://github.com/dkarrasch">@dkarrasch</a>&#41;;</p>
+</li>
+<li><p>Support for batched <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1975"><code>gemm</code></a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/1981"><code>gemv</code></a> and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2063"><code>svd</code></a> &#40;by <a href="https://github.com/lpawela">@lpawela</a> and <a href="https://github.com/nikopj">@nikopj</a>.</p>
+</li>
+</ul>
 ]]></content:encoded>
     
   <pubDate>Tue, 19 Sep 2023 00:00:00 +0000</pubDate>  
