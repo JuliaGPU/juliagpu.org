@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR41/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR41/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR41/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR41/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 5.1: Unified memory and cooperative groups ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR41/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR41/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 5.1: Unified memory and cooperative groups</h1>
+      <i data-feather=calendar></i>
+<time datetime=2023-11-7>Nov 7, 2023</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl 5.1 greatly improves the support of two important parts of the CUDA toolkit: unified memory, for accessing GPU memory on the CPU and vice-versa, and cooperative groups which offer a more modular approach to kernel programming.</p>
+<h1 id="cudajl_51_unified_memory_and_cooperative_groups"><a href="#cudajl_51_unified_memory_and_cooperative_groups" class="header-anchor">CUDA.jl 5.1: Unified memory and cooperative groups</a></h1>
+<p>CUDA.jl 5.1 greatly improves the support of two important parts of the CUDA toolkit: unified memory, for accessing GPU memory on the CPU and vice-versa, and cooperative groups which offer a more modular approach to kernel programming.</p>
+<h2 id="unified_memory"><a href="#unified_memory" class="header-anchor">Unified memory</a></h2>
+<p>Unified memory is a feature of CUDA that allows the programmer to <strong>access memory from both the CPU and GPU</strong>, relying on the driver to move data between the two. This can be useful for a variety of reasons: to avoid explicit memory copies, to use more memory than the GPU has available, or to be able to incrementally port code to the GPU and still have parts of the application run on the CPU.</p>
+<p>CUDA.jl did already support unified memory, but only for the most basic use cases. With CUDA.jl 5.1, it is now easier to allocate unified memory, and more convenient to use that memory from the CPU:</p>
+<pre><code class="language-julia-repl">julia&gt; gpu &#61; cu&#40;&#91;1., 2.&#93;; unified&#61;true&#41;
+2-element CuArray&#123;Float32, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 1.0
+ 2.0
+
+julia&gt; # accessing GPU memory from the CPU
+       gpu&#91;1&#93; &#61; 3;
+
+julia&gt; gpu
+2-element CuArray&#123;Float32, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 3.0
+ 2.0</code></pre>
+<p>Accessing GPU memory like this used to throw an error, but with CUDA.jl 5.1 it is <strong>safe and efficient to perform scalar iteration on <code>CuArray</code>s backed by unified memory</strong>. This greatly simplifies porting applications to the GPU, as it no longer is a problem when code uses <code>AbstractArray</code> fallbacks from Base that process element by element.</p>
+<p>In addition, CUDA.jl 5.1 also makes it <strong>easier to convert <code>CuArray</code>s to <code>Array</code> objects</strong>. This is important when wanting to use high-performance CPU libraries like BLAS or LAPACK which do not support <code>CuArray</code>s:</p>
+<pre><code class="language-julia-repl">julia&gt; cpu &#61; unsafe_wrap&#40;Array, gpu&#41;
+2-element Vector&#123;Float32&#125;:
+ 3.0
+ 2.0
+
+julia&gt; LinearAlgebra.BLAS.scal&#33;&#40;2f0, cpu&#41;;
+
+julia&gt; gpu
+2-element CuArray&#123;Float32, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 6.0
+ 4.0</code></pre>
+<p>The reverse is also possible: CPU-based <code>Array</code>s can now trivially be converted to <code>CuArray</code> objects for use on the GPU, <strong>without the need to explicitly allocate unified memory</strong>. This further simplifies memory management, as it makes it possible to use the GPU inside of an existing application without having to copy data into a <code>CuArray</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; gpu &#61; unsafe_wrap&#40;CuArray, cpu&#41;
+2-element CuArray&#123;Int64, 1, CUDA.Mem.UnifiedBuffer&#125;:
+ 1
+ 2
+
+julia&gt; CUDA.@sync gpu .&#43;&#61; 1;
+
+julia&gt; cpu
+2-element Vector&#123;Int64&#125;:
+ 2
+ 3</code></pre>
+<p>Note that the above methods are prefixed <code>unsafe</code> because of how they require <strong>careful management of object lifetimes</strong>: When creating an <code>Array</code> from a <code>CuArray</code>, the <code>CuArray</code> must be kept alive for as long as the <code>Array</code> is used, and vice-versa when creating a <code>CuArray</code> from an <code>Array</code>. Explicit synchronization &#40;i.e. waiting for the GPU to finish computing&#41; is also required, as CUDA.jl cannot synchronize automatically when accessing GPU memory through a CPU pointer.</p>
+<p>For now, CUDA.jl still defaults to device memory for unspecified allocations. This can be changed using the <code>default_memory</code> <a href="https://github.com/JuliaPackaging/Preferences.jl">preference</a> of the CUDA.jl module, which can be set to either <code>&quot;device&quot;</code>, <code>&quot;unified&quot;</code> or <code>&quot;host&quot;</code>. When these changes have been sufficiently tested, and the remaining rough edges have been smoothed out, we may consider switching the default allocator.</p>
+<h2 id="cooperative_groups"><a href="#cooperative_groups" class="header-anchor">Cooperative groups</a></h2>
+<p>Another major improvement in CUDA.jl 5.1 are the greatly expanded wrappers for the CUDA cooperative groups API. Cooperative groups are a low-level feature of CUDA that make it possible to <strong>write kernels that are more flexible than the traditional approach</strong> of differentiating computations based on thread and block indices. Instead, cooperative groups allow the programmer to use objects representing groups of threads, pass those around, and differentiate computations based on queries on those objects.</p>
+<p>For example, let&#39;s port the example from the <a href="https://developer.nvidia.com/blog/cooperative-groups/">introductory NVIDIA blogpost post</a>, which provides a function to compute the sum of an array in parallel:</p>
+<pre><code class="language-julia">function reduce_sum&#40;group, temp, val&#41;
+    lane &#61; CG.thread_rank&#40;group&#41;
+
+    # Each iteration halves the number of active threads
+    # Each thread adds its partial sum&#91;i&#93; to sum&#91;lane&#43;i&#93;
+    i &#61; CG.num_threads&#40;group&#41; ÷ 2
+    while i &gt; 0
+        temp&#91;lane&#93; &#61; val
+        CG.sync&#40;group&#41;
+        if lane &lt;&#61; i
+            val &#43;&#61; temp&#91;lane &#43; i&#93;
+        end
+        CG.sync&#40;group&#41;
+        i ÷&#61; 2
+    end
+
+    return val  # note: only thread 1 will return full sum
+end</code></pre>
+<p>When the threads of a group call this function, they cooperatively compute the sum of the values passed by each thread in the group. For example, let&#39;s write a kernel that calls this function using a group representing the current thread block:</p>
+<pre><code class="language-julia">function sum_kernel_block&#40;sum::AbstractArray&#123;T&#125;,
+                          input::AbstractArray&#123;T&#125;&#41; where T
+    # have each thread compute a partial sum
+    my_sum &#61; thread_sum&#40;input&#41;
+
+    # perform a cooperative summation
+    temp &#61; CuStaticSharedArray&#40;T, 256&#41;
+    g &#61; CG.this_thread_block&#40;&#41;
+    block_sum &#61; reduce_sum&#40;g, temp, my_sum&#41;
+
+    # combine the block sums
+    if CG.thread_rank&#40;g&#41; &#61;&#61; 1
+        CUDA.@atomic sum&#91;&#93; &#43;&#61; block_sum
+    end
+
+    return
+end
+
+function thread_sum&#40;input::AbstractArray&#123;T&#125;&#41; where T
+    sum &#61; zero&#40;T&#41;
+
+    i &#61; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+    stride &#61; blockDim&#40;&#41;.x * gridDim&#40;&#41;.x
+    while i &lt;&#61; length&#40;input&#41;
+        sum &#43;&#61; input&#91;i&#93;
+        i &#43;&#61; stride
+    end
+
+    return sum
+end
+
+n &#61; 1&lt;&lt;24
+threads &#61; 256
+blocks &#61; cld&#40;n, threads&#41;
+
+data &#61; CUDA.rand&#40;n&#41;
+sum &#61; CUDA.fill&#40;zero&#40;eltype&#40;data&#41;&#41;, 1&#41;
+@cuda threads&#61;threads blocks&#61;blocks sum_kernel_block&#40;sum, data&#41;</code></pre>
+<p>This style of programming makes it possible to write kernels that are safer and more modular than traditional kernels. Some CUDA features also require the use of cooperative groups, for example, asynchronous memory copies between global and shared memory are done using the <code>CG.memcpy_async</code> function.</p>
+<p>With CUDA.jl 5.1, it is now possible to use a large part of these APIs from Julia. Support has been added for implicit groups &#40;with the exception of cluster groups and the deprecated multi-grid groups&#41;, all relevant queries on these groups, as well as the many important collective functions, such as <code>shuffle</code>, <code>vote</code>, and <code>memcpy_async</code>. Support for explicit groups is still missing, as are collectives like <code>reduce</code> and <code>invoke</code>. For more information, refer to <a href="https://cuda.juliagpu.org/dev/development/kernel/#Cooperative-groups">the CUDA.jl documentation</a>.</p>
+<h2 id="other_updates"><a href="#other_updates" class="header-anchor">Other updates</a></h2>
+<p>Apart from these two major features, CUDA.jl 5.1 also includes a number of smaller fixes and improvements:</p>
+<ul>
+<li><p>Support for CUDA 12.3</p>
+</li>
+<li><p>Performance improvements related to memory copies, which regressed in CUDA 5.0</p>
+</li>
+<li><p>Improvements to the native profiler &#40;<code>CUDA.@profiler</code>&#41;, now also showing local memory usage, supporting more NVTX metadata, and with better support for Pluto.jl and Jupyter</p>
+</li>
+<li><p>Many CUSOLVER and CUSPARSE improvements by <a href="https://github.com/amontoison">@amontoison</a></p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR41/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR41/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
