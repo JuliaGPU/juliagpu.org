@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR42/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR42/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR42/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR42/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 4.0 ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR42/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 4.0</h1>
+      <i data-feather=calendar></i>
+<time datetime=2023-2-1>Feb 1, 2023</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl 4.0 is a breaking release that introduces the use of JLLs to provide the CUDA toolkit. This makes it possible to compile other binary libaries against the CUDA runtime, and use them together with CUDA.jl. The release also brings CUSPARSE improvements, the ability to limit memory use, and many bug fixes and performance improvements.</p>
+<h2 id="jlls_for_cuda_artifacts"><a href="#jlls_for_cuda_artifacts" class="header-anchor">JLLs for CUDA artifacts</a></h2>
+<p>While CUDA.jl has been using binary artifacts for a while, it was manually managing installation and selection of them, i.e., not by using standardised JLL packages. This complicated use of the artifacts by other packages, and made it difficult to build other binary packages against the CUDA runtime.</p>
+<p>With CUDA.jl 4.0, we now use JLLs to load the CUDA driver and runtime. Specifically, there are two JLLs in play: <code>CUDA_Driver_jll</code> and <code>CUDA_Runtime_jll</code>. The former is responsible for loading the CUDA driver library &#40;possibly upgrading it using a forward-compatible version&#41;, and determining the CUDA version that your set-up supports:</p>
+<pre><code class="language-julia-repl">❯ JULIA_DEBUG&#61;CUDA_Driver_jll julia
+julia&gt; using CUDA_Driver_jll
+┌ System CUDA driver found at libcuda.so.1, detected as version 12.0.0
+└ @ CUDA_Driver_jll
+┌ System CUDA driver is recent enough; not using forward-compatible driver
+└ @ CUDA_Driver_jll</code></pre>
+<p>With the driver identified and loaded, <code>CUDA_Runtime_jll</code> can select a compatible toolkit. By default, it uses the latest supported toolkit that is compatible with the driver:</p>
+<pre><code class="language-julia-repl">julia&gt; using CUDA_Runtime_jll
+
+julia&gt; CUDA_Runtime_jll.cuda_toolkits
+10-element Vector&#123;VersionNumber&#125;:
+ v&quot;10.2.0&quot;
+ v&quot;11.0.0&quot;
+ v&quot;11.1.0&quot;
+ v&quot;11.2.0&quot;
+ v&quot;11.3.0&quot;
+ v&quot;11.4.0&quot;
+ v&quot;11.5.0&quot;
+ v&quot;11.6.0&quot;
+ v&quot;11.7.0&quot;
+ v&quot;11.8.0&quot;
+
+julia&gt; CUDA_Runtime_jll.host_platform
+Linux x86_64 &#123;cuda&#61;11.8&#125;</code></pre>
+<p>As you can see, the selected CUDA runtime is encoded in the host platform. This makes it possible for Julia to automatically select compatible versions of other binary packages. For example, if we install and load <code>SuiteSparse_GPU_jll</code>, which right now <a href="https://github.com/JuliaPackaging/Yggdrasil/blob/2f5a64d9f61d0f1b619367b03b5cecae979ed6d1/S/SuiteSparse/SuiteSparse_GPU/build_tarballs.jl#L104-L126">provides builds</a> for CUDA 10.2, 11.0 and 12.0, the artifact resolution code knows to load the build for CUDA 11.0 which is compatible with the selected CUDA 11.8 runtime:</p>
+<pre><code class="language-julia">julia&gt; using SuiteSparse_GPU_jll
+
+julia&gt; SuiteSparse_GPU_jll.best_wrapper
+&quot;~/.julia/packages/SuiteSparse_GPU_jll/.../x86_64-linux-gnu-cuda&#43;11.0.jl&quot;</code></pre>
+<p>The change to JLLs requires a breaking change: the <code>JULIA_CUDA_VERSION</code> and <code>JULIA_CUDA_USE_BINARYBUILDER</code> environment variables have been removed, and are replaced by preferences that are set in the current environment. For convenience, you can set these preferences by calling <code>CUDA.set_runtime_version&#33;</code>:</p>
+<pre><code class="language-julia-repl">❯ julia --project
+julia&gt; using CUDA
+julia&gt; CUDA.runtime_version&#40;&#41;
+v&quot;11.8.0&quot;
+
+julia&gt; CUDA.set_runtime_version&#33;&#40;v&quot;11.7&quot;&#41;
+┌ Set CUDA Runtime version preference to 11.7,
+└ please re-start Julia for this to take effect.
+
+❯ julia --project
+julia&gt; using CUDA
+julia&gt; CUDA.runtime_version&#40;&#41;
+v&quot;11.7.0&quot;
+
+julia&gt; using CUDA_Runtime_jll
+julia&gt; CUDA_Runtime_jll.host_platform
+Linux x86_64 &#123;cuda&#61;11.7&#125;</code></pre>
+<p>The changed preference is reflected in the host platform, which means that you can use this mechanism to load a different builds of other binary packages. For example, if you rely on a package or JLL that does not yet have a build for CUDA 12, you could set the preference to <code>v&quot;11.x&quot;</code> to load an available build.</p>
+<p>For discovering a local runtime, you can set the version to <code>&quot;local&quot;</code>, which will replace the use of <code>CUDA_Runtime_jll</code> by <code>CUDA_Runtime_discovery.jl</code>, an API-compatible package that replaces the JLL with a local runtime discovery mechanism:</p>
+<pre><code class="language-julia-repl">❯ julia --project
+julia&gt; CUDA.set_runtime_version&#33;&#40;&quot;local&quot;&#41;
+┌ Set CUDA Runtime version preference to local,
+└ please re-start Julia for this to take effect.
+
+❯ JULIA_DEBUG&#61;CUDA_Runtime_Discovery julia --project
+julia&gt; using CUDA
+┌ Looking for CUDA toolkit via environment variables CUDA_PATH
+└ @ CUDA_Runtime_Discovery
+┌ Looking for binary ptxas in /opt/cuda
+│   all_locations &#61;
+│    2-element Vector&#123;String&#125;:
+│     &quot;/opt/cuda&quot;
+│     &quot;/opt/cuda/bin&quot;
+└ @ CUDA_Runtime_Discovery
+┌ Debug: Found ptxas at /opt/cuda/bin/ptxas
+└ @ CUDA_Runtime_Discovery
+...</code></pre>
+<h2 id="memory_limits"><a href="#memory_limits" class="header-anchor">Memory limits</a></h2>
+<p>By popular demand, support for memory limits has been reinstated. This functionality had been removed after the switch to CUDA memory pools, as the memory pool allocator does not yet support memory limits. Awaiting improvements by NVIDIA, we have added functionality to impose memory limits from the Julia side, in the form of two environment variables:</p>
+<ul>
+<li><p><code>JULIA_CUDA_SOFT_MEMORY_LIMIT</code>: This is an advisory limit, used to configure the memory pool, which will result in the pool being shrunk down to the requested limit at every synchronization point. That means that the pool may temporarily grow beyond the limit. This limit is unavailable when disabling memory pools &#40;with <code>JULIA_CUDA_MEMORY_POOL&#61;none</code>&#41;.</p>
+</li>
+<li><p><code>JULIA_CUDA_HARD_MEMORY_LIMIT</code>: This is a hard limit, checked before every allocation. Doing so is relatively expensive, so it is recommended to use the soft limit instead.</p>
+</li>
+</ul>
+<p>The value of these variables can be formatted as a numer of bytes, optionally followed by a unit, or as a percentage of the total device memory. Examples: <code>100M</code>, <code>50&#37;</code>, <code>1.5GiB</code>, <code>10000</code>.</p>
+<h2 id="cusparse_improvements"><a href="#cusparse_improvements" class="header-anchor">CUSPARSE improvements</a></h2>
+<p>Thanks to the work of <a href="https://github.com/amontoison">@amontoison</a>, the CUSPARSE interface has undergone many improvements:</p>
+<ul>
+<li><p>Better support of the <code>CuSparseMatrixCOO</code> format with, in particular, the addition of <code>CuSparseMatrixCOO * CuVector</code> and <code>CuSparseMatrixCOO * CuMatrix</code> products;</p>
+</li>
+<li><p>Routines specialized for <code>-</code>, <code>&#43;</code>, <code>*</code> operations between sparse matrices &#40;<code>CuSparseMatrixCOO</code>, <code>CuSparseMatrixCSC</code> and <code>CuSparseMatrixCSR</code>&#41; have been interfaced;</p>
+</li>
+<li><p>New generic routines for backward and forward sweeps with sparse triangular matrices are now used by <code>\</code>;</p>
+</li>
+<li><p><code>CuMatrix * CuSparseVector</code> and <code>CuMatrix * CuSparseMatrix</code> products have been added;</p>
+</li>
+<li><p>Conversions between sparse and dense matrices have been updated for using more recent and optimized routines;</p>
+</li>
+<li><p>High-level Julia functions for the new set of sparse BLAS 1 routines such as dot products between <code>CuSparseVector</code>;</p>
+</li>
+<li><p>Add missing dispatchs for <code>mul&#33;</code> and <code>ldiv&#33;</code> functions;</p>
+</li>
+<li><p>Interfacing of almost all new CUSPARSE routines added by the CUDA toolkits <code>v&quot;11.x&quot;</code>.</p>
+</li>
+</ul>
+<h2 id="other_changes"><a href="#other_changes" class="header-anchor">Other changes</a></h2>
+<ul>
+<li><p>Removal of the CUDNN, CUTENSOR, CUTENSORNET and CUSTATEVEC submodules: These have been moved into their own packages, respectively cuDNN.jl, cuTENSOR.jl, cuTensorNet.jl and cuStateVec.jl &#40;note the change in capitalization, now following NVIDIA&#39;s naming scheme&#41;;</p>
+</li>
+<li><p>Removal of the NVTX submodule: NVTX.jl should be used instead, which is a more complete implementation of the NVTX API;</p>
+</li>
+<li><p>Support for CUDA 11.8 &#40;support for CUDA 12.0 is being worked on&#41;;</p>
+</li>
+<li><p>Support for Julia 1.9.</p>
+</li>
+</ul>
+<h2 id="backport_releases"><a href="#backport_releases" class="header-anchor">Backport releases</a></h2>
+<p>Because CUDA.jl 4.0 is a breaking release, two additional releases have been made that backport bugfixes and select features:</p>
+<ul>
+<li><p>CUDA.jl 3.12.1 and 3.12.2: backports of bugfixes since 3.12</p>
+</li>
+<li><p>CUDA.jl 3.13.0: additionally adding the memory limit functionality</p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR42/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR42/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>

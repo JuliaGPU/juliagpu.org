@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR42/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR42/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR42/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR42/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 3.3 ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR42/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 3.3</h1>
+      <i data-feather=calendar></i>
+<time datetime=2021-6-10>Jun 10, 2021</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>There have been several releases of CUDA.jl in the past couple of months, with many bugfixes and many exciting new features to improve GPU programming in Julia: <code>CuArray</code> now supports isbits Unions, CUDA.jl can emit debug info for use with NVIDIA tools, and changes to the compiler make it even easier to use the latest version of the CUDA toolkit.</p>
+<h2 id="cuarray_support_for_isbits_unions"><a href="#cuarray_support_for_isbits_unions" class="header-anchor"><code>CuArray</code> support for isbits Unions</a></h2>
+<p>Unions are a way to represent values of one type or another, e.g., a value that can be an integer or a floating point. If all possible element types of a Union are so-called bitstypes, which can be stored contiguously in memory, the Union of these types can be stored contiguously too. This kind of optimization is implemented by the Array type, which can store such &quot;isbits Unions&quot; inline, as opposed to storing a pointer to a heap-allocated box. For more details, refer to the <a href="https://docs.julialang.org/en/v1/devdocs/isbitsunionarrays/">Julia documentation</a>.</p>
+<p>With CUDA.jl 3.3, the CuArray GPU array type now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/941">supports this optimization too</a>. That means you can safely allocate CuArrays with isbits union element types and perform GPU-accelerated operations on then:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; CuArray&#40;&#91;1, nothing, 3&#93;&#41;
+3-element CuArray&#123;Union&#123;Nothing, Int64&#125;, 1&#125;:
+ 1
+  nothing
+ 3
+
+julia&gt; findfirst&#40;isnothing, a&#41;
+2</code></pre>
+<p>It is also safe to pass these CuArrays to a kernel and use unions there:</p>
+<pre><code class="language-julia-repl">julia&gt; function kernel&#40;a&#41;
+         i &#61; threadIdx&#40;&#41;.x
+         if a&#91;i&#93; &#33;&#61;&#61; nothing
+           a&#91;i&#93; &#43;&#61; 1
+         end
+         return
+       end
+
+julia&gt; @cuda threads&#61;3 kernel&#40;a&#41;
+
+julia&gt; a
+3-element CuArray&#123;Union&#123;Nothing, Int64&#125;, 1&#125;:
+ 2
+  nothing
+ 4</code></pre>
+<p>This feature is especially valuable to represent missing values, and is an important step towards GPU support for DataFrames.jl.</p>
+<h2 id="debug_and_location_information"><a href="#debug_and_location_information" class="header-anchor">Debug and location information</a></h2>
+<p>Another noteworthy addition is the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/891">support for emitting debug and location information</a>. The debug level, set by passing <code>-g &lt;level&gt;</code> to the <code>julia</code> executable, determines how much info is emitted. The default of level 1 only enables location information instructions which should not impact performance. Passing <code>-g0</code> disables this, while passing <code>-g2</code> also enables the output of DWARF debug information and compiles in debug mode.</p>
+<p>Location information is useful for a variety of reasons. Many tools, like the NVIDIA profilers, use it corelate instructions to source code:</p>
+<figure>
+  <img src="/previews/PR42/post/2021-06-10-cuda_3.3/nvvp.png" alt="NVIDIA Visual Profiler with source-code location information">
+</figure>
+
+<p>Debug information can be used to debug compiled code using <code>cuda-gdb</code>:</p>
+<pre><code class="language-julia">&#36; cuda-gdb --args julia -g2 examples/vadd.jl
+&#40;cuda-gdb&#41; set cuda break_on_launch all
+&#40;cuda-gdb&#41; run
+&#91;Switching focus to CUDA kernel 0, grid 1, block &#40;0,0,0&#41;, thread &#40;0,0,0&#41;, device 0, sm 0, warp 0, lane 0&#93;
+macro expansion &#40;&#41; at .julia/packages/LLVM/hHQuD/src/interop/base.jl:74
+74                  Base.llvmcall&#40;&#40;&#36;ir,&#36;fn&#41;, &#36;rettyp, &#36;argtyp, &#36;&#40;args.args...&#41;&#41;
+
+&#40;cuda-gdb&#41; bt
+#0  macro expansion &#40;&#41; at .julia/packages/LLVM/hHQuD/src/interop/base.jl:74
+#1  macro expansion &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:6
+#2  _index &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:6
+#3  blockIdx_x &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:56
+#4  blockIdx &#40;&#41; at .julia/dev/CUDA/src/device/intrinsics/indexing.jl:76
+#5  julia_vadd&lt;&lt;&lt;&#40;1,1,1&#41;,&#40;12,1,1&#41;&gt;&gt;&gt; &#40;a&#61;..., b&#61;..., c&#61;...&#41; at .julia/dev/CUDA/examples/vadd.jl:6
+
+&#40;cuda-gdb&#41; f 5
+#5  julia_vadd&lt;&lt;&lt;&#40;1,1,1&#41;,&#40;12,1,1&#41;&gt;&gt;&gt; &#40;a&#61;..., b&#61;..., c&#61;...&#41; at .julia/dev/CUDA/examples/vadd.jl:6
+6           i &#61; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+
+&#40;cuda-gdb&#41; l
+1       using Test
+2
+3       using CUDA
+4
+5       function vadd&#40;a, b, c&#41;
+6           i &#61; &#40;blockIdx&#40;&#41;.x-1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+7           c&#91;i&#93; &#61; a&#91;i&#93; &#43; b&#91;i&#93;
+8           return
+9       end
+10</code></pre>
+<h2 id="improved_cuda_compatibility_support"><a href="#improved_cuda_compatibility_support" class="header-anchor">Improved CUDA compatibility support</a></h2>
+<p>As always, new CUDA.jl releases come with updated support for the CUDA toolkit. CUDA.jl is now compatible with <a href="https://github.com/JuliaGPU/CUDA.jl/pull/858">CUDA 11.3</a>, as well as <a href="https://github.com/JuliaGPU/CUDA.jl/pull/945">CUDA 11.3 Update 1</a>. Users don&#39;t have to do anything to update to these versions, as CUDA.jl will automatically select and download the latest supported version.</p>
+<p>Of course, for CUDA.jl to use the latest versions of the CUDA toolkit, a sufficiently recent version of the NVIDIA driver is required. Before CUDA 11.0, the driver&#39;s CUDA compatibility was a strict lower bound, and every minor CUDA release required a driver update. CUDA 11.0 comes with an enhanced compatibility option that follows semantic versioning, e.g., CUDA 11.3 can be used on an NVIDIA driver that only supports up to CUDA 11.0. CUDA.jl now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/936">follows semantic versioning</a> when selecting a compatible toolkit, making it easier to use the latest version of the CUDA toolkit in Julia.</p>
+<p>For those interested: Implementing semantic versioning required the CUDA.jl compiler to <a href="https://github.com/JuliaGPU/CUDA.jl/pull/892">use <code>ptxas</code> instead of the driver&#39;s embedded JIT</a> to generate GPU machine code. At the same time, many parts of CUDA.jl still use the CUDA driver APIs, so it&#39;s always recommended to keep your NVIDIA driver up-to-date.</p>
+<h2 id="high-level_graph_apis"><a href="#high-level_graph_apis" class="header-anchor">High-level graph APIs</a></h2>
+<p>To overcome the cost of launching kernels, CUDA makes it possible to build computational graphs, and execute those graphs with less overhead than the underlying operations. In CUDA.jl we provide easy access to the APIs <a href="https://github.com/JuliaGPU/CUDA.jl/pull/877">to record and execute</a> these graphs:</p>
+<pre><code class="language-julia">A &#61; CUDA.zeros&#40;Int, 1&#41;
+
+# ensure the operation is compiled
+A .&#43;&#61; 1
+
+# capture
+graph &#61; capture&#40;&#41; do
+    A .&#43;&#61; 1
+end
+@test Array&#40;A&#41; &#61;&#61; &#91;1&#93;   # didn&#39;t change anything
+
+# instantiate and launch
+exec &#61; instantiate&#40;graph&#41;
+CUDA.launch&#40;exec&#41;
+@test Array&#40;A&#41; &#61;&#61; &#91;2&#93;
+
+# update and instantiate/launch again
+graph′ &#61; capture&#40;&#41; do
+    A .&#43;&#61; 2
+end
+update&#40;exec, graph′&#41;
+CUDA.launch&#40;exec&#41;
+@test Array&#40;A&#41; &#61;&#61; &#91;4&#93;</code></pre>
+<p>This sequence of operations is common enough that we provide a high-level <code>@captured</code> macro wraps that automatically records, updates, instantiates and launches the graph:</p>
+<pre><code class="language-julia">A &#61; CUDA.zeros&#40;Int, 1&#41;
+
+for i in 1:2
+    @captured A .&#43;&#61; 1
+end
+@test Array&#40;A&#41; &#61;&#61; &#91;2&#93;</code></pre>
+<h2 id="minor_changes_and_features"><a href="#minor_changes_and_features" class="header-anchor">Minor changes and features</a></h2>
+<ul>
+<li><p>CUDA.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/842">now supports</a> <code>@atomic</code> multiplication and division &#40;by @yuehhua&#41;</p>
+</li>
+<li><p>Several statistics functions <a href="https://github.com/JuliaGPU/CUDA.jl/pull/509">have been implemented</a> &#40;by @berquist&#41;</p>
+</li>
+<li><p>The device-side random number generator in <a href="https://github.com/JuliaGPU/CUDA.jl/pull/890">is now based on Philox2x</a>, greatly improving quality of randomness &#40;passing BigCrush&#41; while allowing calls to <code>rand&#40;&#41;</code> from divergent threads.</p>
+</li>
+<li><p>Dependent libraries like CUDNN and CUTENSOR <a href="https://github.com/JuliaGPU/CUDA.jl/pull/882">are now only downloaded and initialized</a> when they are used.</p>
+</li>
+<li><p>The <code>synchronize&#40;&#41;</code> function in <a href="https://github.com/JuliaGPU/CUDA.jl/pull/896">now first spins</a> before yielding and sleeping, to improve the latency of short-running operations.</p>
+</li>
+<li><p>Several additional operations are now supported on Float16 inputs, such as <a href="https://github.com/JuliaGPU/CUDA.jl/pull/904">CUSPARSE and CUBLAS</a> operations, and <a href="https://github.com/JuliaGPU/CUDA.jl/pull/871">various math intrinsics</a>.</p>
+</li>
+<li><p>Kepler support &#40;compute capability 3.5&#41; <a href="https://github.com/JuliaGPU/CUDA.jl/pull/923">has been reinstated</a> for the time being.</p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR42/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR42/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>

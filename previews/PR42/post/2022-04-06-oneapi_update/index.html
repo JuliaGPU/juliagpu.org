@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR42/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR42/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR42/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR42/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>oneAPI.jl status update ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR42/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR42/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>oneAPI.jl status update</h1>
+      <i data-feather=calendar></i>
+<time datetime=2022-4-6>Apr 6, 2022</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>It has been over a year since the last update on oneAPI.jl, the Julia package for programming Intel GPUs &#40;and other accelerators&#41; using the oneAPI toolkit. Since then, the package has been under steady development, and several new features have been added to improve the developer experience and usability of the package.</p>
+<h2 id="atomic_intrinsics"><a href="#atomic_intrinsics" class="header-anchor"><code>@atomic</code> intrinsics</a></h2>
+<p>oneAPI.jl <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/85">now supports</a> atomic operations, which are required to implement a variety of parallel algorithms. Low-level atomic functions &#40;<code>atomic_add&#33;</code>, <code>atomic_xchg&#33;</code>, etc&#41; are available as unexported methods in the oneAPI module:</p>
+<pre><code class="language-julia">a &#61; oneArray&#40;Int32&#91;0&#93;&#41;
+
+function kernel&#40;a&#41;
+    oneAPI.atomic_add&#33;&#40;pointer&#40;a&#41;, Int32&#40;1&#41;&#41;
+    return
+end
+
+@oneapi items&#61;256 kernel&#40;a&#41;
+@test Array&#40;a&#41;&#91;1&#93; &#61;&#61; 256</code></pre>
+<p>Note that these methods are only available for those types that are supported by the underlying OpenCL intrinsics. For example, the <code>atomic_add&#33;</code> from above can only be used with <code>Int32</code> and <code>UInt32</code> inputs.</p>
+<p>Most users will instead rely on the higher-level <code>@atomic</code> macro, which can be easily put in front of many array operations to make them behave atomically. To avoid clashing with the new <code>@atomic</code> macro in Julia 1.7, this macro is also unexported:</p>
+<pre><code class="language-julia">a &#61; oneArray&#40;Int32&#91;0&#93;&#41;
+
+function kernel&#40;a&#41;
+    oneAPI.@atomic a&#91;1&#93; &#43;&#61; Int32&#40;1&#41;
+    return
+end
+
+@oneapi items&#61;256 kernel&#40;a&#41;
+@test Array&#40;a&#41;&#91;1&#93; &#61;&#61; 512</code></pre>
+<p>When used with operations that are supported by OpenCL, this macro will lower to calls like <code>atomic_add&#33;</code>. For other operations, a compare-and-exchange loop will be used. Note that for now, this is still restricted to 32-bit operations, as we do not support the <code>cl_khr_int64_base_atomics</code> extension for 64-bit atomics.</p>
+<h2 id="initial_integration_with_vendor_libraries"><a href="#initial_integration_with_vendor_libraries" class="header-anchor">Initial integration with vendor libraries</a></h2>
+<p>One significant missing features is the integration with vendor libraries like oneMKL. These integrations are required to ensure good performance for important operations like matrix multiplication, which currently fall-back to generic implementations in Julia that may not always perform as good.</p>
+<p>To improve this situation, we <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/97">are working on</a> a wrapper library that allows us to integrate with oneMKL and other oneAPI and SYCL libraries. Currently, only matrix multiplication is supported, but once the infrastructural issues are worked out we expect to quickly support many more operations.</p>
+<p>If you need support for specific libraries, please have a look at this PR. As the API surface is significant, we will need help to extend the wrapper library and integrate it with high-level Julia libraries like LinearAlgebra.jl.</p>
+<h2 id="correctness_issues"><a href="#correctness_issues" class="header-anchor">Correctness issues</a></h2>
+<p>In porting existing Julia GPU applications to oneAPI.jl, we fixed several issues that caused correctness issues when executing code on Intel GPUs:</p>
+<ul>
+<li><p>when the garbage collector frees GPU memory, <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/157">it now blocks</a> until all outstanding commands &#40;which may include uses of said memory&#41; are completes</p>
+</li>
+<li><p>the <code>barrier</code> function to synchronize threads <a href="https://github.com/JuliaGPU/oneAPI.jl/pull/162">is now</a> marked as <code>convert</code> to avoid LLVM miscompilations</p>
+</li>
+</ul>
+<p>Note that if you are using Tiger Lake hardware, there is currently a <a href="https://github.com/intel/compute-runtime/issues/522">known issue</a> in the back-end Intel compiler that affects oneAPI.jl, causing correctness issues that can be spotted by running the oneAPI.jl test suite.</p>
+<h2 id="future_work"><a href="#future_work" class="header-anchor">Future work</a></h2>
+<p>To significantly improve usability of oneAPI.jl, we will add support to the KernelAbstraction.jl package. This library is used by <a href="https://juliahub.com/ui/Packages/KernelAbstractions/aywHT/0.7.2?page&#61;2">many other packages</a> for adding GPU acceleration to algorithms that cannot be easily expressed using only array operations. As such, support for oneAPI.jl will make it possible to use your oneAPI GPUs with all of these packages.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR42/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR42/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
