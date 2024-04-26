@@ -149,8 +149,6 @@ Tim Besard
 <!-- Content appended here -->
 
 <p>CUDA.jl 5.1 greatly improves the support of two important parts of the CUDA toolkit: unified memory, for accessing GPU memory on the CPU and vice-versa, and cooperative groups which offer a more modular approach to kernel programming.</p>
-<h1 id="cudajl_51_unified_memory_and_cooperative_groups"><a href="#cudajl_51_unified_memory_and_cooperative_groups" class="header-anchor">CUDA.jl 5.1: Unified memory and cooperative groups</a></h1>
-<p>CUDA.jl 5.1 greatly improves the support of two important parts of the CUDA toolkit: unified memory, for accessing GPU memory on the CPU and vice-versa, and cooperative groups which offer a more modular approach to kernel programming.</p>
 <h2 id="unified_memory"><a href="#unified_memory" class="header-anchor">Unified memory</a></h2>
 <p>Unified memory is a feature of CUDA that allows the programmer to <strong>access memory from both the CPU and GPU</strong>, relying on the driver to move data between the two. This can be useful for a variety of reasons: to avoid explicit memory copies, to use more memory than the GPU has available, or to be able to incrementally port code to the GPU and still have parts of the application run on the CPU.</p>
 <p>CUDA.jl did already support unified memory, but only for the most basic use cases. With CUDA.jl 5.1, it is now easier to allocate unified memory, and more convenient to use that memory from the CPU:</p>
