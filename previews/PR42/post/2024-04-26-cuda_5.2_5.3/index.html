@@ -235,7 +235,7 @@ julia&gt; @btime CUDA.@sync sort&#40;&#36;&#40;CUDA.rand&#40;1024, 1024&#41;&#41
 # reference CPU time
 julia&gt; @btime sort&#40;&#36;&#40;rand&#40;Float32, 1024, 1024&#41;&#41;; dims&#61;1&#41;
   4.795 ms &#40;1030 allocations: 5.07 MiB&#41;</code></pre>
-<h2 id="unified_memory_improvements"><a href="#unified_memory_improvements" class="header-anchor">Unified memory improvements</a></h2>
+<h2 id="unified_memory_fixes"><a href="#unified_memory_fixes" class="header-anchor">Unified memory fixes</a></h2>
 <p>CUDA.jl 5.1 greatly improved support for unified memory, and this has continued in CUDA.jl 5.2 and 5.3. Most notably, when broadcasting <code>CuArray</code>s we now correctly preserve the memory type of the input arrays. This means that if you broadcast a <code>CuArray</code> that is allocated as unified memory, the result will also be allocated as unified memory. In case of a conflict, e.g. broadcasting a unified <code>CuArray</code> with one backed by device memory, we will prefer unified memory:</p>
 <pre><code class="language-julia-repl">julia&gt; cu&#40;&#91;1&#93;; host&#61;true&#41; .&#43; 1
 1-element CuArray&#123;Int64, 1, Mem.HostBuffer&#125;:
