@@ -61,6 +61,17 @@ Profiler ran for 1.0 s, capturing 1427349 events.Host-side activity: calling CUD
 │    0.02&#37; │   17.88 µs │     1 │                                     │ cuLaunchKernel          │
 │    0.00&#37; │  953.67 ns │     1 │                                     │ cuStreamSynchronize     │
 └──────────┴────────────┴───────┴─────────────────────────────────────┴─────────────────────────┘</code></pre>
+<p>It is also not required anymore to specify <code>external&#61;true</code> when using <code>CUDA.@profile</code> in combination with a tool like NSight Systems, as CUDA.jl will automatically detect the presence of an external profiler:</p>
+<pre><code class="language-julia-repl">shell&gt; nsys launch julia# warm-up
+julia&gt; CuArray&#40;&#91;1&#93;&#41;.&#43;1
+1-element CuArray&#123;Int64, 1, CUDA.Mem.DeviceBuffer&#125;:
+ 2julia&gt; CUDA.@profile CuArray&#40;&#91;1&#93;&#41;.&#43;1
+&#91; Info: This Julia session is already being profiled; defaulting to the external profiler.
+Capture range started in the application.
+Capture range ended in the application.
+Generating &#39;/tmp/nsys-report-c42f.qdstrm&#39;
+&#91;1/1&#93; &#91;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;&#61;100&#37;&#93; report1.nsys-rep</code></pre>
+<p>In case that detection fails, the <code>external</code> keyword argument remains available &#40;but do file an issue&#41;.</p>
 <h2 id="kernel_launch_debugging">Kernel launch debugging</h2>
 <p>A common issue with CUDA programming is that kernel launches may fail when exhausting certain resources, such as shared memory or registers. This typically results in a cryptic error message, but CUDA.jl will now try to diagnose launch failures and provide a more helpful error message, as suggested by <a href="https://github.com/simonbyrne">@simonbyrne</a>:</p>
 <p>For example, when using more parameter memory than allowed by the architecture:</p>
