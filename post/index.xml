@@ -19,6 +19,77 @@
 
 
 <item>
+  <title><![CDATA[oneAPI.jl 1.5: Ponte Vecchio support and oneMKL improvements]]></title>
+  <link>https://juliagpu.org/post/2024-05-24-oneapi_1.5/index.html</link>
+  <guid>https://juliagpu.org/2024-05-24-oneapi_1.5/</guid>
+  <description><![CDATA[oneAPI.jl v1.5 is a significant release that brings many new features, from extended hardware support to greatly improved wrappers of the oneMLK math library.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>oneAPI.jl v1.5 is a significant release that brings many new features, from extended hardware support to greatly improved wrappers of the oneMLK math library.</p>
+<h2 id="intel_ponte_vecchio">Intel Ponte Vecchio</h2>
+<p>In oneAPI.jl v1.5 we introduce support for the Intel Ponte Vecchio &#40;PVC&#41; architecture, which empowers the Xe HPC GPUs as found in the Aurora supercomputer:</p>
+<pre><code class="language-julia-repl">julia&gt; oneAPI.versioninfo&#40;&#41;
+Binary dependencies:
+- NEO: 24.13.29138&#43;0
+- libigc: 1.0.16510&#43;0
+- gmmlib: 22.3.18&#43;0
+- SPIRV_LLVM_Translator_unified: 0.4.0&#43;0
+- SPIRV_Tools: 2023.2.0&#43;0Toolchain:
+- Julia: 1.10.3
+- LLVM: 15.0.71 driver:
+- 00000000-0000-0000-17d2-6b1e010371d2 &#40;v1.3.29138, API v1.3.0&#41;16 devices:
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550
+- Intel&#40;R&#41; Data Center GPU Max 1550</code></pre>
+<p>Apart from <a href="https://github.com/JuliaGPU/oneAPI.jl/issues/428">a handful of MKL-related issues</a>, oneAPI.jl is fully functional on PVC, and passes all tests.</p>
+<h2 id="onemlk_wrappers">oneMLK wrappers</h2>
+<p>Thanks to the work of <a href="https://github.com/amontoison">@amontoison</a>, oneAPI.jl now provides greatly improved wrappers of the oneMKL library. This includes support for:</p>
+<ul>
+<li><p>LAPACK: <code>geqrf</code>&#40;<code>_batched</code>&#41;, <code>orgqr</code>&#40;<code>_batched</code>&#41;, <code>ormqr</code>, <code>potrf</code>&#40;<code>_batched</code>&#41;, <code>potrs</code>&#40;<code>_batched</code>&#41;, <code>getrf</code>&#40;<code>_batched</code>&#41;, <code>getri</code>&#40;<code>_batched</code>&#41;, <code>gebrd</code>, <code>gesvd</code>, <code>syevd</code>, <code>heevd</code>, <code>sygvd</code>, <code>hegvd</code></p>
+</li>
+<li><p>Sparse arrays: <code>sparse_gemm</code>, <code>sparse_gemv</code>, <code>sparse_symv</code>, <code>sparse_trmv</code>, <code>sparse_trsv</code>, <code>sparse_optimize_gemv</code>, <code>sparse_optimize_trsv</code></p>
+</li>
+</ul>
+<p>Where possible, these functions are integrated with standard library interfaces, e.g., making it possible to simply call <code>eigen</code>, or to multiply two <code>oneSparseMatrixCSR</code>s.</p>
+<h2 id="minor_changes">Minor changes</h2>
+<p>There have of course been many other changes and improvements in oneAPI.jl v1.5. For a full list, please refer to the <a href="https://github.com/JuliaGPU/oneAPI.jl/releases/tag/v1.5.0">release notes</a>, but some highlights include:</p>
+<ul>
+<li><p>a new launch configuration heuristic that should generally improve performance;</p>
+</li>
+<li><p>broadcast now preserves the buffer type &#40;host, device, or shared&#41;;</p>
+</li>
+<li><p>support for very large arrays that exceed the default device memory limit;</p>
+</li>
+<li><p>several toolchain bumps, with v1.5 using oneAPI 2024.1.0 with driver 24.13.29138.7;</p>
+</li>
+<li><p>minimal support for native Windows &#40;next to WSL, which is fully supported&#41;.</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Fri, 24 May 2024 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 5.2 and 5.3: Maintenance releases]]></title>
   <link>https://juliagpu.org/post/2024-04-26-cuda_5.2_5.3/index.html</link>
   <guid>https://juliagpu.org/2024-04-26-cuda_5.2_5.3/</guid>
