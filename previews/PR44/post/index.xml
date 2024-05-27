@@ -150,7 +150,7 @@ julia&gt; @btime &#36;a&#91;&#93;;
 4.210 s &#40;9 allocs: 208 bytes, without a warmup&#41;julia&gt; # After
        @b foldl&#40;&#43;, a&#41;
 3.107 ms &#40;9 allocs: 208 bytes&#41;</code></pre>
-<p>These changes should make it easier to port applications to the GPU by incrementally moving parts of the codebase to the GPU without having to worry about the performance of accessing memory from the CPU. The only requirement is to use unified memory, e.g., by calling <code>cu</code> with <code>unified&#61;true</code>, or setting a global CUDA.jl preference to use unified memory by default. However, as unified memory comes with a slight cost, and results in synchronous allocation behavior, it is still recommended to switch back to regular device memory when your application has been fully ported to the GPU.</p>
+<p>These changes should make it easier to port applications to the GPU by incrementally moving parts of the codebase to the GPU without having to worry about the performance of accessing memory from the CPU. The only requirement is to use unified memory, e.g., by calling <code>cu</code> with <code>unified&#61;true</code>, or setting the CUDA.jl preference <code>default_memory</code> to use unified memory by default. However, as unified memory comes with a slight cost, and results in synchronous allocation behavior, it is still recommended to switch back to regular device memory when your application has been fully ported to the GPU.</p>
 <h2 id="other_changes">Other changes</h2>
 <p>To keep this post from becoming even longer, a quick rundown of other changes:</p>
 <ul>
