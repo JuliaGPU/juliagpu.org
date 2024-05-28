@@ -26,6 +26,26 @@
   
   <content:encoded><![CDATA[
 <p>CUDA.jl 5.4 is an important release that comes with many memory-management related improvements, improving the performance and usability of several key features.</p>
+<p>Before anything else, let&#39;s get the breaking changes out of the way. CUDA.jl v5.4 only bumps the minor version, so it should be compatible with existing codebases. However, there are a couple of API changes that, although covered by appropriate deprecation warnings, applications should be updated to:</p>
+<ul>
+<li><p>The <code>CUDA.Mem</code> submodule has been removed. All identifiers have been moved to the parent <code>CUDA</code> submodule, with a couple being renamed in the process:</p>
+<ul>
+<li><p><code>Mem.Device</code> and <code>Mem.DeviceBuffer</code> have been renamed to <code>CUDA.DeviceMemory</code> &#40;the same applies to <code>Mem.Host</code> and <code>Mem.Unified</code>&#41;;</p>
+</li>
+<li><p>enums from the <code>Mem</code> submodule have gained a <code>MEM</code> suffix, e.g., <code>Mem.ATTACH_GLOBAL</code> has been renamed to <code>CUDA.MEM_ATTACH_GLOBAL</code>;</p>
+</li>
+<li><p><code>Mem.set&#33;</code> has been renamed to <code>CUDA.memset</code>;</p>
+</li>
+<li><p><code>Mem.info&#40;&#41;</code> has been renamed to <code>CUDA.memory_info&#40;&#41;</code>;</p>
+</li>
+</ul>
+</li>
+<li><p><code>CUDA.memory_status&#40;&#41;</code> has been renamed to <code>CUDA.pool_status&#40;&#41;</code>;</p>
+</li>
+<li><p><code>CUDA.available_memory&#40;&#41;</code> has been renamed to <code>CUDA.free_memory&#40;&#41;</code>.</p>
+</li>
+</ul>
+<p>The meat of this release is in the memory management improvements detailed below. These changes can have a significant impact of the performance of your application, so it&#39;s recommended to thoroughly test your application after upgrading&#33;</p>
 <h2 id="eager_garbage_collection">Eager garbage collection</h2>
 <p>Julia is a garbage collected language, which means that &#40;GPU&#41; allocations can fail because garbage has piled up, necessitating a collection cycle. Previous versions of CUDA.jl handled this at the allocation site, detecting out-of-memory errors and triggering the GC. This was not ideal, as it could lead to significant pauses and a bloated memory usage.</p>
 <p>To improve this, CUDA.jl v5.4 more accurately keeps track of memory usage, and uses that information to trigger the GC early at appropriate times, e.g., when waiting for a kernel to finish. This should lead to more predictable performance, both by distributing the cost of garbage collection over time and by potentially masking it behind other operations.</p>
