@@ -139,7 +139,7 @@ li p {
 
       <h1>CUDA.jl 5.4: Memory management mayhem</h1>
       <i data-feather=calendar></i>
-<time datetime=2024-5-27>May 27, 2024</time><br>
+<time datetime=2024-5-28>May 28, 2024</time><br>
 <i data-feather=edit-2></i>
 Tim Besard
 
@@ -299,6 +299,8 @@ julia&gt; # After
 <h2 id="other_changes"><a href="#other_changes" class="header-anchor">Other changes</a></h2>
 <p>To keep this post from becoming even longer, a quick rundown of other changes:</p>
 <ul>
+<li><p><a href="https://github.com/wsmoses">@wsmoses</a> introduced initial support for automatic differentiation of heterogeneous host/device code using Enzyme.jl. Before, you would have to differentiate through host and device code separately, and manually set up rules for crossing the host/device boundary. Now, you can differentiate through entire applications with ease;</p>
+</li>
 <li><p><code>CUDA.Mem</code> has been deprecated: <code>Mem.&#40;Device|Unified|Host&#41;</code> has been renamed to <code>CUDA.&#40;Device|Unified|Host&#41;Memory</code>, and other identifiers have been moved to the <code>CUDA</code> module. These changes are breaking, but covered by deprecation warnings;</p>
 </li>
 <li><p><code>CUDA.@profile</code> now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2339">automatically detects external profilers</a>, so it should not be required to specify <code>external&#61;true</code> anymore when running under NSight;</p>
