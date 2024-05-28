@@ -22,10 +22,10 @@
   <title><![CDATA[CUDA.jl 5.4: Memory management mayhem]]></title>
   <link>https://juliagpu.org/post/2024-05-28-cuda_5.4/index.html</link>
   <guid>https://juliagpu.org/2024-05-28-cuda_5.4/</guid>
-  <description><![CDATA[CUDA.jl 5.4 is an important release that comes with many memory-management related changes, improving the performance and usability of several key features.]]></description>  
+  <description><![CDATA[CUDA.jl 5.4 comes with many memory-management related changes that should improve performance of memory-heavy applications, and make it easier to work with heterogeneous set-ups involving multiple GPUs or using both the CPU and GPU.]]></description>  
   
   <content:encoded><![CDATA[
-<p>CUDA.jl 5.4 is an important release that comes with many memory-management related changes, improving the performance and usability of several key features.</p>
+<p>CUDA.jl 5.4 comes with many memory-management related changes that should improve performance of memory-heavy applications, and make it easier to work with heterogeneous set-ups involving multiple GPUs or using both the CPU and GPU.</p>
 <p>Before anything else, let&#39;s get the breaking changes out of the way. CUDA.jl v5.4 only bumps the minor version, so it should be compatible with existing codebases. However, there are a couple of API changes that, although covered by appropriate deprecation warnings, applications should be updated to:</p>
 <ul>
 <li><p>The <code>CUDA.Mem</code> submodule has been removed. All identifiers have been moved to the parent <code>CUDA</code> submodule, with a couple being renamed in the process:</p>
