@@ -260,7 +260,7 @@ julia&gt; a .&#43; 1;</code></pre>
 <p>If P2P access between devices is not possible, CUDA.jl will now raise an error instead of throwing an illegal memory access error as it did before:</p>
 <pre><code class="language-julia">julia&gt; # Use on incompatible device 2
        device&#33;&#40;2&#41;
-CuDevice&#40;5&#41;: NVIDIA GeForce GTX 1080 Ti
+CuDevice&#40;2&#41;: NVIDIA GeForce GTX 1080 Ti
 julia&gt; a .&#43; 1
 ERROR: cannot take the GPU address of inaccessible device memory.
 
