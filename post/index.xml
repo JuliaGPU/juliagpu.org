@@ -55,10 +55,9 @@ using MLUtils: DataLoadern_obs &#61; 300_000
 n_feature &#61; 1000
 X &#61; rand&#40;n_feature, n_obs&#41;
 y &#61; rand&#40;1, n_obs&#41;
-train_data &#61; DataLoader&#40;&#40;X, y&#41; |&lt; gpu; batchsize &#61; 2048, shuffle&#61;false&#41;model &#61; Dense&#40;n_feature, &gt;&#41; |&lt; gpu
-loss&#40;m, _x, _y&#41; &#61; Flux.Losses.mse&#40;m&#40;_x&#41;, _&gt;&#41;
+train_data &#61; DataLoader&#40;&#40;X, y&#41; |&gt; gpu; batchsize &#61; 2048, shuffle&#61;false&#41;model &#61; Dense&#40;n_feature, 1&#41; |&gt; gpu
+loss&#40;m, _x, _y&#41; &#61; Flux.Losses.mse&#40;m&#40;_x&#41;, _y&#41;
 opt_state &#61; Flux.setup&#40;Flux.Adam&#40;&#41;, model&#41;
-Flux.train&#33;&#40;loss, model, train_data, opt_state&#41;
 for epoch in 1:100
   Flux.train&#33;&#40;loss, model, train_data, opt_state&#41;
 end</code></pre>
