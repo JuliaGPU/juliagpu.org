@@ -184,7 +184,7 @@ Toolchain:
 - Intel&#40;R&#41; Data Center GPU Max 1550
 - Intel&#40;R&#41; Data Center GPU Max 1550</code></pre>
 <p>Apart from <a href="https://github.com/JuliaGPU/oneAPI.jl/issues/428">a handful of MKL-related issues</a>, oneAPI.jl is fully functional on PVC, and passes all tests.</p>
-<h2 id="onemlk_wrappers"><a href="#onemlk_wrappers" class="header-anchor">oneMLK wrappers</a></h2>
+<h2 id="onemkl_wrappers"><a href="#onemkl_wrappers" class="header-anchor">oneMKL wrappers</a></h2>
 <p>Thanks to the work of <a href="https://github.com/amontoison">@amontoison</a>, oneAPI.jl now provides greatly improved wrappers of the oneMKL library. This includes support for:</p>
 <ul>
 <li><p>LAPACK: <code>geqrf</code>&#40;<code>_batched</code>&#41;, <code>orgqr</code>&#40;<code>_batched</code>&#41;, <code>ormqr</code>, <code>potrf</code>&#40;<code>_batched</code>&#41;, <code>potrs</code>&#40;<code>_batched</code>&#41;, <code>getrf</code>&#40;<code>_batched</code>&#41;, <code>getri</code>&#40;<code>_batched</code>&#41;, <code>gebrd</code>, <code>gesvd</code>, <code>syevd</code>, <code>heevd</code>, <code>sygvd</code>, <code>hegvd</code></p>
