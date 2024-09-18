@@ -59,8 +59,14 @@ activities, we would be grateful if you could cite our work:
 
 ## Community
 
-If you need help, or have questions about GPU programming in Julia, you can find members of
-the community at:
+If you need help, or have questions about GPU programming in Julia, you can find
+members of the community at:
 
-- Julia Discourse, with a dedicated [GPU section](https://discourse.julialang.org/c/domain/gpu/11)
-- Julia Slack ([register here](https://slackinvite.julialang.org/)), on the [#gpu channel](https://julialang.slack.com/messages/C689Y34LE/)
+- Julia Discourse, with a dedicated [GPU
+  section](https://discourse.julialang.org/c/domain/gpu/11)
+- Julia Slack ([register here](https://slackinvite.julialang.org/)), on the
+  [#gpu channel](https://julialang.slack.com/messages/C689Y34LE/)
+- [JuliaGPU office
+  hours](https://mit.zoom.us/j/92410737378?pwd=MWkrSkIzMEtRWkZHdm1XQmpNbm90UT09),
+  every other week at 2PM CET (check the [Julia community
+  calendar](https://julialang.org/community/#events) for more details).
