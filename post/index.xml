@@ -19,6 +19,39 @@
 
 
 <item>
+  <title><![CDATA[CUDA.jl 5.5: Maintenance release]]></title>
+  <link>https://juliagpu.org/post/2024-09-18-cuda_5.5/index.html</link>
+  <guid>https://juliagpu.org/2024-09-18-cuda_5.5/</guid>
+  <description><![CDATA[CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features.</p>
+<p>The only important change is that the minimal required Julia version has been bumped to 1.10, in anticipation of it becoming the next LTS release.</p>
+<h2 id="new_features">New features</h2>
+<ul>
+<li><p>Support for the upcoming Julia 1.11 release has been added, as well as for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2461">CUDA 12.6 &#40;Update 1&#41;</a>.</p>
+</li>
+<li><p>Launch overhead has been reduced by <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2472">avoiding double argument conversions</a>. Note that this does not apply to kernels that are obtained using <code>@cuda launch&#61;false</code>.</p>
+</li>
+<li><p>CUSOLVER&#39;s dense wrappers have been improved by <a href="https://github.com/bjarthur">Ben Arthur</a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2465">now caching workspace buffers</a>. This should greatly reduce the number of allocations needed for repeated calls.</p>
+</li>
+<li><p><a href="https://github.com/amontoison">Alexis Montoison</a> has improved the CUSPARSE wrappers, adding <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2489">conversions between sparse vectors and sparse matrices</a> that enable <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2488">a version of <code>gemv</code></a> which preserves sparsity of the inputs.</p>
+</li>
+<li><p>CUDA.jl&#39;s CUFFT wrappers <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2430">now support <code>Float16</code></a>, thanks to <a href="https://github.com/eschnett">Erik Schnetter</a>.</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Wed, 18 Sep 2024 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 5.4: Memory management mayhem]]></title>
   <link>https://juliagpu.org/post/2024-05-28-cuda_5.4/index.html</link>
   <guid>https://juliagpu.org/2024-05-28-cuda_5.4/</guid>
