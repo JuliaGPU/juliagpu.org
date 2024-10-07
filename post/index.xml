@@ -19,6 +19,65 @@
 
 
 <item>
+  <title><![CDATA[Metal.jl 1.4: Improved random numbers]]></title>
+  <link>https://juliagpu.org/post/2024-10-07-metal-1.4/index.html</link>
+  <guid>https://juliagpu.org/2024-10-07-metal-1.4/</guid>
+  <description><![CDATA[Metal.jl 1.4 adds higher-quality random number generators from the Metal Performance Shaders library. Some limitations apply, with a fallback to the current implementation in those situations.]]></description>  
+  
+  <content:encoded><![CDATA[<p> <p>Metal.jl 1.4 adds higher-quality random number generators from the Metal Performance Shaders library. Some limitations apply, with a fallback to the current implementation in those situations.</p></p>
+<h2 id="metalrand_and_friends"><code>Metal.rand</code> and friends</h2>
+<p>Using functionality provided by the Metal Performance Shaders &#40;MPS&#41; library, Metal.jl now comes with much improved GPU random number generators. Uniform distributions using <code>Metal.rand</code> &#40;and its in-place variant <code>Metal.rand&#33;</code>&#41; are available for all Metal-supported integer types and <code>Float32</code>. However, due to <a href="https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400767-copyfrombuffer?language&#61;objc">Metal API limitations</a>, 8-bit and 16-bit integers may fall back to the lower-quality GPUArrays.jl random number generator if their size in bytes is not a multiple of 4. Normally distributed <code>Float32</code> values can be generated for with <code>Metal.randn</code> and <code>Metal.randn&#33;</code>, while <code>Float16</code> is not supported by the MPS library and will always fall back to the GPUArrays implementation.</p>
+<p>The easiest way to use these is to use the Metal convenience functions <code>Metal.rand&#91;n&#93;&#91;&#33;&#93;</code> as you would the usual functions from the Random.jl standard library:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; Metal.rand&#40;Float32, 2&#41;
+2-element MtlVector&#123;Float32, Metal.PrivateStorage&#125;:
+ 0.95755994
+ 0.7110207julia&gt; Metal.randn&#33;&#40;a&#41;
+2-element MtlVector&#123;Float32, Metal.PrivateStorage&#125;:
+ 1.7230463
+ 0.55636907</code></pre>
+<p>However, the Random.jl methods can also be used by providing the appropriate <code>RNG</code> either from <code>MPS.default_rng&#40;&#41;</code> or <code>MPS.RNG&#40;&#41;</code> to the standard <code>Random.rand&#91;n&#93;&#91;&#33;&#93;</code> functions:</p>
+<pre><code class="language-julia-repl">julia&gt; using Randomjulia&gt; rng &#61; MPS.RNG&#40;&#41;;julia&gt; Random.rand&#40;rng, 2&#41;
+2-element MtlVector&#123;Float32, Metal.PrivateStorage&#125;:
+ 0.8941469
+ 0.67628527</code></pre>
+<p>Seeding is done by calling <code>Metal.seed&#33;</code> for the global RNG, or <code>Random.seed&#33;</code> when working with an explicit <code>RNG</code> object.</p>
+<h2 id="other_improvements_since_the_last_blog_post">Other improvements since the last blog post</h2>
+<ul>
+<li><p>Since v0.5: <code>MtlArray</code> storage mode has been parameterized, allowing one to create a shared storage <code>MtlArray</code> by calling <code>MtlArray&#123;eltype, ndims, Metal.SharedStorage&#125;&#40;...&#41;</code>.</p>
+</li>
+<li><p>Since v0.3: MPS-accelerated decompositions were added.</p>
+</li>
+<li><p>Various performance improvements</p>
+</li>
+<li><p><em>Many</em> bug fixes.</p>
+</li>
+</ul>
+<h2 id="future_work">Future work</h2>
+<p>Although Metal.jl is now in v1, there is still work to be done to make it as fast and feature-complete as possible. In particular:</p>
+<ul>
+<li><p>Metal.jl is now using native ObjectiveC FFI for wrapping Metal APIs. However, these wrappers have to be written manually for every piece of Objective-C code. <em>We are looking for help with improving Clang.jl and ObjectiveC.jl</em> to <a href="https://github.com/JuliaInterop/ObjectiveC.jl/issues/41">enable the automatic generation of these wrappers</a>;</p>
+</li>
+<li><p>The MPS wrappers are incomplete, automatic wrapper generation would greatly help with full MPS support;</p>
+</li>
+<li><p>To implement a full-featured KernelAbstractions.jl back-end, Metal atomic operations need to <a href="https://github.com/JuliaGPU/Metal.jl/issues/218">be hooked up to Atomix</a>;</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/issues/298">Full support for BFloat16 values</a>, which has been supported since Metal 3.1 &#40;macOS 14&#41;, is not yet available in Metal.jl. There is, however, a <a href="https://github.com/JuliaGPU/Metal.jl/pull/446">draft PR</a> in the works. Check it out if you&#39;re interested in helping out;</p>
+</li>
+<li><p>Some functionality present in CUDA.jl <a href="https://github.com/JuliaGPU/Metal.jl/issues/443">could be ported to Metal.jl to improve usability</a>.</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Mon, 07 Oct 2024 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Christian Guinard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 5.5: Maintenance release]]></title>
   <link>https://juliagpu.org/post/2024-09-18-cuda_5.5/index.html</link>
   <guid>https://juliagpu.org/2024-09-18-cuda_5.5/</guid>
