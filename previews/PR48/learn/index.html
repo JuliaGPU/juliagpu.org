@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR48/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR48/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR48/css/bootstrap.min.css">
+  
+  
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>Learn ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR48/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+<!-- Content appended here -->
+
+<h1 id="learn"><a href="#learn" class="header-anchor">Learn</a></h1>
+<p>Currently, the Julia CUDA stack is the most mature, easiest to install, and full-featured. The <a href="https://cuda.juliagpu.org/stable/">CUDA.jl documentation</a> is a central place for information on all relevant packages. Start with the instructions on <a href="https://cuda.juliagpu.org/stable/installation/overview/">how to install</a> the stack, and follow with this <a href="https://cuda.juliagpu.org/stable/tutorials/introduction/">introductory tutorial</a>. There are also a series of <a href="https://github.com/JuliaGPU/Learning/tree/main/Courses/AdvancedCUDA">notebooks on more advanced uses of CUDA.jl</a>, including application and kernel optimization, as well as advanced memory management and concurrent programming concepts &#40;which apply to other back-ends as well&#41;.</p>
+<p>If you prefer video material, there are plenty of talks and workshops on GPU programming in Julia to be found on Youtube. For example:</p>
+<h2 id="gpu_programming_in_julia"><a href="#gpu_programming_in_julia" class="header-anchor">GPU programming in Julia</a></h2>
+<p>3-hour workshop covering various of the toolchain:</p>
+<ul>
+<li><p>Array programming</p>
+</li>
+<li><p>Kernel programminng</p>
+</li>
+<li><p>Parallel proggramming concepts</p>
+</li>
+<li><p>CUDA.jl application and kernel profiling</p>
+</li>
+<li><p>Image processing using AMDGPU.jl</p>
+</li>
+<li><p>Vendor-neutral GPU programming with KernelAbstractions.jl</p>
+</li>
+</ul>
+<div style=position:relative;padding-bottom:56.25%;height:0;overflow:hidden>
+  <iframe
+    src=https://www.youtube.com/embed/Hz9IMJuW5hU
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;"
+    allowfullscreen
+    title="YouTube Video">
+  </iframe>
+</div>
+
+<br/>
+<h2 id="concurrent_gpu_computing_in_cudajl_30"><a href="#concurrent_gpu_computing_in_cudajl_30" class="header-anchor">Concurrent GPU computing in CUDA.jl 3.0</a></h2>
+<p>Introduction to concurrent GPU computing:</p>
+<ul>
+<li><p>Overlapping GPU computations</p>
+</li>
+<li><p>Using multiple devices</p>
+</li>
+<li><p>Using threads</p>
+</li>
+</ul>
+<div style=position:relative;padding-bottom:56.25%;height:0;overflow:hidden>
+  <iframe
+    src=https://www.youtube.com/embed/fw0R5G8pB0U
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;"
+    allowfullscreen
+    title="YouTube Video">
+  </iframe>
+</div>
+
+<br/>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR48/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>

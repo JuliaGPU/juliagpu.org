@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR48/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR48/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR48/css/bootstrap.min.css">
+  
+  
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 5.5: Maintenance release ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR48/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR48/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 5.5: Maintenance release</h1>
+      <i data-feather=calendar></i>
+<time datetime=2024-9-18>Sep 18, 2024</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features.</p>
+<p>The only important change is that the minimal required Julia version has been bumped to 1.10, in anticipation of it becoming the next LTS release.</p>
+<h2 id="new_features"><a href="#new_features" class="header-anchor">New features</a></h2>
+<ul>
+<li><p>Support for the upcoming Julia 1.11 release has been added, as well as for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2461">CUDA 12.6 &#40;Update 1&#41;</a>.</p>
+</li>
+<li><p>Launch overhead has been reduced by <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2472">avoiding double argument conversions</a>. Note that this does not apply to kernels that are obtained using <code>@cuda launch&#61;false</code>.</p>
+</li>
+<li><p>CUSOLVER&#39;s dense wrappers have been improved by <a href="https://github.com/bjarthur">Ben Arthur</a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2465">now caching workspace buffers</a>. This should greatly reduce the number of allocations needed for repeated calls.</p>
+</li>
+<li><p><a href="https://github.com/amontoison">Alexis Montoison</a> has improved the CUSPARSE wrappers, adding <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2489">conversions between sparse vectors and sparse matrices</a> that enable <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2488">a version of <code>gemv</code></a> which preserves sparsity of the inputs.</p>
+</li>
+<li><p>CUDA.jl&#39;s CUFFT wrappers <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2430">now support <code>Float16</code></a>, thanks to <a href="https://github.com/eschnett">Erik Schnetter</a>.</p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR48/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
