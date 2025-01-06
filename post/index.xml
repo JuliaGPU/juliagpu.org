@@ -19,6 +19,59 @@
 
 
 <item>
+  <title><![CDATA[GPUArrays v11: Port to KernelAbstractions.jl]]></title>
+  <link>https://juliagpu.org/post/2025-01-07-gpuarrays-11/index.html</link>
+  <guid>https://juliagpu.org/2025-01-07-gpuarrays-11/</guid>
+  <description><![CDATA[The latest version of GPUArrays.jl involved a port of all vendor-neutral kernels to KernelAbstractions.jl. This should make it easier to add new functionality and improve the performance of existing kernels.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>The latest version of GPUArrays.jl involved a port of all vendor-neutral kernels to KernelAbstractions.jl. This should make it easier to add new functionality and improve the performance of existing kernels.</p>
+<h2 id="vendor-neutral_kernel_dsl">Vendor-neutral kernel DSL</h2>
+<p>Back in the day, we created GPUArrays.jl to avoid having to write separate kernels for each GPU back-end, by relying on a very simple vendor-neutral domain-specific language &#40;DSL&#41; that could be translated very easily to the back-end&#39;s native kernel language. As a simple example, the following kernel was used to compute the adjoint of a vector:</p>
+<pre><code class="language-julia">function LinearAlgebra.adjoint&#33;&#40;B::AbstractGPUMatrix, A::AbstractGPUVector&#41;
+    gpu_call&#40;B, A&#41; do ctx, B, A
+        idx &#61; @linearidx A
+        @inbounds B&#91;1, idx&#93; &#61; adjoint&#40;A&#91;idx&#93;&#41;
+        return
+    end
+    return B
+end</code></pre>
+<p>This DSL was designed almost a decade ago, by <a href="https://github.com/SimonDanisch">Simon Danisch</a>, and has served us well&#33; Since then, KernelAbstractions.jl has been developed by <a href="https://github.com/vchuravy/">Valentin Churavy</a>, providing a more principled and powerful DSL. With many application developers switching to KernelAbstractions.jl, it was time to port GPUArrays.jl to this new DSL as well.</p>
+<p>Thanks to the tireless work by <a href="https://github.com/leios">James Schloss</a>, <strong>GPUArrays.jl v11 now uses KernelAbstractions.jl for all vendor-neutral kernels</strong>. The aforementioned <code>adjoint&#33;</code> kernel now looks like this:</p>
+<pre><code class="language-julia">function LinearAlgebra.adjoint&#33;&#40;B::AbstractGPUMatrix, A::AbstractGPUVector&#41;
+    @kernel function adjoint_kernel&#33;&#40;B, A&#41;
+        idx &#61; @index&#40;Global, Linear&#41;
+        @inbounds B&#91;1, idx&#93; &#61; adjoint&#40;A&#91;idx&#93;&#41;
+    end
+    adjoint_kernel&#33;&#40;get_backend&#40;A&#41;&#41;&#40;B, A; ndrange&#61;size&#40;A&#41;&#41;
+    return B
+end</code></pre>
+<p>As shown above, the KernelAbstractions.jl DSL is very similar to the old DSL, but it provides more flexibility and power &#40;e.g., support for atomics through Atomix.jl&#41;. In addition, many more users are familiar with KernelAbstractions.jl, making it easier for them to contribute to GPUArrays.jl. A good first step here would be to port some of the vendor-specific kernels from CUDA.jl to GPUArrays.jl, making them available to all GPU back-ends. If you are interested in contributing, please reach out&#33;</p>
+<p>That said, the change is not without its challenges. The added flexibility offered by KernelAbstractions.jl with respect to indexing currently results in <strong>certain kernels being slower than before</strong>, specifically when there is not much computational complexity to amortise the cost of indexing &#40;e.g., when doing very simple broadcasts&#41;. <a href="https://github.com/JuliaGPU/GPUArrays.jl/issues/565">We are working on improving this</a>, but it will take some time. Not to hold back the rest of the JuliaGPU ecosystem, we are releasing despite these performance issues. It&#39;s recommended to carefully benchmark your application after upgrading to v11, and to report any performance regressions</p>
+<h2 id="back-end_package_versions">Back-end package versions</h2>
+<p>As GPUArrays.jl is not a direct dependency of most applications, the update will be pulled in by the following back-end package versions &#40;some of which may not be released yet&#41;:</p>
+<ul>
+<li><p>CUDA.jl v5.6</p>
+</li>
+<li><p>Metal.jl v1.5</p>
+</li>
+<li><p>oneAPI.jl v2.0</p>
+</li>
+<li><p>AMDGPU.jl v1.1</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Tue, 07 Jan 2025 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[Metal.jl 1.4: Improved random numbers]]></title>
   <link>https://juliagpu.org/post/2024-10-07-metal-1.4/index.html</link>
   <guid>https://juliagpu.org/2024-10-07-metal-1.4/</guid>
