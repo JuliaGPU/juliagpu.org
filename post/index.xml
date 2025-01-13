@@ -19,6 +19,94 @@
 
 
 <item>
+  <title><![CDATA[OpenCL.jl 0.10: Now with native Julia kernels]]></title>
+  <link>https://juliagpu.org/post/2025-01-13-opencl_0.10/index.html</link>
+  <guid>https://juliagpu.org/2025-01-13-opencl_0.10/</guid>
+  <description><![CDATA[Version 0.10 of OpenCL.jl is a significant release that adds support for native Julia kernels. This necessitated a major overhaul of the package&#39;s internals, bringing the package in line with modern Julia GPU programming practices.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>Version 0.10 of OpenCL.jl is a significant release that adds support for native Julia kernels. This necessitated a major overhaul of the package&#39;s internals, bringing the package in line with modern Julia GPU programming practices.</p>
+<h2 id="native_julia_kernels">Native Julia kernels</h2>
+<p>The highlight of this release is the addition of <strong>a compiler that makes it possible to write OpenCL kernels in Julia</strong> instead of having to use OpenCL C and accompanying string-based APIs. Let&#39;s illustrate using the typical <code>vadd</code> vector-additional example, which starts by generating some data and uploading it to the GPU:</p>
+<pre><code class="language-julia">using OpenCLdims &#61; &#40;2,&#41;
+a &#61; round.&#40;rand&#40;Float32, dims&#41; * 100&#41;
+b &#61; round.&#40;rand&#40;Float32, dims&#41; * 100&#41;
+c &#61; similar&#40;a&#41;d_a &#61; CLArray&#40;a&#41;
+d_b &#61; CLArray&#40;b&#41;
+d_c &#61; CLArray&#40;c&#41;</code></pre>
+<p>The typical way to write a kernel is to use a string with OpenCL C code, which is then compiled and executed on the GPU. This is done as follows:</p>
+<pre><code class="language-julia">const source &#61; &quot;&quot;&quot;
+   __kernel void vadd&#40;__global const float *a,
+                      __global const float *b,
+                      __global float *c&#41; &#123;
+      int i &#61; get_global_id&#40;0&#41;;
+      c&#91;i&#93; &#61; a&#91;i&#93; &#43; b&#91;i&#93;;
+    &#125;&quot;&quot;&quot;prog &#61; cl.Program&#40;; source&#41; |&gt; cl.build&#33;
+kern &#61; cl.Kernel&#40;prog, &quot;vadd&quot;&#41;len &#61; prod&#40;dims&#41;
+clcall&#40;kern, Tuple&#123;Ptr&#123;Float32&#125;, Ptr&#123;Float32&#125;, Ptr&#123;Float32&#125;&#125;,
+       d_a, d_b, d_c; global_size&#61;&#40;len,&#41;&#41;</code></pre>
+<p>With the new GPUCompiler.jl-based compiler, you can now write the kernel in Julia just like with our other back-ends:</p>
+<pre><code class="language-julia">function vadd&#40;a, b, c&#41;
+    i &#61; get_global_id&#40;&#41;
+    @inbounds c&#91;i&#93; &#61; a&#91;i&#93; &#43; b&#91;i&#93;
+    return
+endlen &#61; prod&#40;dims&#41;
+@opencl global_size&#61;len vadd&#40;d_a, d_b, d_c&#41;</code></pre>
+<p>This is of course a much more natural way to write kernels, and it also allows for OpenCL.jl to be plugged into the rest of the JuliaGPU ecosystem. Concretely, OpenCL.jl now implements the GPUArrays.jl interface, enabling lots of vendor-neutral functionality, and also provides a KernelAbstractions.jl back-end for use with the plenty of libraries that build on top of KernelAbstractions.jl.</p>
+<p>There is no free lunch, though, and <strong>the native compiler functionality currently relies on your OpenCL driver supporting SPIR-V</strong>. This is sadly not a common feature, e.g., neither NVIDIA or ADM&#39;s OpenCL drivers support it, only Intel&#39;s. But if you are stuck with a driver that does not support SPIR-V, there is still hope: SPIR-V can be compiled back to OpenCL C, using <a href="https://github.com/google/clspv">Google <code>clspv</code></a>. If you are interested, check out <a href="https://github.com/JuliaGPU/OpenCL.jl/issues/234">this issue</a> and feel free to reach out.</p>
+<h2 id="breaking_api_changes">Breaking API changes</h2>
+<p>Existing users of OpenCL.jl will of course have noticed that even the string-based example above uses a different API than before. In order to support the new compiler, and bring OpenCL.jl in line with modern Julia programming practices, we have <strong>significantly overhauled the package&#39;s internals as well as some external APIs</strong>.</p>
+<p>The most significant high-level changes include:</p>
+<ul>
+<li><p>Memory management is now done using <code>CLArray</code>, backed by Shared Virtual Memory &#40;SVM&#41;, instead of opaque buffers. Raw buffers are still supported, but not compatible with native kernel execution &#40;because they can not be converted to a pointer&#41;.</p>
+</li>
+<li><p>Kernels are called using the new <code>clcall</code> function, which performs automatic conversion of objects much like how <code>ccall</code> works.</p>
+</li>
+</ul>
+<p>At the lower-level &#40;of the <code>cl</code> submodule&#41;, the changes are more extensive:</p>
+<ul>
+<li><p>Context, device and queue arguments have been removed from most APIs, and are now stored in task-local storage. These values can be queried &#40;<code>cl.platform&#40;&#41;</code>, <code>cl.device&#40;&#41;</code>, etc&#41; and set &#40;<code>cl.platform&#33;&#40;platform&#41;</code>, <code>cl.device&#33;&#40;device&#41;</code>, etc&#41; as needed.</p>
+</li>
+<li><p>As part of the above change, questionable APIs like <code>cl.create_some_context&#40;&#41;</code> and <code>cl.devices&#40;&#41;</code> have been removed;</p>
+</li>
+<li><p>The <code>Buffer</code> API has been completely reworked. It now only provides low-level functionality, such as <code>unsafe_copyto&#33;</code> or <code>unsafe_map&#33;</code>, while high-level functionality like <code>copy&#33;</code> is implemented for the CLArray type;</p>
+</li>
+<li><p>The <code>cl.info</code> method, and the <code>getindex</code> overloading to access properties of OpenCL objects, have been replaced by <code>getproperty</code> overloading on the objects themselves &#40;e.g., <code>cl.info&#40;dev, :name&#41;</code> and <code>dev&#91;:name&#93;</code> are now simply <code>dev.name</code>&#41;;</p>
+</li>
+<li><p>The blocking <code>cl.launch</code> has been replaced by a nonblocking <code>cl.call</code>, while also removing the <code>getindex</code>-overloading shorthand. However, it&#39;s recommended to use the newly-added <code>cl.clcall</code> function, which takes an additional tuple type argument and performs automatic conversions of arguments to those types. This makes it possible to pass a <code>CLArray</code> to an OpenCL C function expecting Buffer-backed pointers, for example.</p>
+</li>
+<li><p>Argument conversion has been removed; the user should make sure Julia arguments passed to kernels match the OpenCL argument types &#40;i.e., no empty types, 4-element tuples for a 3-element <code>float3</code> arguments&#41;.</p>
+</li>
+<li><p>The <code>to_host</code> function has been replaced by simply calling <code>Array</code> on the <code>CLArray</code>.</p>
+</li>
+<li><p>Queue and execution capabilities of a device are now to be queried using dedicated functions, <code>cl.queue_properties</code> and <code>cl.exec_capabilities</code>.</p>
+</li>
+</ul>
+<p>Working towards the first stable version of this package, we anticipate having to make even more breaking changes. However, we want to get the current changes out there to get feedback from the community. If some of the removed functionality is crucial to your workflow, feel free to reach out and we can discuss how to best support it in the future.</p>
+<h2 id="jll-based_opencl_drivers">JLL-based OpenCL drivers</h2>
+<p>Another significant change is the <strong>integration with OpenCL drivers built and provided using Julia&#39;s BinaryBuilder infrastructure</strong>. Over time, this should simplify the installation of OpenCL drivers by avoiding the need to install global drivers. For now, the only driver provided as a JLL is a CPU driver based on the <a href="https://portablecl.org/">Portable Computing Language &#40;PoCL&#41; library</a>. This driver can be used by simply installing and loading <code>pocl_jll</code> before you start using OpenCL.jl:</p>
+<pre><code class="language-julia-repl">julia&gt; using OpenCL, pocl_jlljulia&gt; OpenCL.versioninfo&#40;&#41;
+OpenCL.jl version 0.10.0Toolchain:
+ - Julia v1.11.2
+ - OpenCL_jll v2024.5.8&#43;1Available platforms: 1
+ - Portable Computing Language
+   OpenCL 3.0, PoCL 6.0  Apple, Release, RELOC, SPIR-V, LLVM 16.0.6jl, SLEEF, DISTRO, POCL_DEBUG
+   · cpu &#40;fp16, fp64, il&#41;</code></pre>
+<p>Notice the <code>il</code> capability reported by <code>OpenCL.versioninfo&#40;&#41;</code>, indicating that PoCL supports SPIR-V and can thus be used with the new native Julia kernel compiler. In fact, this is one of the goals of reworking OpenCL.jl: to provide a CPU fallback implementation for use with Julia GPU libraries.</p>
+<h2 id="work_towards_opencljl_10">Work towards OpenCL.jl 1.0</h2>
+<p>This release is a significant step towards a stable 1.0 release of OpenCL.jl, bringing the package in line with our other Julia GPU-backends. Our focus is on improving OpenCL.jl in order to support a CPU fallback back-end for KernelAbstractions.jl based on PoCL. If you are a user of OpenCL.jl, or are interested in using the package in the future, please test out this release with your application and/or driver, and provide feedback on the changes we&#39;ve made. Pull requests are greatly appreciated, and we are happy to help you get started with contributing to the package.</p>
+]]></content:encoded>
+    
+  <pubDate>Mon, 13 Jan 2025 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[GPUArrays v11: Port to KernelAbstractions.jl]]></title>
   <link>https://juliagpu.org/post/2025-01-07-gpuarrays-11/index.html</link>
   <guid>https://juliagpu.org/2025-01-07-gpuarrays-11/</guid>
