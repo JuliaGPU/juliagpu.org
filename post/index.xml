@@ -22,10 +22,10 @@
   <title><![CDATA[CUDA.jl 5.6 and 5.7: Allocator cache, and asynchronous CUBLAS wrappers]]></title>
   <link>https://juliagpu.org/post/2025-03-11-cuda_5.6_5.7/index.html</link>
   <guid>https://juliagpu.org/2025-03-11-cuda_5.6_5.7/</guid>
-  <description><![CDATA[CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy allocations. CUDA.jl v5.7 brings a greatly improved &lt;code&gt;CuRef&lt;/code&gt; type, which enables fully asynchronous CUBLAS calls.]]></description>  
+  <description><![CDATA[CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy applications. CUDA.jl v5.7 brings a greatly improved &lt;code&gt;CuRef&lt;/code&gt; type, which enables fully asynchronous CUBLAS calls.]]></description>  
   
   <content:encoded><![CDATA[
-<p>CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy allocations. CUDA.jl v5.7 brings a greatly improved <code>CuRef</code> type, which enables fully asynchronous CUBLAS calls.</p>
+<p>CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy applications. CUDA.jl v5.7 brings a greatly improved <code>CuRef</code> type, which enables fully asynchronous CUBLAS calls.</p>
 <h2 id="reworking_curef_for_asynchronous_cublas">Reworking <code>CuRef</code> for asynchronous CUBLAS</h2>
 <p>The <code>CuRef</code> type is similar to Julia&#39;s <code>Ref</code>, a boxed value, often used with C APIs. In CUDA.jl v5.7, we&#39;ve made several changes to this type. First of all, we&#39;ve aligned its API much more closely with the <code>Ref</code> type from Base, e.g, adding <code>getindex</code> and <code>setindex&#33;</code> methods, which should make it more familiar to users:</p>
 <pre><code class="language-julia-repl">julia&gt; box &#61; CuRef&#40;1&#41;
