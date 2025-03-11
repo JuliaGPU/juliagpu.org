@@ -19,6 +19,66 @@
 
 
 <item>
+  <title><![CDATA[CUDA.jl 5.6 and 5.7: Allocator cache, and asynchronous CUBLAS wrappers]]></title>
+  <link>https://juliagpu.org/post/2025-03-11-cuda_5.6_5.7/index.html</link>
+  <guid>https://juliagpu.org/2025-03-11-cuda_5.6_5.7/</guid>
+  <description><![CDATA[CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy allocations. CUDA.jl v5.7 brings a greatly improved &lt;code&gt;CuRef&lt;/code&gt; type, which enables fully asynchronous CUBLAS calls.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy allocations. CUDA.jl v5.7 brings a greatly improved <code>CuRef</code> type, which enables fully asynchronous CUBLAS calls.</p>
+<h2 id="reworking_curef_for_asynchronous_cublas">Reworking <code>CuRef</code> for asynchronous CUBLAS</h2>
+<p>The <code>CuRef</code> type is similar to Julia&#39;s <code>Ref</code>, a boxed value, often used with C APIs. In CUDA.jl v5.7, we&#39;ve made several changes to this type. First of all, we&#39;ve aligned its API much more closely with the <code>Ref</code> type from Base, e.g, adding <code>getindex</code> and <code>setindex&#33;</code> methods, which should make it more familiar to users:</p>
+<pre><code class="language-julia-repl">julia&gt; box &#61; CuRef&#40;1&#41;
+CuRefValue&#123;Int64&#125;&#40;1&#41;julia&gt; box&#91;&#93;
+1julia&gt; box&#91;&#93; &#61; 2
+2julia&gt; box
+CuRefValue&#123;Int64&#125;&#40;2&#41;</code></pre>
+<p>We also <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2645">optimized and improved</a> the <code>CuRef</code> implementation. As part of that work, we <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2625">removed the eager synchronization when copying from unpinned memory</a>. This was done to make it possible for Julia code to execute when waiting for the memory copy to start. However, it turns out that certain &#40;small&#41; copies, such as those performed by <code>CuRef</code>, can be performed without having to wait for the copy to start. By removing eager synchronization from those copies, <code>CuRef</code> objects can now be constructed fully asynchronously, i.e., without having to wait for the GPU to be ready.</p>
+<p>Building on these changes, <a href="https://github.com/kshyatt">@kshyatt</a> has <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2616">switched our CUBLAS wrappers</a> over to using GPU-based <code>CuRef</code> boxes for scalar inputs instead of host-based <code>Ref</code> boxes. Although this increases the complexity of invoking CUBLAS APIs – the allocation of <code>CuRef</code> boxes requires CUDA API calls whereas a <code>Ref</code> box is much cheaper to allocate – this results in the API behaving asynchronously, whereas before every CUBLAS API taking scalar inputs would have resulted in a so-called &quot;bubble&quot; waiting for the GPU to finish executing.</p>
+<h2 id="a_julia-level_allocator_cache">A Julia-level allocator cache</h2>
+<p>To help with the common issue of running out of GPU memory, or to reduce the cost of CUDA.jl hitting the GC too often, <a href="https://github.com/pxl-th">@pxl-th</a> <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/576">has added a reusable caching allocator</a> to GPUArrays.jl, which CUDA.jl now supports and integrates with.</p>
+<p>The idea is simple: GPU allocations made in a <code>GPUArrays.@cached</code> block are recorded in a <code>cache</code>, and when the block is exited the allocations are made available for reuse. Only when the cache goes out of scope, or when you call <code>unsafe_free&#33;</code> on it, the allocations will be fully freed. This is useful when you have a repetitive workload that performs the same allocations over and over again, such as in a machine learning training loop:</p>
+<pre><code class="language-julia">cache &#61; GPUArrays.AllocCache&#40;&#41;
+for epoch in 1:1000
+    GPUArrays.@cached cache begin
+        # dummy workload
+        sin.&#40;CUDA.rand&#40;Float32, 1024^3&#41;&#41;
+    end
+end# wait for &#96;cache&#96; to be collected, or optionally eagerly free the memory
+GPUArrays.unsafe_free&#33;&#40;cache&#41;</code></pre>
+<p>Even though CUDA already has a caching allocator, the Julia-level caching mechanism may still improve performance by lowering pressure on the GC and reducing fragmentation of the underlying allocator. For example, the above snippet only performs two memory allocations that require 8 GiB, instead of 2000 allocations totalling 8 TiB &#40;&#33;&#41; of GPU memory.</p>
+<p>The cherry on top is that the caching interface is generic, implemented in GPUArrays.jl, and available to all GPU back-ends that are compatible with v11.2.</p>
+<h2 id="minor_changes">Minor changes</h2>
+<ul>
+<li><p>Device-to-host copies <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2648">now eagerly synchronize</a> to improve concurrent execution.</p>
+</li>
+<li><p>On multi-GPU systems, unified memory <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2626">is not automatically prefetched anymore</a> when launching kernels, making it possible to process a single array on multiple devices.</p>
+</li>
+<li><p>A change to <code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2621">should allow eliding additional bounds checks</a> in code that already performs a manual bounds check &#40;such as KernelAbstractions.jl code&#41;</p>
+</li>
+<li><p>CUDA toolkit 12.8 <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2634">is now supported</a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2620">as well as Jetson Orin</a> devices.</p>
+</li>
+<li><p>It is now possible to <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2624">pass symbols to kernels</a>.</p>
+</li>
+<li><p>CUBLAS: <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2642">Support for Givens rotation methods</a>.</p>
+</li>
+<li><p>CUSPARSE: Support for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2639">using CuSparseMatrixBSR with generic <code>mm&#33;</code></a>.</p>
+</li>
+<li><p>Windows support for NVTX <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2665">has been fixed</a>.</p>
+</li>
+</ul>
+]]></content:encoded>
+    
+  <pubDate>Tue, 11 Mar 2025 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[OpenCL.jl 0.10: Now with native Julia kernels]]></title>
   <link>https://juliagpu.org/post/2025-01-13-opencl_0.10/index.html</link>
   <guid>https://juliagpu.org/2025-01-13-opencl_0.10/</guid>
