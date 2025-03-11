@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR50/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR50/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="/previews/PR50/css/bootstrap.min.css">
+  
+   <link rel="stylesheet" href="/previews/PR50/libs/highlight/github.min.css">
+ 
+
+  <style>
+ .hljs {
+     padding: 0;
+     background: 0 0
+ }
+.container {
+   max-width: 700px
+}
+
+#nav-border {
+   border-bottom: 1px solid #212529
+}
+
+#main {
+   margin-top: 1em;
+   margin-bottom: 4em
+}
+
+#home-jumbotron {
+   background-color: inherit
+}
+
+#footer .container {
+   padding: 1em 0
+}
+
+#footer a {
+   color: inherit;
+   text-decoration: underline
+}
+
+.font-125 {
+   font-size: 125%
+}
+
+.tag-btn {
+   margin-bottom: .3em
+}
+
+pre {
+   background-color: #f5f5f5;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   padding: 16px
+}
+
+pre code {
+   padding: 0;
+   font-size: inherit;
+   color: inherit;
+   background-color: transparent;
+   border-radius: 0
+}
+
+code {
+   padding: 2px 4px;
+   font-size: 90%;
+   color: #c7254e;
+   background-color: #f9f2f4;
+   border-radius: 4px
+}
+
+img,
+iframe,
+embed,
+video,
+audio {
+   max-width: 100%
+}
+
+.card-img,
+.card-img-top,
+.card-img-bottom {
+   width: initial
+}
+
+#main h1>a, #main h2>a, #main h3>a {
+   color: inherit;
+   text-decoration: none;
+}
+
+li p {
+   margin: 0
+}
+
+</style>
+
+
+  
+  
+    <title>CUDA.jl 1.1 ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-lg navbar-light justify-content-center">
+        <ul class=navbar-nav>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/"><i data-feather=home></i>Home</a>
+            </li>
+            <li class="nav-item active"><a class=nav-link href="/previews/PR50/post/"><i data-feather=file-text></i>Blog</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/learn/"><i data-feather=book-open></i>Learn</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/cuda/">CUDA</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/rocm/">ROCm</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/oneapi/">oneAPI</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/metal/">Metal</a>
+            </li>
+            <li class="nav-item "><a class=nav-link href="/previews/PR50/other/">Other</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 1.1</h1>
+      <i data-feather=calendar></i>
+<time datetime=2020-7-7>Jul 7, 2020</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl 1.1 marks the first feature release after merging several CUDA packages into one. It raises the minimal Julia version to 1.4, and comes with support for the impending 1.5 release.</p>
+<h2 id="cudajl_replacing_cuarrayscudanativejl"><a href="#cudajl_replacing_cuarrayscudanativejl" class="header-anchor">CUDA.jl replacing CuArrays/CUDAnative.jl</a></h2>
+<p>As <a href="https://discourse.julialang.org/t/psa-cuda-jl-replacing-cuarrays-jl-cudanative-jl-cudadrv-jl-cudaapi-jl-call-for-testing/40205">announced a while back</a>, CUDA.jl is now the new package for programming CUDA GPUs in Julia, replacing CuArrays.jl, CUDAnative.jl, CUDAdrv.jl and CUDAapi.jl. The merged package should be a drop-in replacement: All existing functionality has been ported, and almost all exported functions are still there. Applications like Flux.jl or the DiffEq.jl stack are being updated to support this change.</p>
+<h2 id="cuda_11_support"><a href="#cuda_11_support" class="header-anchor">CUDA 11 support</a></h2>
+<p>With CUDA.jl 1.1, we support the upcoming release of the CUDA toolkit. This only applies to locally-installed versions of the toolkit, i.e., you need to specify <code>JULIA_CUDA_USE_BINARYBUILDER&#61;false</code> in your environment to pick up the locally-installed release candidate of the CUDA toolkit. New features, like the third-generation tensor cores and its extended type support, or any new APIs, are not yet natively supported by Julia code.</p>
+<h2 id="nvidia_management_library_nvml"><a href="#nvidia_management_library_nvml" class="header-anchor">NVIDIA Management Library &#40;NVML&#41;</a></h2>
+<p>CUDA.jl now integrates with the NVIDIA Management Library, or NVML. With this library, it&#39;s possible to query information about the system, any GPU devices, their topology, etc.:</p>
+<pre><code class="language-julia-repl">julia&gt; using CUDA
+
+julia&gt; dev &#61; first&#40;NVML.devices&#40;&#41;&#41;
+CUDA.NVML.Device&#40;Ptr&#123;Nothing&#125; @0x00007f987c7c6e38&#41;
+
+julia&gt; NVML.uuid&#40;dev&#41;
+UUID&#40;&quot;b8d5e790-ea4d-f962-e0c3-0448f69f2e23&quot;&#41;
+
+julia&gt; NVML.name&#40;dev&#41;
+&quot;Quadro RTX 5000&quot;
+
+julia&gt; NVML.power_usage&#40;dev&#41;
+37.863
+
+julia&gt; NVML.energy_consumption&#40;dev&#41;
+65330.292</code></pre>
+<h2 id="experimental_texture_support"><a href="#experimental_texture_support" class="header-anchor">Experimental: Texture support</a></h2>
+<p>It is now also possible to use the GPU&#39;s hardware texture support from Julia, albeit using a fairly low-level and still experimental API &#40;many thanks to <a href="https://github.com/cdsousa">@cdsousa</a> for the initial development&#41;. As a demo, let&#39;s start with loading a sample image:</p>
+<pre><code class="language-julia">julia&gt; using Images, TestImages, ColorTypes, FixedPointNumbers
+julia&gt; img &#61; RGBA&#123;N0f8&#125;.&#40;testimage&#40;&quot;lighthouse&quot;&#41;&#41;</code></pre>
+<p>We use RGBA since CUDA&#39;s texture hardware only supports 1, 2 or 4 channels. This support is also currently limited to &quot;plain&quot; types, so let&#39;s reinterpret the image:</p>
+<pre><code class="language-julia">julia&gt; img′ &#61; reinterpret&#40;NTuple&#123;4,UInt8&#125;, img&#41;</code></pre>
+<p>Now we can upload this image to the array, using the <code>CuTextureArray</code> type for optimized storage &#40;normal <code>CuArray</code>s are supported too&#41;, and bind it to a <code>CuTexture</code> object that we can pass to a kernel:</p>
+<pre><code class="language-julia-repl">julia&gt; texturearray &#61; CuTextureArray&#40;img′&#41;
+
+julia&gt; texture &#61; CuTexture&#40;texturearray; normalized_coordinates&#61;true&#41;
+512×768 4-channel CuTexture&#40;::CuTextureArray&#41; with eltype NTuple&#123;4,UInt8&#125;</code></pre>
+<p>Let&#39;s write and a kernel that warps this image. Since we specified <code>normalized_coordinates&#61;true</code>, we index the texture using values in <code>&#91;0,1&#93;</code>:</p>
+<pre><code class="language-julia">function warp&#40;dst, texture&#41;
+    tid &#61; threadIdx&#40;&#41;.x &#43; &#40;blockIdx&#40;&#41;.x - 1&#41; * blockDim&#40;&#41;.x
+    I &#61; CartesianIndices&#40;dst&#41;
+    @inbounds if tid &lt;&#61; length&#40;I&#41;
+        i,j &#61; Tuple&#40;I&#91;tid&#93;&#41;
+        u &#61; Float32&#40;i-1&#41; / Float32&#40;size&#40;dst, 1&#41;-1&#41;
+        v &#61; Float32&#40;j-1&#41; / Float32&#40;size&#40;dst, 2&#41;-1&#41;
+        x &#61; u &#43; 0.02f0 * CUDA.sin&#40;30v&#41;
+        y &#61; v &#43; 0.03f0 * CUDA.sin&#40;20u&#41;
+        dst&#91;i,j&#93; &#61; texture&#91;x,y&#93;
+    end
+    return
+end</code></pre>
+<p>The size of the output image determines how many elements we need to process. This needs to be translated to a number of threads and blocks, keeping in mind device and kernel characteristics. We automate this using the occupancy API:</p>
+<pre><code class="language-julia-repl">julia&gt; outimg_d &#61; CuArray&#123;eltype&#40;img′&#41;&#125;&#40;undef, 500, 1000&#41;;
+
+julia&gt; function configurator&#40;kernel&#41;
+           config &#61; launch_configuration&#40;kernel.fun&#41;
+
+           threads &#61; Base.min&#40;length&#40;outimg_d&#41;, config.threads&#41;
+           blocks &#61; cld&#40;length&#40;outimg_d&#41;, threads&#41;
+
+           return &#40;threads&#61;threads, blocks&#61;blocks&#41;
+       end
+
+julia&gt; @cuda config&#61;configurator warp&#40;outimg_d, texture&#41;</code></pre>
+<p>Finally, we fetch and visualize the output:</p>
+<pre><code class="language-julia-repl">julia&gt; outimg &#61; Array&#40;outimg_d&#41;
+
+julia&gt; save&#40;&quot;imgwarp.png&quot;, reinterpret&#40;eltype&#40;img&#41;, outimg&#41;&#41;</code></pre>
+<figure>
+  <img src="/previews/PR50/post/2020-07-07-cuda_1.1/imgwarp.png" alt="Warped lighthouse">
+</figure>
+
+<h2 id="minor_features"><a href="#minor_features" class="header-anchor">Minor features</a></h2>
+<p>The test-suite is now parallelized, using up-to <code>JULIA_NUM_THREADS</code> processes:</p>
+<pre><code class="language-julia">&#36; JULIA_NUM_THREADS&#61;4 julia -e &#39;using Pkg; Pkg.test&#40;&quot;CUDA&quot;&#41;;&#39;
+
+                                     |          | ---------------- GPU ---------------- | ---------------- CPU ---------------- |
+Test                        &#40;Worker&#41; | Time &#40;s&#41; | GC &#40;s&#41; | GC &#37; | Alloc &#40;MB&#41; | RSS &#40;MB&#41; | GC &#40;s&#41; | GC &#37; | Alloc &#40;MB&#41; | RSS &#40;MB&#41; |
+initialization                   &#40;2&#41; |     2.52 |   0.00 |  0.0 |       0.00 |   115.00 |   0.05 |  1.8 |     153.13 |   546.27 |
+apiutils                         &#40;4&#41; |     0.55 |   0.00 |  0.0 |       0.00 |   115.00 |   0.02 |  4.0 |      75.86 |   522.36 |
+codegen                          &#40;4&#41; |    14.81 |   0.36 |  2.5 |       0.00 |   157.00 |   0.62 |  4.2 |    1592.28 |   675.15 |
+...
+gpuarrays/mapreduce essentials   &#40;2&#41; |   113.52 |   0.01 |  0.0 |       3.19 |   641.00 |   2.61 |  2.3 |    8232.84 |  2449.35 |
+gpuarrays/mapreduce &#40;old tests&#41;  &#40;5&#41; |   138.35 |   0.01 |  0.0 |     130.20 |   507.00 |   2.94 |  2.1 |    8615.15 |  2353.62 |
+gpuarrays/mapreduce derivatives  &#40;3&#41; |   180.52 |   0.01 |  0.0 |       3.06 |   229.00 |   3.44 |  1.9 |   12262.67 |  1403.39 |
+
+Test Summary: |  Pass  Broken  Total
+  Overall     | 11213       3  11216
+    SUCCESS
+    Testing CUDA tests passed</code></pre>
+<p>A copy of <code>Base.versioninfo&#40;&#41;</code> is available to report on the CUDA toolchain and any devices:</p>
+<pre><code class="language-julia-repl">julia&gt; CUDA.versioninfo&#40;&#41;
+CUDA toolkit 10.2.89, artifact installation
+CUDA driver 11.0.0
+NVIDIA driver 450.36.6
+
+Libraries:
+- CUBLAS: 10.2.2
+- CURAND: 10.1.2
+- CUFFT: 10.1.2
+- CUSOLVER: 10.3.0
+- CUSPARSE: 10.3.1
+- CUPTI: 12.0.0
+- NVML: 11.0.0&#43;450.36.6
+- CUDNN: 7.6.5 &#40;for CUDA 10.2.0&#41;
+- CUTENSOR: 1.1.0 &#40;for CUDA 10.2.0&#41;
+
+Toolchain:
+- Julia: 1.5.0-rc1.0
+- LLVM: 9.0.1
+- PTX ISA support: 3.2, 4.0, 4.1, 4.2, 4.3, 5.0, 6.0, 6.1, 6.3, 6.4
+- Device support: sm_35, sm_37, sm_50, sm_52, sm_53, sm_60, sm_61, sm_62, sm_70, sm_72, sm_75
+
+1 device&#40;s&#41;:
+- Quadro RTX 5000 &#40;sm_75, 14.479 GiB / 15.744 GiB available&#41;</code></pre>
+<p>CUTENSOR artifacts have been upgraded to version 1.1.0.</p>
+<p>Benchmarking infrastructure based on the Codespeed project has been set-up at <a href="https://speed.juliagpu.org/">speed.juliagpu.org</a> to keep track of the performance of various operations.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+
+    
+    
+        <script src="/previews/PR50/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="/previews/PR50/libs/feather/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
