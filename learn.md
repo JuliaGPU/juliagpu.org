@@ -45,6 +45,6 @@ Introduction to concurrent GPU computing:
 * Using multiple devices
 * Using threads
 
-{{youtube fw0R5G8pB0U}}
+{{youtube AKhcF0yNvJE}}
 
 \\
