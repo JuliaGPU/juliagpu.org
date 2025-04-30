@@ -9,7 +9,8 @@
 
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   
-  
+   <link rel="stylesheet" href="/libs/highlight/github.min.css">
+ 
 
   <style>
  .hljs {
@@ -157,6 +158,49 @@ li p {
 </li>
 </ul>
 <p>The <a href="https://cuda.juliagpu.org/stable/">documentation</a> of CUDA.jl demonstrates each of these approaches.</p>
+<h2 id="getting_started"><a href="#getting_started" class="header-anchor">Getting started</a></h2>
+<p>CUDA.jl can be easily installed through Julia&#39;s package manager. You only need to install the NVIDIA driver; CUDA.jl will automatically download and install a compatible CUDA toolkit:</p>
+<pre><code class="language-julia">pkg&gt; add CUDA</code></pre>
+<p>Once you have the package installed, you can import it and start using it, e.g., via the <code>CuArray</code> array abstraction:</p>
+<pre><code class="language-julia">julia&gt; using CUDA
+
+julia&gt; A &#61; CuArray&#40;ones&#40;5, 5&#41;&#41;;
+
+julia&gt; A .&#43; 1
+5×5 CuMatrix&#123;Float64, CUDA.DeviceMemory&#125;:
+ 2.0  2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0  2.0
+ 2.0  2.0  2.0  2.0  2.0</code></pre>
+<p>Array operations like the <code>A .&#43; 1</code> above are automatically offloaded to the GPU, and allow for a very high-level programming style. If you need more control, you can write your own CUDA kernels directly in Julia:</p>
+<pre><code class="language-julia">julia&gt; function add_one&#40;A&#41;
+           i &#61; threadIdx&#40;&#41;.x
+           A&#91;i&#93; &#43;&#61; 1
+           return
+       end
+
+julia&gt; @cuda threads&#61;length&#40;A&#41; add_one&#40;A&#41;;
+
+julia&gt; A
+5×5 CuMatrix&#123;Float64, CUDA.DeviceMemory&#125;:
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0
+ 3.0  3.0  3.0  3.0  3.0</code></pre>
+<p>Even though in the example above CUDA.jl takes care of low-level details like memory management or device synchronization, it is still possible to do this yourself by directly calling into the underlying CUDA APIs. For more details, refer to the <a href="https://cuda.juliagpu.org/stable/lib/driver/">CUDA.jl documentation</a>.</p>
+<h2 id="support"><a href="#support" class="header-anchor">Support</a></h2>
+<p>CUDA.jl aims to support:</p>
+<ul>
+<li><p>all current versions of Julia, starting from the latest LTS;</p>
+</li>
+<li><p>the current and previous major version of the CUDA toolkit;</p>
+</li>
+<li><p>all platforms that the CUDA toolkit supports &#40;i.e., x86 and arm64, Linux and Window&#41;, including support for embedded devices like NVIDIA Jetson.</p>
+</li>
+</ul>
+<p>In terms of API coverage, CUDA.jl aims to cover all APIs provided by the CUDA toolkkit, including its libraries like cuBLAS, cuFFT, cuSPARSE, etc. Other common libraries, like cuDNN, are also supported. For each of these, we always provide low-level bindings to the CUDA APIs &#40;making it possible to easily port existing code&#41;, while also providing high-level wrappers for most common APIs.</p>
 <h2 id="performance"><a href="#performance" class="header-anchor">Performance</a></h2>
 <p>Julia on the CPU is known for its good performance, approaching that of statically compiled languages like C. The same holds for programming NVIDIA GPUs with kernels written using CUDA.jl, where we have <a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">shown</a> the performance to approach and even sometimes exceed that of CUDA C on a selection<sup id="fnref:1"><a href="#fndef:1" class="fnref">[1]</a></sup> of applications from the Rodinia benchmark suite:</p>
 
@@ -186,6 +230,10 @@ intensive, we only ported and analyzed the 10 smallest benchmarks from the suite
 
 
     
+    
+        <script src="/libs/highlight/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
+
     
 
     <footer id=footer class="mt-auto text-center text-muted">
