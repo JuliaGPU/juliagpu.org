@@ -18,7 +18,7 @@ jobs:
     - name: Install Julia
       uses: julia-actions/setup-julia@v1
       with:
-        version: 1.6
+        version: 1.9
 
     - name: Fix URLs for PR preview deployment (pull request previews)
       if: github.event_name == 'pull_request'

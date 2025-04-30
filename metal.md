@@ -24,4 +24,4 @@ accelerators at three distinct abstraction levels:
 - by writing your own kernels and launching them using the `@metal` macro;
 - using the low-level Metal API wrappers in the `MTL` submodule.
 
-For more information, refer to the [introductory blog post](/post/2022-06-24-metal/).
+For more information, refer to the [introductory blog post](/post/2022-06-24-metal/) and the [post on Metal Performance Shaders](/post/2023-03-03-metal_0.2/).

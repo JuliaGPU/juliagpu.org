@@ -28,7 +28,7 @@ All versions of Julia are supported, on Linux and Windows, and the functionality
 
 Similar, but much newer capabilities exist for [**Intel GPUs with oneAPI**](/oneapi/). Currently, full-featured kernel programming capabilities are available, but there is no support for vendor libraries such as oneMKL or oneDNN yet.
 
-Experimental support exists for [**AMD GPUs**](/rocm/) running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using array operations, but these capabilities are under heavy development and are not ready for general consumption yet.
+Maturing support exists for [**AMD GPUs**](/rocm/) running on the ROCm stack. These GPUs can again be programmed in Julia at the kernel level or using high-level operations on arrays. Latest versions of Julia are supported, and the functionality is increasingly used by a variety of applications and libraries.
 
 Experimental support also exists for [**Apple GPUs**](/metal/). Array programming and kernel programming are both supported.
 
@@ -59,8 +59,14 @@ activities, we would be grateful if you could cite our work:
 
 ## Community
 
-If you need help, or have questions about GPU programming in Julia, you can find members of
-the community at:
+If you need help, or have questions about GPU programming in Julia, you can find
+members of the community at:
 
-- Julia Discourse, with a dedicated [GPU section](https://discourse.julialang.org/c/domain/gpu/11)
-- Julia Slack ([register here](https://slackinvite.julialang.org/)), on the [#gpu channel](https://julialang.slack.com/messages/C689Y34LE/)
+- Julia Discourse, with a dedicated [GPU
+  section](https://discourse.julialang.org/c/domain/gpu/11)
+- Julia Slack ([register here](https://slackinvite.julialang.org/)), on the
+  [#gpu channel](https://julialang.slack.com/messages/C689Y34LE/)
+- [JuliaGPU office
+  hours](https://mit.zoom.us/j/92410737378?pwd=MWkrSkIzMEtRWkZHdm1XQmpNbm90UT09),
+  every other week at 2PM CET (check the [Julia community
+  calendar](https://julialang.org/community/#events) for more details).
