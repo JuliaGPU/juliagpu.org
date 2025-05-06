@@ -1,14 +1,24 @@
 <style>
- .hljs {
-     padding: 0;
-     background: 0 0
- }
+
+/* Reduce whitespace around code blocks */
+pre code.hljs {
+   padding: 0;
+   background: 0 0
+}
+
+/* Limit page width */
 .container {
    max-width: 700px
 }
 
+/* Add line under navigation menu */
 #nav-border {
    border-bottom: 1px solid #212529
+}
+
+/* Whitespace between nativation icon and link */
+.nav-link svg {
+   margin-right: 0.3em;
 }
 
 #main {
@@ -44,14 +54,7 @@ pre {
    padding: 16px
 }
 
-pre code {
-   padding: 0;
-   font-size: inherit;
-   color: inherit;
-   background-color: transparent;
-   border-radius: 0
-}
-
+/* Highlight inline code blocks */
 code {
    padding: 2px 4px;
    font-size: 90%;
