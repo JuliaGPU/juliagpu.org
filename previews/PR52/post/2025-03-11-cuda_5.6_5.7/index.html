@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR52/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR52/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+ 
+
+  <link rel="stylesheet" href="/previews/PR52/css/style.css">
+
+  
+  
+    <title>CUDA.jl 5.6 and 5.7: Allocator cache, and asynchronous CUBLAS wrappers ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-sm navbar-light">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
+navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <ul class=navbar-nav>
+                <li class="nav-item ">
+                    <a class=nav-link href="/previews/PR52/"><i data-feather=home></i> Home</a>
+                </li>
+                <li class="nav-item active">
+                    <a class=nav-link href="/previews/PR52/post/"><i data-feather=file-text></i> Blog</a>
+                </li>
+                <li class="nav-item ">
+                    <a class=nav-link href="/previews/PR52/showcases/"><i data-feather=star></i> Showcases</a>
+                </li>
+                <li class="nav-item ">
+                    <a class=nav-link href="/previews/PR52/learn/"><i data-feather=book-open></i> Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-feather=cpu></i> Backends
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <a class="dropdown-item " href="/previews/PR52/backends/cuda/">CUDA</a>
+                        <a class="dropdown-item " href="/previews/PR52/backends/rocm/">ROCm</a>
+                        <a class="dropdown-item " href="/previews/PR52/backends/oneapi/">oneAPI</a>
+                        <a class="dropdown-item " href="/previews/PR52/backends/metal/">Metal</a>
+                        <a class="dropdown-item " href="/previews/PR52/backends/opencl/">OpenCL</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 5.6 and 5.7: Allocator cache, and asynchronous CUBLAS wrappers</h1>
+      <i data-feather=calendar></i>
+<time datetime=2025-3-11>Mar 11, 2025</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl v5.6 adds support for the new GPUArrays.jl caching allocator interface, which should improve performance of repetitive, memory-heavy applications. CUDA.jl v5.7 brings a greatly improved <code>CuRef</code> type, which enables fully asynchronous CUBLAS calls.</p>
+<h2 id="reworking_curef_for_asynchronous_cublas"><a href="#reworking_curef_for_asynchronous_cublas" class="header-anchor">Reworking <code>CuRef</code> for asynchronous CUBLAS</a></h2>
+<p>The <code>CuRef</code> type is similar to Julia&#39;s <code>Ref</code>, a boxed value, often used with C APIs. In CUDA.jl v5.7, we&#39;ve made several changes to this type. First of all, we&#39;ve aligned its API much more closely with the <code>Ref</code> type from Base, e.g, adding <code>getindex</code> and <code>setindex&#33;</code> methods, which should make it more familiar to users:</p>
+<pre><code class="language-julia-repl">julia&gt; box &#61; CuRef&#40;1&#41;
+CuRefValue&#123;Int64&#125;&#40;1&#41;
+
+julia&gt; box&#91;&#93;
+1
+
+julia&gt; box&#91;&#93; &#61; 2
+2
+
+julia&gt; box
+CuRefValue&#123;Int64&#125;&#40;2&#41;</code></pre>
+<p>We also <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2645">optimized and improved</a> the <code>CuRef</code> implementation. As part of that work, we <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2625">removed the eager synchronization when copying from unpinned memory</a>. This was done to make it possible for Julia code to execute when waiting for the memory copy to start. However, it turns out that certain &#40;small&#41; copies, such as those performed by <code>CuRef</code>, can be performed without having to wait for the copy to start. By removing eager synchronization from those copies, <code>CuRef</code> objects can now be constructed fully asynchronously, i.e., without having to wait for the GPU to be ready.</p>
+<p>Building on these changes, <a href="https://github.com/kshyatt">@kshyatt</a> has <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2616">switched our CUBLAS wrappers</a> over to using GPU-based <code>CuRef</code> boxes for scalar inputs instead of host-based <code>Ref</code> boxes. Although this increases the complexity of invoking CUBLAS APIs – the allocation of <code>CuRef</code> boxes requires CUDA API calls whereas a <code>Ref</code> box is much cheaper to allocate – this results in the API behaving asynchronously, whereas before every CUBLAS API taking scalar inputs would have resulted in a so-called &quot;bubble&quot; waiting for the GPU to finish executing.</p>
+<h2 id="a_julia-level_allocator_cache"><a href="#a_julia-level_allocator_cache" class="header-anchor">A Julia-level allocator cache</a></h2>
+<p>To help with the common issue of running out of GPU memory, or to reduce the cost of CUDA.jl hitting the GC too often, <a href="https://github.com/pxl-th">@pxl-th</a> <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/576">has added a reusable caching allocator</a> to GPUArrays.jl, which CUDA.jl now supports and integrates with.</p>
+<p>The idea is simple: GPU allocations made in a <code>GPUArrays.@cached</code> block are recorded in a <code>cache</code>, and when the block is exited the allocations are made available for reuse. Only when the cache goes out of scope, or when you call <code>unsafe_free&#33;</code> on it, the allocations will be fully freed. This is useful when you have a repetitive workload that performs the same allocations over and over again, such as in a machine learning training loop:</p>
+<pre><code class="language-julia">cache &#61; GPUArrays.AllocCache&#40;&#41;
+for epoch in 1:1000
+    GPUArrays.@cached cache begin
+        # dummy workload
+        sin.&#40;CUDA.rand&#40;Float32, 1024^3&#41;&#41;
+    end
+end
+
+# wait for &#96;cache&#96; to be collected, or optionally eagerly free the memory
+GPUArrays.unsafe_free&#33;&#40;cache&#41;</code></pre>
+<p>Even though CUDA already has a caching allocator, the Julia-level caching mechanism may still improve performance by lowering pressure on the GC and reducing fragmentation of the underlying allocator. For example, the above snippet only performs two memory allocations that require 8 GiB, instead of 2000 allocations totalling 8 TiB &#40;&#33;&#41; of GPU memory.</p>
+<p>The cherry on top is that the caching interface is generic, implemented in GPUArrays.jl, and available to all GPU back-ends that are compatible with v11.2.</p>
+<h2 id="minor_changes"><a href="#minor_changes" class="header-anchor">Minor changes</a></h2>
+<ul>
+<li><p>Device-to-host copies <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2648">now eagerly synchronize</a> to improve concurrent execution.</p>
+</li>
+<li><p>On multi-GPU systems, unified memory <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2626">is not automatically prefetched anymore</a> when launching kernels, making it possible to process a single array on multiple devices.</p>
+</li>
+<li><p>A change to <code>CuDeviceArray</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2621">should allow eliding additional bounds checks</a> in code that already performs a manual bounds check &#40;such as KernelAbstractions.jl code&#41;</p>
+</li>
+<li><p>CUDA toolkit 12.8 <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2634">is now supported</a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2620">as well as Jetson Orin</a> devices.</p>
+</li>
+<li><p>It is now possible to <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2624">pass symbols to kernels</a>.</p>
+</li>
+<li><p>CUBLAS: <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2642">Support for Givens rotation methods</a>.</p>
+</li>
+<li><p>CUSPARSE: Support for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2639">using CuSparseMatrixBSR with generic <code>mm&#33;</code></a>.</p>
+</li>
+<li><p>Windows support for NVTX <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2665">has been fixed</a>.</p>
+</li>
+</ul>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+    
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+<!-- Languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
+
+<script>hljs.highlightAll();</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
