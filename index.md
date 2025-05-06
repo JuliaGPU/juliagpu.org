@@ -3,12 +3,16 @@ title = "JuliaGPU"
 +++
 
 ~~~
-<div id=home-jumbotron class="jumbotron text-center">
-  <h1><img height=70 src="/assets/logo_crop.png">
-      JuliaGPU</h1>
-  <p class=font-125>
-    High-performance GPU programming in a high-level language.
-  </p>
+<div class="p-5 mb-5">
+  <div class="container text-center">
+    <h1>
+      <img height=70 src="/assets/logo_crop.png">
+      JuliaGPU
+    </h1>
+    <p class="font-125">
+      High-performance GPU programming in a high-level language.
+    </p>
+  </div>
 </div>
 ~~~
 
