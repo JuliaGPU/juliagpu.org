@@ -1,7 +1,7 @@
 +++
 # General
 author = "JuliaGPU"
-ignore = ["node_modules/", "README.md"]
+ignore = ["node_modules/", "README.md", ".aider.chat.history.md"]
 
 # RSS stuff
 generate_rss = true
