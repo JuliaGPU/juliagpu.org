@@ -7,15 +7,17 @@
             </li>
             <li class="nav-item {{ispage learn}}active{{end}}"><a class=nav-link href="/learn/"><i data-feather=book-open></i>Learn</a>
             </li>
-            <li class="nav-item {{ispage cuda}}active{{end}}"><a class=nav-link href="/cuda/">CUDA</a>
-            </li>
-            <li class="nav-item {{ispage rocm}}active{{end}}"><a class=nav-link href="/rocm/">ROCm</a>
-            </li>
-            <li class="nav-item {{ispage oneapi}}active{{end}}"><a class=nav-link href="/oneapi/">oneAPI</a>
-            </li>
-            <li class="nav-item {{ispage metal}}active{{end}}"><a class=nav-link href="/metal/">Metal</a>
-            </li>
-            <li class="nav-item {{ispage other}}active{{end}}"><a class=nav-link href="/other/">Other</a>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle {{ispage backends/*}}active{{end}}" href="#" id="backendDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Backends
+                </a>
+                <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                    <a class="dropdown-item {{ispage backends/cuda}}active{{end}}" href="/backends/cuda/">CUDA</a>
+                    <a class="dropdown-item {{ispage backends/rocm}}active{{end}}" href="/backends/rocm/">ROCm</a>
+                    <a class="dropdown-item {{ispage backends/oneapi}}active{{end}}" href="/backends/oneapi/">oneAPI</a>
+                    <a class="dropdown-item {{ispage backends/metal}}active{{end}}" href="/backends/metal/">Metal</a>
+                    <a class="dropdown-item {{ispage backends/other}}active{{end}}" href="/backends/metal/">Other</a>
+                </div>
             </li>
         </ul>
     </nav>
