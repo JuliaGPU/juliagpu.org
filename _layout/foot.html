@@ -2,10 +2,6 @@
       </main>
     </div> <!-- class="container" -->
 
-
-    {{ if hasmath }}
-        {{ insert foot_katex.html }}
-    {{ end }}
     {{ if hascode }}
         {{ insert foot_highlight.html }}
     {{ end }}
@@ -15,8 +11,11 @@
     </footer>
 
     <!-- FEATHER -->
-    <script src="/libs/feather/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
     <script>feather.replace()</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- GOOGLE ANALYTICS -->
     <script>
