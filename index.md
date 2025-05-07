@@ -69,17 +69,17 @@ to help support it, please star the relevant repositories as such metrics may he
 funding in the future. If you use our software as part of your research, teaching, or other
 activities, we would be grateful if you could cite our work:
 
-- Tim Besard, Christophe Foket, and Bjorn De Sutter. "[Effective extensible
-  programming: Unleashing Julia on
+- T. Besard, C. Foket, and B. De Sutter. "[Effective extensible programming:
+  Unleashing Julia on
   GPUs.](https://ieeexplore.ieee.org/abstract/document/8471188)" *IEEE
   Transactions on Parallel and Distributed Systems* (2018).
-- Tim Besard, Valentin Churavy, Alan Edelman and Bjorn De Sutter. "[Rapid
-  software prototyping for heterogeneous and distributed
+- T. Besard, V. Churavy, Alan Edelman and B. De Sutter. "[Rapid software
+  prototyping for heterogeneous and distributed
   platforms.](https://www.sciencedirect.com/science/article/pii/S0965997818310123)"
   *Advances in Engineering Software* (2019).
-- Thomas Faingnaert, Tim Besard, and Bjorn De Sutter. "[Flexible Performant GEMM
-  Kernels on GPUs.](https://ieeexplore.ieee.org/document/9655458)" *IEEE
-  Transactions on Parallel and Distributed Systems* (2021).
+- T. Faingnaert, T. Besard, and B. De Sutter. "[Flexible Performant GEMM Kernels
+  on GPUs.](https://ieeexplore.ieee.org/document/9655458)" *IEEE Transactions on
+  Parallel and Distributed Systems* (2021).
 
 ## Community
 
