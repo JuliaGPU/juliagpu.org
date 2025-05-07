@@ -6,12 +6,23 @@ title = "Showcases"
 
 The Julia language, combined with its powerful GPU ecosystem, enables developers
 and researchers to tackle demanding computational problems with unprecedented
-productivity and performance. With **over [600
-packages](https://juliahub.com/ui/Packages/General/GPUArrays#dependents)**
-leveraging Julia's GPU capabilities, the ecosystem spans machine learning,
-scientific simulation, quantum computing, and more.
+productivity and performance. With **over [600 dependent
+packages](https://juliahub.com/ui/Packages/General/GPUArrays#dependents)**, it
+is clear that Julia's GPU capabilities are not confined to a few niche areas;
+they are a foundational element empowering a vast and diverse scientific and
+engineering ecosystem:
 
-Here are some highlights showcasing the versatility and power of Julia on GPUs.
+- **Climate, Ocean, and Earth Sciences**: [Oceananigans.jl](https://juliahub.com/ui/Packages/General/Oceananigans), [GeophysicalFlows.jl](https://juliahub.com/ui/Packages/General/GeophysicalFlows), [MagmaThermoKinematics.jl](https://juliahub.com/ui/Packages/General/MagmaThermoKinematics), [PlanktonIndividuals.jl](https://juliahub.com/ui/Packages/General/PlanktonIndividuals), [RRTMGP.jl](https://juliahub.com/ui/Packages/General/RRTMGP), [SeisNoise.jl](https://juliahub.com/ui/Packages/General/SeisNoise), [vSmartMOM.jl](https://juliahub.com/ui/Packages/General/vSmartMOM)
+- **Physics & Engineering Simulation**: [MicroMagnetic.jl](https://juliahub.com/ui/Packages/General/MicroMagnetic), [Swalbe.jl](https://juliahub.com/ui/Packages/General/Swalbe), [ParticleHolography.jl](https://juliahub.com/ui/Packages/General/ParticleHolography), [MHDFlows.jl](https://juliahub.com/ui/Packages/General/MHDFlows), [Molly.jl](https://juliahub.com/ui/Packages/General/Molly), [WaterLily.jl](https://juliahub.com/ui/Packages/General/WaterLily), [Tortuosity.jl](https://juliahub.com/ui/Packages/General/Tortuosity), [Trixi.jl](https://juliahub.com/ui/Packages/General/Trixi)
+- **Power Systems & Energy**: [ExaPF.jl](https://juliahub.com/ui/Packages/General/ExaPF), [Argos.jl](https://juliahub.com/ui/Packages/General/Argos), [ProxAL.jl](https://juliahub.com/ui/Packages/General/ProxAL)
+- **Machine Learning & Artificial Intelligence**: [Flux.jl](https://juliahub.com/ui/Packages/General/Flux), [Lux.jl](https://juliahub.com/ui/Packages/General/Lux), [MeshGraphNets.jl](https://juliahub.com/ui/Packages/General/MeshGraphNets), [ObjectDetector.jl](https://juliahub.com/ui/Packages/General/ObjectDetector), [LogicCircuits.jl](https://juliahub.com/ui/Packages/General/LogicCircuits)
+- **Quantum Science & Technology**: [Yao.jl](https://juliahub.com/ui/Packages/General/Yao), [ITensor.jl](https://juliahub.com/ui/Packages/General/ITensor), [TensorOperations.jl](https://juliahub.com/ui/Packages/General/TensorOperations)
+- **Biomedical & Medical Physics**: [KomaMRI.jl](https://juliahub.com/ui/Packages/General/KomaMRI), [NeuroAnalyzer.jl](https://juliahub.com/ui/Packages/General/NeuroAnalyzer), [Unfold.jl](https://juliahub.com/ui/Packages/General/Unfold), [Roentgen.jl](https://juliahub.com/ui/Packages/General/Roentgen)
+- **Bioinformatics & Computational Biology**: [Ebic.jl](https://juliahub.com/ui/Packages/General/Ebic), [SimSpread.jl](https://juliahub.com/ui/Packages/General/SimSpread)
+- **Numerical & Data Analysis**: [MonteCarloMeasurements.jl](https://juliahub.com/ui/Packages/General/MonteCarloMeasurements), [Krylov.jl](https://juliahub.com/ui/Packages/General/Krylov), [MadNLP.jl](https://juliahub.com/ui/Packages/General/MadNLP), [NextLA.jl](https://juliahub.com/ui/Packages/General/NextLA), [DistStat.jl](https://juliahub.com/ui/Packages/General/DistStat), [DifferentialEquations.jl](https://juliahub.com/ui/Packages/General/DifferentialEquations)
+- **High-Performance Computing**: [ParallelStencil.jl](https://juliahub.com/ui/Packages/General/ParallelStencil), [Dagger.jl](https://juliahub.com/ui/Packages/General/Dagger)
+
+This diverse adoption underscores the power and flexibility of Julia's GPU tools. Now, let's dive into a few noteworthy examples in more detail:
 
 
 ## Flux.jl: Elegant Machine Learning
