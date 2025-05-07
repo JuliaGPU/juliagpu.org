@@ -116,7 +116,7 @@ selection[^1] of applications from the Rodinia benchmark suite:
     <img src="/assets/img/cuda-performance.png" class=card-img-top alt>
   </a>
   <div class=card-body>
-    <p class=card-text>
+    <p class=card-text align=center>
       Relative performance of Rodinia benchmarks <a href=https://github.com/JuliaParallel/rodinia>implemented in Julia with CUDA.jl</a>.
     </p>
   </div>
