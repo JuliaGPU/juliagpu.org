@@ -32,7 +32,7 @@ navigation">
                     <a class=nav-link href="/previews/PR52/"><i data-feather=home></i> Home</a>
                 </li>
                 <li class="nav-item ">
-                    <a class=nav-link href="/previews/PR52/post/"><i data-feather=file-text></i> Blog</a>
+                    <a class=nav-link href="/previews/PR52/post/"><i data-feather=file-text></i> News</a>
                 </li>
                 <li class="nav-item active">
                     <a class=nav-link href="/previews/PR52/showcases/"><i data-feather=star></i> Showcases</a>
@@ -88,9 +88,111 @@ navigation">
 </li>
 </ul>
 <p>This diverse adoption underscores the power and flexibility of Julia&#39;s GPU tools. Now, let&#39;s dive into a few noteworthy examples in more detail:</p>
+<h2 id="oceananigansjl_simulating_fluid_dynamics"><a href="#oceananigansjl_simulating_fluid_dynamics" class="header-anchor">Oceananigans.jl: Simulating Fluid Dynamics</a></h2>
+<p><strong><a href="https://github.com/CliMA/Oceananigans.jl">Oceananigans.jl</a></strong> is a fast, friendly, and flexible Julia package for the numerical simulation of incompressible, stratified, rotating fluid flows on CPUs and GPUs. Developed as part of the Climate Modeling Alliance &#40;CliMA&#41;, it&#39;s designed for both cutting-edge research into small-scale ocean physics and for educational purposes.</p>
+
+<div class="card mb-3">
+  <a href="/previews/PR52/assets/img/oceananigans-simulation.png">
+    <img src="/previews/PR52/assets/img/oceananigans-simulation.png" class=card-img-top alt>
+  </a>
+  <div class=card-body>
+    <p class=card-text align=center>
+      Vertical vorticity as simulated by Oceananigans after a one year integration.
+    </p>
+  </div>
+</div>
+
+<p>Leveraging Julia and <a href="https://github.com/JuliaGPU/KernelAbstractions.jl">KernelAbstractions.jl</a>, Oceananigans.jl achieves significant GPU speedups, often <strong>~3x more cost-effective</strong> than CPU simulations and capable of handling <strong>~150 million grid points</strong> on a single high-end GPU. These performance gains permit the long-time integration of realistic simulations, such as large eddy simulation of oceanic boundary layer turbulence over a seasonal cycle or the generation of training data for turbulence parameterizations in Earth system models</p>
+
+<div class="card mb-3">
+  <a href="/previews/PR52/assets/img/oceananigans-energy.png">
+    <img src="/previews/PR52/assets/img/oceananigans-energy.png" class=card-img-top alt>
+  </a>
+  <div class=card-body>
+    <p class=card-text align=center>
+      Simulated years computed by a megawatt-hour of energy (SWPMWh) versus <br />
+      number of grid points for state-of-the-art atmosphere and ocean models.
+    </p>
+  </div>
+</div>
+
+<p>GPU support in Oceananigans.jl is built on top of KernelAbstractions.jl, and simply requires the user to specify the <code>GPU&#40;&#41;</code> backend when creating the grid:</p>
+<pre><code class="language-julia">using Oceananigans
+
+grid &#61; RectilinearGrid&#40;GPU&#40;&#41;, size&#61;&#40;128, 128&#41;, x&#61;&#40;0, 2π&#41;, y&#61;&#40;0, 2π&#41;,
+                       topology&#61;&#40;Periodic, Periodic, Flat&#41;&#41;
+model &#61; NonhydrostaticModel&#40;; grid, advection&#61;WENO&#40;&#41;&#41;
+ϵ&#40;x, y&#41; &#61; 2rand&#40;&#41; - 1
+set&#33;&#40;model, u&#61;ϵ, v&#61;ϵ&#41;
+simulation &#61; Simulation&#40;model; Δt&#61;0.01, stop_time&#61;4&#41;
+run&#33;&#40;simulation&#41;</code></pre>
+<h2 id="diffeqgpujl_accelerating_scientific_simulation"><a href="#diffeqgpujl_accelerating_scientific_simulation" class="header-anchor">DiffEqGPU.jl: Accelerating Scientific Simulation</a></h2>
+<p>Part of the acclaimed <strong><a href="https://sciml.ai/">SciML</a></strong> ecosystem, <strong><a href="https://github.com/SciML/DiffEqGPU.jl">DiffEqGPU.jl</a></strong> significantly accelerates the solution of large ensembles of differential equations &#40;ODEs, SDEs&#41;. It provides highly optimized GPU kernels that enable substantial speedups for tasks like parameter sweeps, uncertainty quantification, and simulating complex systems in various scientific fields—often without requiring users to modify their existing model code.</p>
+<p>DiffEqGPU.jl achieves high, vendor-agnostic performance. Benchmarks show it can outperform hand-optimized C&#43;&#43;/CUDA solutions and run considerably faster &#40;e.g., <strong>20-100x</strong>&#41; than <code>vmap</code>-based approaches in frameworks like JAX or PyTorch. This capability extends across NVIDIA, AMD, Intel, and Apple GPUs, largely due to its foundation on KernelAbstractions.jl.</p>
+
+<div class="card mb-3">
+  <a href="/previews/PR52/assets/img/diffeqgpu-lorenz.jpg">
+    <img src="/previews/PR52/assets/img/diffeqgpu-lorenz.jpg" class=card-img-top alt>
+  </a>
+  <div class=card-body>
+    <p class=card-text align=center>
+      Solution time for an adaptive Lorenz ODE versus the number of trajectories.
+    </p>
+  </div>
+</div>
+
+<p>The code changes required to solve this classical problem on the GPU are minimal. After setting up the ensemble of Lorenz equations, one can simply replace the <code>EnsembleThreads&#40;&#41;</code> method with <code>EnsembleGPUArray&#40;&#41;</code> to run the simulation on the GPU:</p>
+<pre><code class="language-julia">using DiffEqGPU, OrdinaryDiffEq, CUDA
+
+function lorenz&#40;du, u, p, t&#41;
+    du&#91;1&#93; &#61; p&#91;1&#93; * &#40;u&#91;2&#93; - u&#91;1&#93;&#41;
+    du&#91;2&#93; &#61; u&#91;1&#93; * &#40;p&#91;2&#93; - u&#91;3&#93;&#41; - u&#91;2&#93;
+    du&#91;3&#93; &#61; u&#91;1&#93; * u&#91;2&#93; - p&#91;3&#93; * u&#91;3&#93;
+end
+
+u0 &#61; Float32&#91;1.0; 0.0; 0.0&#93;
+tspan &#61; &#40;0.0f0, 100.0f0&#41;
+p &#61; &#91;10.0f0, 28.0f0, 8 / 3.0f0&#93;
+prob &#61; ODEProblem&#40;lorenz, u0, tspan, p&#41;
+prob_func &#61; function &#40;prob, i, repeat&#41;
+    remake&#40;prob, p &#61; rand&#40;Float32, 3&#41; .* p&#41;
+end
+monteprob &#61; EnsembleProblem&#40;prob, prob_func &#61; prob_func, safetycopy &#61; false&#41;
+
+# CPU-based
+sol &#61; solve&#40;monteprob, Tsit5&#40;&#41;, EnsembleThreads&#40;&#41;,
+            trajectories &#61; 10_000, saveat &#61; 1.0f0&#41;;
+
+# GPU-based
+sol &#61; solve&#40;monteprob, Tsit5&#40;&#41;, EnsembleGPUArray&#40;CUDA.CUDABackend&#40;&#41;&#41;,
+            trajectories &#61; 10_000, saveat &#61; 1.0f0&#41;;</code></pre>
+<p>The use of <code>EnsembleGPUArray</code> has a bit of overhead because it parallelizes at the level of array operations. It is also possible to execute the entire solver on the GPU by using <code>EnsembleGPUKernel</code>, which offers even better performance, albeit at the the cost of some flexibility &#40;such as using special solvers, and writing the problem in out-of-place form&#41;:</p>
+<pre><code class="language-julia">using DiffEqGPU, OrdinaryDiffEq, StaticArrays, CUDA
+
+function lorenz2&#40;u, p, t&#41;
+    σ &#61; p&#91;1&#93;
+    ρ &#61; p&#91;2&#93;
+    β &#61; p&#91;3&#93;
+    du1 &#61; σ * &#40;u&#91;2&#93; - u&#91;1&#93;&#41;
+    du2 &#61; u&#91;1&#93; * &#40;ρ - u&#91;3&#93;&#41; - u&#91;2&#93;
+    du3 &#61; u&#91;1&#93; * u&#91;2&#93; - β * u&#91;3&#93;
+    return SVector&#123;3&#125;&#40;du1, du2, du3&#41;
+end
+
+u0 &#61; @SVector &#91;1.0f0; 0.0f0; 0.0f0&#93;
+tspan &#61; &#40;0.0f0, 10.0f0&#41;
+p &#61; @SVector &#91;10.0f0, 28.0f0, 8 / 3.0f0&#93;
+prob &#61; ODEProblem&#123;false&#125;&#40;lorenz2, u0, tspan, p&#41;
+prob_func &#61; function &#40;prob, i, repeat&#41;
+    remake&#40;prob, p &#61; &#40;@SVector rand&#40;Float32, 3&#41;&#41; .* p&#41;
+end
+monteprob &#61; EnsembleProblem&#40;prob, prob_func &#61; prob_func, safetycopy &#61; false&#41;
+
+sol &#61; solve&#40;monteprob, GPUTsit5&#40;&#41;, EnsembleGPUKernel&#40;CUDA.CUDABackend&#40;&#41;&#41;,
+            trajectories &#61; 10_000, saveat &#61; 1.0f0&#41;</code></pre>
 <h2 id="fluxjl_elegant_machine_learning"><a href="#fluxjl_elegant_machine_learning" class="header-anchor">Flux.jl: Elegant Machine Learning</a></h2>
-<p><strong><a href="https://github.com/FluxML/Flux.jl">Flux.jl</a></strong> is Julia&#39;s premier machine learning library, known for its flexibility and tight integration with the Julia ecosystem. Moving computations from the CPU to the GPU is often trivial, unlocking massive speedups for training deep learning models.</p>
-<p>Here&#39;s an example of a simple multi-layer perceptron &#40;MLP&#41; model trained on a synthetic dataset using Flux.jl. The network is defined and trained on the GPU with minimal code changes, by simply applying the <code>device</code> function to the model and data.</p>
+<p><strong><a href="https://github.com/FluxML/Flux.jl">Flux.jl</a></strong> is Julia&#39;s premier machine learning library, known for its <strong>100&#37; pure-Julia stack</strong> and lightweight abstractions. Flux is designed for flexibility, extensibility, and seamless integration with the broader Julia ecosystem. The package excels in allowing developers to easily express complex models, write custom layers or training loops, and leverage GPU acceleration with remarkable simplicity.</p>
+<p>Here&#39;s an example of a simple multi-layer perceptron &#40;MLP&#41; model defined and trained on a synthetic dataset. The data is batched and subsequently moved to the GPU by using the <code>device</code> function, requiring minimal code changes:</p>
 <pre><code class="language-julia">using Flux
 using CUDA # Or AMDGPU, Metal
 
@@ -122,67 +224,6 @@ for epoch in 1:1_000
         Flux.update&#33;&#40;opt_state, model, grads&#91;1&#93;&#41;
     end
 end</code></pre>
-<h2 id="diffeqgpujl_accelerating_scientific_simulation"><a href="#diffeqgpujl_accelerating_scientific_simulation" class="header-anchor">DiffEqGPU.jl: Accelerating Scientific Simulation</a></h2>
-<p>Part of the acclaimed <strong><a href="https://diffeq.sciml.ai/stable/">DifferentialEquations.jl</a></strong> &#40;SciML&#41; ecosystem, <strong><a href="https://github.com/JuliaDiffEq/DiffEqGPU.jl">DiffEqGPU.jl</a></strong> provides highly optimized GPU kernels for solving large ensembles of differential equations &#40;ODEs, SDEs, etc.&#41; in parallel. This enables massive speedups for parameter sweeps, uncertainty quantification, and simulating complex systems found in biology, physics, and engineering.</p>
-<p>As an example, consider the Lorenz system, a classic chaotic system. The code below demonstrates how to set up and solve a large ensemble of Lorenz equations. Doing so in the GPU is as simple as changing the ensemble method to <code>EnsembleGPUArray</code>:</p>
-<pre><code class="language-julia">using DiffEqGPU, OrdinaryDiffEq, CUDA
-function lorenz&#40;du, u, p, t&#41;
-    du&#91;1&#93; &#61; p&#91;1&#93; * &#40;u&#91;2&#93; - u&#91;1&#93;&#41;
-    du&#91;2&#93; &#61; u&#91;1&#93; * &#40;p&#91;2&#93; - u&#91;3&#93;&#41; - u&#91;2&#93;
-    du&#91;3&#93; &#61; u&#91;1&#93; * u&#91;2&#93; - p&#91;3&#93; * u&#91;3&#93;
-end
-
-u0 &#61; Float32&#91;1.0; 0.0; 0.0&#93;
-tspan &#61; &#40;0.0f0, 100.0f0&#41;
-p &#61; &#91;10.0f0, 28.0f0, 8 / 3.0f0&#93;
-prob &#61; ODEProblem&#40;lorenz, u0, tspan, p&#41;
-prob_func &#61; function &#40;prob, i, repeat&#41;
-    remake&#40;prob, p &#61; rand&#40;Float32, 3&#41; .* p&#41;
-end
-monteprob &#61; EnsembleProblem&#40;prob, prob_func &#61; prob_func, safetycopy &#61; false&#41;
-
-# CPU-based
-sol &#61; solve&#40;monteprob, Tsit5&#40;&#41;, EnsembleThreads&#40;&#41;,
-            trajectories &#61; 10_000, saveat &#61; 1.0f0&#41;;
-
-# GPU-based
-sol &#61; solve&#40;monteprob, Tsit5&#40;&#41;, EnsembleGPUArray&#40;CUDA.CUDABackend&#40;&#41;&#41;,
-            trajectories &#61; 10_000, saveat &#61; 1.0f0&#41;;</code></pre>
-<p>The use of <code>EnsembleGPUArray</code> has a bit of overhead because it parallelizes at the level of array operations. It is also possible to execute the entire solver on the GPU by using <code>EnsembleGPUKernel</code>, which offers even better performance, albeit at the the cost of some flexibility. For example, it requires using special solvers and writing the the problem in out-of-place form:</p>
-<pre><code class="language-julia">using DiffEqGPU, OrdinaryDiffEq, StaticArrays, CUDA
-
-function lorenz2&#40;u, p, t&#41;
-    σ &#61; p&#91;1&#93;
-    ρ &#61; p&#91;2&#93;
-    β &#61; p&#91;3&#93;
-    du1 &#61; σ * &#40;u&#91;2&#93; - u&#91;1&#93;&#41;
-    du2 &#61; u&#91;1&#93; * &#40;ρ - u&#91;3&#93;&#41; - u&#91;2&#93;
-    du3 &#61; u&#91;1&#93; * u&#91;2&#93; - β * u&#91;3&#93;
-    return SVector&#123;3&#125;&#40;du1, du2, du3&#41;
-end
-
-u0 &#61; @SVector &#91;1.0f0; 0.0f0; 0.0f0&#93;
-tspan &#61; &#40;0.0f0, 10.0f0&#41;
-p &#61; @SVector &#91;10.0f0, 28.0f0, 8 / 3.0f0&#93;
-prob &#61; ODEProblem&#123;false&#125;&#40;lorenz2, u0, tspan, p&#41;
-prob_func &#61; function &#40;prob, i, repeat&#41;
-    remake&#40;prob, p &#61; &#40;@SVector rand&#40;Float32, 3&#41;&#41; .* p&#41;
-end
-monteprob &#61; EnsembleProblem&#40;prob, prob_func &#61; prob_func, safetycopy &#61; false&#41;
-sol &#61; solve&#40;monteprob, GPUTsit5&#40;&#41;, EnsembleGPUKernel&#40;CUDA.CUDABackend&#40;&#41;&#41;,
-            trajectories &#61; 10_000, saveat &#61; 1.0f0&#41;</code></pre>
-<h2 id="oceananigansjl_simulating_fluid_dynamics"><a href="#oceananigansjl_simulating_fluid_dynamics" class="header-anchor">Oceananigans.jl: Simulating Fluid Dynamics</a></h2>
-<p><strong><a href="https://github.com/CliMA/Oceananigans.jl">Oceananigans.jl</a></strong> is a fast, friendly, and flexible software package for the numerical simulation of incompressible, stratified flows in the ocean, atmosphere, and laboratory, written in Julia.</p>
-<p>GPU support in Oceananigans.jl is built on top of KernelAbstractions.jl, and simply requires the user to specify the <code>GPU&#40;&#41;</code> backend when creating the grid:</p>
-<pre><code class="language-julia">using Oceananigans
-
-grid &#61; RectilinearGrid&#40;GPU&#40;&#41;, size&#61;&#40;128, 128&#41;, x&#61;&#40;0, 2π&#41;, y&#61;&#40;0, 2π&#41;,
-                       topology&#61;&#40;Periodic, Periodic, Flat&#41;&#41;
-model &#61; NonhydrostaticModel&#40;; grid, advection&#61;WENO&#40;&#41;&#41;
-ϵ&#40;x, y&#41; &#61; 2rand&#40;&#41; - 1
-set&#33;&#40;model, u&#61;ϵ, v&#61;ϵ&#41;
-simulation &#61; Simulation&#40;model; Δt&#61;0.01, stop_time&#61;4&#41;
-run&#33;&#40;simulation&#41;</code></pre>
 <!-- CONTENT ENDS HERE -->
       </main>
     </div> <!-- class="container" -->
