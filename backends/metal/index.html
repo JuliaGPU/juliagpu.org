@@ -14,7 +14,7 @@
 
   
   
-    <title>CUDA.jl 5.5: Maintenance release ⋅ JuliaGPU</title>
+    <title>Metal ⋅ JuliaGPU</title>
   
 </head>
 <body class="d-flex flex-column h-100">
@@ -30,7 +30,7 @@ navigation">
                 <li class="nav-item ">
                     <a class=nav-link href="/"><i data-feather=home></i> Home</a>
                 </li>
-                <li class="nav-item active">
+                <li class="nav-item ">
                     <a class=nav-link href="/post/"><i data-feather=file-text></i> News</a>
                 </li>
                 <li class="nav-item ">
@@ -40,7 +40,7 @@ navigation">
                     <a class=nav-link href="/learn/"><i data-feather=book-open></i> Learn</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                    <a class="nav-link dropdown-toggle active" href="#" id="backendDropdown"
                         role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i data-feather=cpu></i> Backends
                     </a>
@@ -48,7 +48,7 @@ navigation">
                         <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
                         <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
                         <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
+                        <a class="dropdown-item active" href="/backends/metal/">Metal</a>
                         <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
                     </div>
                 </li>
@@ -62,35 +62,27 @@ navigation">
     <main id=main>
 
     
-      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
-      
-
-      <h1>CUDA.jl 5.5: Maintenance release</h1>
-      <i data-feather=calendar></i>
-<time datetime=2024-9-18>Sep 18, 2024</time><br>
-<i data-feather=edit-2></i>
-Tim Besard
-
-
-      <br><br>
-    
 <!-- Content appended here -->
 
-<p>CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features.</p>
-<p>The only important change is that the minimal required Julia version has been bumped to 1.10, in anticipation of it becoming the next LTS release.</p>
-<h2 id="new_features"><a href="#new_features" class="header-anchor">New features</a></h2>
+<h1 id="metal"><a href="#metal" class="header-anchor">Metal</a></h1>
+
+<p>
+  <a href="https://github.com/JuliaGPU/Metal.jl">
+    <img src="https://img.shields.io/github/stars/JuliaGPU/Metal.jl?style=social" alt>
+  </a>
+</p>
+
+<p>Metal is a compute shader API that can be used to program GPUs found in Apple hardware. The <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a> package makes it possible to do so from Julia, with support for Mac devices that contain an M-series chip. The package is in early development, but already provides most features for application development.</p>
+<p>Similarly to other GPU support packages in Julia, Metal.jl makes it possible to work with accelerators at three distinct abstraction levels:</p>
 <ul>
-<li><p>Support for the upcoming Julia 1.11 release has been added, as well as for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2461">CUDA 12.6 &#40;Update 1&#41;</a>.</p>
+<li><p>high-level, using the <code>MtlArray</code> array type and Julia&#39;s powerful array abstractions;</p>
 </li>
-<li><p>Launch overhead has been reduced by <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2472">avoiding double argument conversions</a>. Note that this does not apply to kernels that are obtained using <code>@cuda launch&#61;false</code>.</p>
+<li><p>by writing your own kernels and launching them using the <code>@metal</code> macro;</p>
 </li>
-<li><p>CUSOLVER&#39;s dense wrappers have been improved by <a href="https://github.com/bjarthur">Ben Arthur</a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2465">now caching workspace buffers</a>. This should greatly reduce the number of allocations needed for repeated calls.</p>
-</li>
-<li><p><a href="https://github.com/amontoison">Alexis Montoison</a> has improved the CUSPARSE wrappers, adding <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2489">conversions between sparse vectors and sparse matrices</a> that enable <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2488">a version of <code>gemv</code></a> which preserves sparsity of the inputs.</p>
-</li>
-<li><p>CUDA.jl&#39;s CUFFT wrappers <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2430">now support <code>Float16</code></a>, thanks to <a href="https://github.com/eschnett">Erik Schnetter</a>.</p>
+<li><p>using the low-level Metal API wrappers in the <code>MTL</code> submodule.</p>
 </li>
 </ul>
+<p>For more information, refer to the <a href="/post/2022-06-24-metal/">introductory blog post</a> and the <a href="/post/2023-03-03-metal_0.2/">post on Metal Performance Shaders</a>.</p>
 <!-- CONTENT ENDS HERE -->
       </main>
     </div> <!-- class="container" -->
