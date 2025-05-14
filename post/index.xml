@@ -19,6 +19,76 @@
 
 
 <item>
+  <title><![CDATA[CUDA.jl 5.8: CuSparseVector broadcasting, CUDA 12.9, and more]]></title>
+  <link>https://juliagpu.org/post/2025-05-14-cuda_5.8/index.html</link>
+  <guid>https://juliagpu.org/2025-05-14-cuda_5.8/</guid>
+  <description><![CDATA[CUDA.jl v5.8 brings several enhancements, most notably the introduction of broadcasting   support for &lt;code&gt;CuSparseVector&lt;/code&gt;. The release also includes support for CUDA 12.9,   and updates to key CUDA libraries like cuTENSOR, cuQuantum, and cuDNN.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>CUDA.jl v5.8 brings several enhancements, most notably the introduction of broadcasting   support for <code>CuSparseVector</code>. The release also includes support for CUDA 12.9,   and updates to key CUDA libraries like cuTENSOR, cuQuantum, and cuDNN.</p>
+<h2 id="broadcasting_for_cusparsevector">Broadcasting for <code>CuSparseVector</code></h2>
+<p>A significant enhancement in CUDA.jl v5.8 is the <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2733">support for broadcasting <code>CuSparseVector</code></a>. Thanks to <a href="https://github.com/kshyatt">@kshyatt</a>, it is now possible to use sparse GPU vectors in broadcast expressions just like it was already possible with sparse matrices:</p>
+<pre><code class="language-julia-repl">julia&gt; using CUDA, .CUSPARSE, SparseArraysjulia&gt; x &#61; cu&#40;sprand&#40;Float32, 10, 0.3&#41;&#41;
+10-element CuSparseVector&#123;Float32, Int32&#125; with 4 stored entries:
+  &#91;2&#93;  &#61;  0.459139
+  &#91;3&#93;  &#61;  0.964073
+  &#91;8&#93;  &#61;  0.904363
+  &#91;9&#93;  &#61;  0.721723julia&gt; # a zero-preserving elementwise operation
+       x .* 2
+10-element CuSparseVector&#123;Float32, Int32&#125; with 4 stored entries:
+  &#91;2&#93;  &#61;  0.918278
+  &#91;3&#93;  &#61;  1.928146
+  &#91;8&#93;  &#61;  1.808726
+  &#91;9&#93;  &#61;  1.443446julia&gt; # a non-zero-preserving elementwise operation
+       x .&#43; 1
+10-element CuArray&#123;Float32, 1, CUDA.DeviceMemory&#125;:
+ 1.0
+ 1.4591388
+ 1.9640732
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.9043632
+ 1.7217231
+ 1.0julia&gt; # combining multiple sparse inputs
+       x .&#43; cu&#40;sprand&#40;Float32, 10, 0.3&#41;&#41;
+10-element CuSparseVector&#123;Float32, Int32&#125; with 6 stored entries:
+  &#91;1&#93;  &#61;  0.906
+  &#91;2&#93;  &#61;  0.583197
+  &#91;3&#93;  &#61;  0.964073
+  &#91;4&#93;  &#61;  0.259103
+  &#91;8&#93;  &#61;  0.904363
+  &#91;9&#93;  &#61;  0.935917</code></pre>
+<h2 id="minor_changes">Minor Changes</h2>
+<p>CUDA.jl 5.8 also includes several other useful updates:</p>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/2772">Added support</a> for CUDA 12.9;</p>
+</li>
+<li><p>Subpackages <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2776">have been updated</a> to CUDNN 9.10, cuTensor 2.2, and cuQuantum 25.03;</p>
+</li>
+<li><p><code>CUSPARSE.gemm&#33;</code> <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2769">now supports</a> additional algorithms choices to limit memory usage;</p>
+</li>
+<li><p>Symbols <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2624">can now be passed</a> to CUDA kernels and stored in <code>CuArray</code>s;</p>
+</li>
+<li><p><code>CuTensor</code> multiplication <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2775">now preserves</a> the memory type of the input tensors;</p>
+</li>
+<li><p>Sparse CSR matrices <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2720">are now interfaced with</a> the SparseMatricesCSR.jl package.</p>
+</li>
+</ul>
+<p>As always, we encourage users to update to the latest version to benefit from these improvements and bug fixes. Check out the <a href="https://github.com/JuliaGPU/CUDA.jl/releases/tag/v5.8.0">changelog</a> for a full list of changes.</p>
+]]></content:encoded>
+    
+  <pubDate>Wed, 14 May 2025 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 5.6 and 5.7: Allocator cache, and asynchronous CUBLAS wrappers]]></title>
   <link>https://juliagpu.org/post/2025-03-11-cuda_5.6_5.7/index.html</link>
   <guid>https://juliagpu.org/2025-03-11-cuda_5.6_5.7/</guid>
