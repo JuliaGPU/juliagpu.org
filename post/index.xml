@@ -19,6 +19,67 @@
 
 
 <item>
+  <title><![CDATA[Metal.jl 1.6: Initial MPSGraph Support]]></title>
+  <link>https://juliagpu.org/post/2025-05-30-metal_1.6/index.html</link>
+  <guid>https://juliagpu.org/2025-05-30-metal_1.6/</guid>
+  <description><![CDATA[Metal.jl adds initial support for MPSGraph, with the matrix multiplication functions   wrapped, resolving some matrix multiplication issues in the previous method.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>Metal.jl adds initial support for MPSGraph, with the matrix multiplication functions   wrapped, resolving some matrix multiplication issues in the previous method.</p>
+<h2 id="initial_mpsgraph_support">Initial MPSGraph support</h2>
+<p><a href="https://github.com/JuliaGPU/Metal.jl/pull/526">PR #526</a> enabled the automatic generation of wrappers for all <code>enum</code>s, <code>struct</code>s, and Objective-C objects for the frameworks that Metal.jl relies upon. This made adding support for <a href="https://developer.apple.com/documentation/metalperformanceshadersgraph?language&#61;objc">MPSGraph</a>, Apple&#39;s MLIR gpu compiler interface, realistic.</p>
+<p>To try out the new framework, constructor and method wrappers necessary for matrix multiplication were added, as well as linking it to the LinearAlgebra interface to work around the <a href="https://github.com/JuliaGPU/Metal.jl/pull/381">NaN issue</a> that could show up on M1/M2 devices.</p>
+<p>Lets go through a simple example doing pairwise multiplication followed by pairwise addition using MPSGraph directly:</p>
+<pre><code class="language-julia">using Metal, Random
+using ObjectiveC: Foundation.NSDictionary
+using Metal: encode&#33;;using .MPS: MPSCommandBuffer
+using .MPSGraphs: MPSGraph, placeholderTensor, MPSGraphTensorData, MPSGraphTensor, multiplicationWithPrimaryTensor, additionWithPrimaryTensorT &#61; Float32;a &#61; Metal.rand&#40;10&#41;;
+b &#61; Metal.rand&#40;10&#41;;
+c &#61; Metal.rand&#40;10&#41;;# To compare with the MPSGraph equivalent
+res &#61; &#40;a .* b&#41; .&#43; c;graph &#61; MPSGraph&#40;&#41; # Initialize the graph# Create placeholder tensors to be used to compile our graph
+placeA &#61; placeholderTensor&#40;graph, size&#40;a&#41;, T&#41;
+placeB &#61; placeholderTensor&#40;graph, size&#40;b&#41;, T&#41;
+placeC &#61; placeholderTensor&#40;graph, size&#40;c&#41;, T&#41;# Link the placeholder tensors to the data via a Dict
+feeds &#61; Dict&#123;MPSGraphTensor, MPSGraphTensorData&#125;&#40;
+    placeA &#61;&gt; MPSGraphTensorData&#40;a&#41;,
+    placeB &#61;&gt; MPSGraphTensorData&#40;b&#41;,
+    placeC &#61;&gt; MPSGraphTensorData&#40;c&#41;
+&#41;# Add multiplication to the graph
+pwisemul &#61; MPSGraphs.multiplicationWithPrimaryTensor&#40;graph, placeA, placeB&#41;# Add addition to the graph
+pwiseadd &#61; MPSGraphs.additionWithPrimaryTensor&#40;graph, pwisemul, placeC&#41;# Our output tensor will be our c MtlArray
+resultdict &#61; Dict&#123;MPSGraphTensor, MPSGraphTensorData&#125;&#40;
+    pwiseadd &#61;&gt; feeds&#91;placeC&#93;
+&#41;# Encode and run the graph
+cmdbuf &#61; MPS.MPSCommandBuffer&#40;Metal.global_queue&#40;device&#40;&#41;&#41;&#41;
+MPS.encode&#33;&#40;cmdbuf, graph, NSDictionary&#40;feeds&#41;, NSDictionary&#40;resultdict&#41;&#41;
+Metal.commit&#33;&#40;cmdbuf&#41;
+Metal.wait_completed&#40;cmdbuf&#41;# The MPSGraph result is equal to the typical way of doing things.
+@assert isapprox&#40;res, c&#41;</code></pre>
+<p>Clearly, for simple operations like the above example, it is a lot of extra boilerplate without much benefit, but for more complex operations, MPSGraph will optimize the graph and operations before running, reducing expensive kernel launches and remving unecessary operations.</p>
+<p>Another exciting aspect of this new framework wrapper is that it is now easier to add functionality that has been long-requested. One can find MPSGraph functionality not yet in Metal.jl and write wrappers using the existing wrappers as a starting point. If anyone is interested in helping out, feel free to open a pull request or an issue on the <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl repository</a>, and we will do our best to help you get your code merged.</p>
+<h2 id="minor_changes">Minor Changes</h2>
+<p>Metal.jl 1.6 also includes several other useful updates:</p>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/559">Fixes</a> with using irrationals in kernels.</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/529">Many</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/531">improvements</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/533">and</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/544">fixes</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/582">to</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/561">intrinsics</a>.</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/557">Support</a> for <code>pow</code> with an <code>Integer</code> exponent .</p>
+</li>
+</ul>
+<p>As always, we encourage users to update to the latest version to benefit from these improvements and bug fixes. Check out the <a href="https://github.com/JuliaGPU/Metal.jl/releases/tag/v1.6.0">changelog</a> for a full list of changes.</p>
+]]></content:encoded>
+    
+  <pubDate>Fri, 30 May 2025 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Christian Guinard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[CUDA.jl 5.8: CuSparseVector broadcasting, CUDA 12.9, and more]]></title>
   <link>https://juliagpu.org/post/2025-05-14-cuda_5.8/index.html</link>
   <guid>https://juliagpu.org/2025-05-14-cuda_5.8/</guid>

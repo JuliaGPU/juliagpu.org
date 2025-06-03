@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+ 
+
+  <link rel="stylesheet" href="/css/style.css">
+
+  
+  
+    <title>Metal.jl 1.6: Initial MPSGraph Support ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-sm navbar-light">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
+navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <ul class=navbar-nav>
+                <li class="nav-item">
+                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/post/"><i data-feather=file-text></i> News</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-feather=cpu></i> Backends
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
+                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
+                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
+                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
+                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>Metal.jl 1.6: Initial MPSGraph Support</h1>
+      <i data-feather=calendar></i>
+<time datetime=2025-5-30>May 30, 2025</time><br>
+<i data-feather=edit-2></i>
+Christian Guinard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>Metal.jl adds initial support for MPSGraph, with the matrix multiplication functions   wrapped, resolving some matrix multiplication issues in the previous method.</p>
+<h2 id="initial_mpsgraph_support"><a href="#initial_mpsgraph_support" class="header-anchor">Initial MPSGraph support</a></h2>
+<p><a href="https://github.com/JuliaGPU/Metal.jl/pull/526">PR #526</a> enabled the automatic generation of wrappers for all <code>enum</code>s, <code>struct</code>s, and Objective-C objects for the frameworks that Metal.jl relies upon. This made adding support for <a href="https://developer.apple.com/documentation/metalperformanceshadersgraph?language&#61;objc">MPSGraph</a>, Apple&#39;s MLIR gpu compiler interface, realistic.</p>
+<p>To try out the new framework, constructor and method wrappers necessary for matrix multiplication were added, as well as linking it to the LinearAlgebra interface to work around the <a href="https://github.com/JuliaGPU/Metal.jl/pull/381">NaN issue</a> that could show up on M1/M2 devices.</p>
+<p>Lets go through a simple example doing pairwise multiplication followed by pairwise addition using MPSGraph directly:</p>
+<pre><code class="language-julia">using Metal, Random
+using ObjectiveC: Foundation.NSDictionary
+using Metal: encode&#33;;using .MPS: MPSCommandBuffer
+using .MPSGraphs: MPSGraph, placeholderTensor, MPSGraphTensorData, MPSGraphTensor, multiplicationWithPrimaryTensor, additionWithPrimaryTensor
+
+T &#61; Float32;
+
+a &#61; Metal.rand&#40;10&#41;;
+b &#61; Metal.rand&#40;10&#41;;
+c &#61; Metal.rand&#40;10&#41;;
+
+# To compare with the MPSGraph equivalent
+res &#61; &#40;a .* b&#41; .&#43; c;
+
+graph &#61; MPSGraph&#40;&#41; # Initialize the graph
+
+# Create placeholder tensors to be used to compile our graph
+placeA &#61; placeholderTensor&#40;graph, size&#40;a&#41;, T&#41;
+placeB &#61; placeholderTensor&#40;graph, size&#40;b&#41;, T&#41;
+placeC &#61; placeholderTensor&#40;graph, size&#40;c&#41;, T&#41;
+
+# Link the placeholder tensors to the data via a Dict
+feeds &#61; Dict&#123;MPSGraphTensor, MPSGraphTensorData&#125;&#40;
+    placeA &#61;&gt; MPSGraphTensorData&#40;a&#41;,
+    placeB &#61;&gt; MPSGraphTensorData&#40;b&#41;,
+    placeC &#61;&gt; MPSGraphTensorData&#40;c&#41;
+&#41;
+
+# Add multiplication to the graph
+pwisemul &#61; MPSGraphs.multiplicationWithPrimaryTensor&#40;graph, placeA, placeB&#41;
+
+# Add addition to the graph
+pwiseadd &#61; MPSGraphs.additionWithPrimaryTensor&#40;graph, pwisemul, placeC&#41;
+
+# Our output tensor will be our c MtlArray
+resultdict &#61; Dict&#123;MPSGraphTensor, MPSGraphTensorData&#125;&#40;
+    pwiseadd &#61;&gt; feeds&#91;placeC&#93;
+&#41;
+
+# Encode and run the graph
+cmdbuf &#61; MPS.MPSCommandBuffer&#40;Metal.global_queue&#40;device&#40;&#41;&#41;&#41;
+MPS.encode&#33;&#40;cmdbuf, graph, NSDictionary&#40;feeds&#41;, NSDictionary&#40;resultdict&#41;&#41;
+Metal.commit&#33;&#40;cmdbuf&#41;
+Metal.wait_completed&#40;cmdbuf&#41;
+
+# The MPSGraph result is equal to the typical way of doing things.
+@assert isapprox&#40;res, c&#41;</code></pre>
+<p>Clearly, for simple operations like the above example, it is a lot of extra boilerplate without much benefit, but for more complex operations, MPSGraph will optimize the graph and operations before running, reducing expensive kernel launches and remving unecessary operations.</p>
+<p>Another exciting aspect of this new framework wrapper is that it is now easier to add functionality that has been long-requested. One can find MPSGraph functionality not yet in Metal.jl and write wrappers using the existing wrappers as a starting point. If anyone is interested in helping out, feel free to open a pull request or an issue on the <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl repository</a>, and we will do our best to help you get your code merged.</p>
+<h2 id="minor_changes"><a href="#minor_changes" class="header-anchor">Minor Changes</a></h2>
+<p>Metal.jl 1.6 also includes several other useful updates:</p>
+<ul>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/559">Fixes</a> with using irrationals in kernels.</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/529">Many</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/531">improvements</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/533">and</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/544">fixes</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/582">to</a> <a href="https://github.com/JuliaGPU/Metal.jl/pull/561">intrinsics</a>.</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/557">Support</a> for <code>pow</code> with an <code>Integer</code> exponent .</p>
+</li>
+</ul>
+<p>As always, we encourage users to update to the latest version to benefit from these improvements and bug fixes. Check out the <a href="https://github.com/JuliaGPU/Metal.jl/releases/tag/v1.6.0">changelog</a> for a full list of changes.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+    
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+<!-- Languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
+
+<script>hljs.highlightAll();</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
