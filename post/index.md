@@ -2,6 +2,11 @@
 title = "Blog"
 external_entries = [
     (
+      Date(2026, 3, 3),
+      "cuTile.jl Brings NVIDIA CUDA Tile-Based Programming to Julia",
+      "https://developer.nvidia.com/blog/cutile-jl-brings-nvidia-cuda-tile-based-programming-to-julia/"
+      ),
+    (
       Date(2020, 1, 14),
       "Julia's Dramatic Rise in HPC and Elsewhere",
       "https://www.hpcwire.com/2020/01/14/julia-programmings-dramatic-rise-in-hpc-and-elsewhere/"
