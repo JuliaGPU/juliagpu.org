@@ -109,7 +109,7 @@ end</code></pre>
 <ul>
 <li><p><strong><code>load</code>/<code>store</code></strong>: <code>index</code>, <code>shape</code>, and <code>tile</code> are now kwargs &#40;<code>ct.load&#40;arr; index&#61;pid, shape&#61;&#40;M, N&#41;&#41;</code>&#41;. Positional syntax still works.</p>
 </li>
-<li><p><strong><code>arange</code></strong>: defaults to <code>Int32</code> — <code>ct.arange&#40;n&#41;</code> works without a type argument; use <code>dtype</code> for other types &#40;<code>ct.arange&#40;16; dtype&#61;Int64&#41;</code>&#41;.</p>
+<li><p><strong><code>arange</code></strong>: now works without a type, defaulting to <code>Int32</code>. Use <code>dtype</code> for other types &#40;e.g. <code>ct.arange&#40;16; dtype&#61;Int64&#41;</code>&#41;.</p>
 </li>
 <li><p><strong><code>gather</code>/<code>scatter</code></strong>: new <code>mask</code>, <code>padding_value</code>, and <code>check_bounds</code> kwargs. User masks are <code>AND</code>&#39;d with automatic bounds masks; <code>check_bounds&#61;false</code> skips bounds comparisons when indices are known safe.</p>
 </li>
