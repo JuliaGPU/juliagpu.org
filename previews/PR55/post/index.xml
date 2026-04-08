@@ -22,10 +22,10 @@
   <title><![CDATA[cuTile.jl 0.2: New features, improved performance, and Julia 1.13 support]]></title>
   <link>https://juliagpu.org/post/2026-04-08-cutile_0.2/index.html</link>
   <guid>https://juliagpu.org/2026-04-08-cutile_0.2/</guid>
-  <description><![CDATA[cuTile.jl v0.2 is the first major update of the Julia package for writing GPU kernels using NVIDIA&#39;s tile-based programming model. This release adds many new features, supports more of the Julia language, and greatly improves performance. We will also be presenting cuTile.jl in a joint webinar with NVIDIA on May 12.]]></description>  
+  <description><![CDATA[cuTile.jl v0.2 is the first major update of the Julia package for writing GPU kernels using NVIDIA&#39;s tile-based programming model. This release adds many new features, supports more of the Julia language, and greatly improves performance. We will be presenting about it in a joint webinar with NVIDIA on May 12.]]></description>  
   
   <content:encoded><![CDATA[
-<p>cuTile.jl v0.2 is the first major update of the Julia package for writing GPU kernels using NVIDIA&#39;s tile-based programming model. This release adds many new features, supports more of the Julia language, and greatly improves performance. We will also be presenting cuTile.jl in a joint webinar with NVIDIA on May 12.</p>
+<p>cuTile.jl v0.2 is the first major update of the Julia package for writing GPU kernels using NVIDIA&#39;s tile-based programming model. This release adds many new features, supports more of the Julia language, and greatly improves performance. We will be presenting about it in a joint webinar with NVIDIA on May 12.</p>
 <p>The release is showcased by two new examples that exercise many of the features described below: a fused <a href="https://github.com/JuliaGPU/cuTile.jl/blob/main/examples/moe.jl">Mixture of Experts</a> kernel with token routing via <code>gather</code>/<code>scatter</code>, and a <a href="https://github.com/JuliaGPU/cuTile.jl/blob/main/examples/fmha.jl">Flash Multi-Head Attention</a> implementation with online <code>softmax</code> and causal masking.</p>
 <h2 id="breaking_changes">Breaking changes</h2>
 <ul>
