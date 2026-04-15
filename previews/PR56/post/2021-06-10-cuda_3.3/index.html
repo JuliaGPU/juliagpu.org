@@ -73,12 +73,7 @@
                     </div>
                 </li>
             </ul>
-            <div class="ms-md-3 d-flex align-items-center">
-                <div class="search-container me-2">
-                    <i data-lucide=search class="search-icon" style="width:14px;height:14px"></i>
-                    <input type="text" class="search-input" id="site-search" placeholder="Search..." autocomplete="off">
-                    <div class="search-results" id="search-results"></div>
-                </div>
+            <div class="ms-md-3">
                 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
                     <i data-lucide=moon id="theme-icon-dark" style="display:none"></i>
                     <i data-lucide=sun id="theme-icon-light" style="display:none"></i>
@@ -292,75 +287,6 @@ end
             document.documentElement.setAttribute('data-bs-theme', next);
             localStorage.setItem('theme', next);
             updateIcons();
-        });
-    })();
-    </script>
-
-    <!-- CLIENT-SIDE SEARCH -->
-    <script>
-    (function() {
-        var searchIndex = null;
-        var searchInput = document.getElementById('site-search');
-        var searchResults = document.getElementById('search-results');
-
-        // Build search index from page data
-        function buildIndex() {
-            if (searchIndex) return;
-            searchIndex = [
-                {title: "Home", url: "/", text: "JuliaGPU GPU programming Julia high-performance"},
-                {title: "NVIDIA CUDA", url: "/backends/cuda/", text: "CUDA.jl NVIDIA GPU CuArray kernel programming cuBLAS cuFFT"},
-                {title: "AMD ROCm", url: "/backends/rocm/", text: "AMDGPU.jl AMD ROCm ROCArray HIP rocBLAS"},
-                {title: "Intel oneAPI", url: "/backends/oneapi/", text: "oneAPI.jl Intel GPU oneArray Level Zero oneMKL"},
-                {title: "Apple Metal", url: "/backends/metal/", text: "Metal.jl Apple Silicon MtlArray GPU M-series"},
-                {title: "OpenCL", url: "/backends/opencl/", text: "OpenCL.jl vendor-neutral GPU programming"},
-                {title: "Showcases", url: "/showcases/", text: "Oceananigans Flux DiffEqGPU climate machine learning simulation"},
-                {title: "Learn", url: "/learn/", text: "tutorials documentation CUDA workshop video"},
-                {title: "Blog / News", url: "/post/", text: "blog posts news updates releases"}
-            ];
-
-            // Add blog post entries from the page if available
-            var entries = document.querySelectorAll('.blog-entry');
-            entries.forEach(function(entry) {
-                var link = entry.querySelector('a');
-                if (link) {
-                    searchIndex.push({
-                        title: link.textContent.trim(),
-                        url: link.getAttribute('href'),
-                        text: entry.textContent
-                    });
-                }
-            });
-        }
-
-        searchInput.addEventListener('focus', buildIndex);
-
-        searchInput.addEventListener('input', function() {
-            var query = this.value.toLowerCase().trim();
-            if (query.length < 2) {
-                searchResults.classList.remove('active');
-                return;
-            }
-
-            buildIndex();
-            var results = searchIndex.filter(function(item) {
-                return item.title.toLowerCase().indexOf(query) !== -1 ||
-                       item.text.toLowerCase().indexOf(query) !== -1;
-            }).slice(0, 8);
-
-            if (results.length === 0) {
-                searchResults.innerHTML = '<div class="search-result-item"><span class="result-title">No results found</span></div>';
-            } else {
-                searchResults.innerHTML = results.map(function(r) {
-                    return '<div class="search-result-item"><a href="' + r.url + '"><span class="result-title">' + r.title + '</span></a></div>';
-                }).join('');
-            }
-            searchResults.classList.add('active');
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.classList.remove('active');
-            }
         });
     })();
     </script>
