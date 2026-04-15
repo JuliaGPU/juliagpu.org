@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en" class=h-100 data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR56/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR56/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="JuliaGPU">
+  <meta property="og:image" content="https://juliagpu.org/assets/logo_crop.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:image" content="https://juliagpu.org/assets/logo_crop.png">
+  
+  
+    <meta property="og:title" content="cuTile.jl 0.2: New features, improved performance, and Julia 1.13 support - JuliaGPU">
+    <meta property="og:description" content="cuTile.jl 0.2: New features, improved performance, and Julia 1.13 support - JuliaGPU">
+  
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-dark.min.css">
+ 
+
+  <link rel="stylesheet" href="/previews/PR56/css/style.css">
+
+  <!-- Dark mode: apply saved preference before paint -->
+  <script>
+    (function() {
+      var theme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-bs-theme', theme);
+    })();
+  </script>
+
+  
+  
+    <title>cuTile.jl 0.2: New features, improved performance, and Julia 1.13 support ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-md">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <ul class=navbar-nav>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR56/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/previews/PR56/post/">News</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR56/showcases/">Showcases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR56/learn/">Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Backends
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <a class="dropdown-item " href="/previews/PR56/backends/cuda/">CUDA</a>
+                        <a class="dropdown-item " href="/previews/PR56/backends/rocm/">ROCm</a>
+                        <a class="dropdown-item " href="/previews/PR56/backends/oneapi/">oneAPI</a>
+                        <a class="dropdown-item " href="/previews/PR56/backends/metal/">Metal</a>
+                        <a class="dropdown-item " href="/previews/PR56/backends/opencl/">OpenCL</a>
+                    </div>
+                </li>
+            </ul>
+            <div class="ms-md-3 d-flex align-items-center">
+                <div class="search-container me-2">
+                    <i data-lucide=search class="search-icon" style="width:14px;height:14px"></i>
+                    <input type="text" class="search-input" id="site-search" placeholder="Search..." autocomplete="off">
+                    <div class="search-results" id="search-results"></div>
+                </div>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <i data-lucide=moon id="theme-icon-dark" style="display:none"></i>
+                    <i data-lucide=sun id="theme-icon-light" style="display:none"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>cuTile.jl 0.2: New features, improved performance, and Julia 1.13 support</h1>
+      <i data-lucide=calendar></i>
+<time datetime=2026-4-8>Apr 8, 2026</time><br>
+<i data-lucide=pencil></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>cuTile.jl v0.2 is the first major update of the Julia package for writing GPU kernels using NVIDIA&#39;s tile-based programming model. This release adds many new features, supports more of the Julia language, and greatly improves performance. We will be presenting about it in a joint webinar with NVIDIA on May 12.</p>
+<p>The release is showcased by two new examples that exercise many of the features described below: a fused <a href="https://github.com/JuliaGPU/cuTile.jl/blob/main/examples/moe.jl">Mixture of Experts</a> kernel with token routing via <code>gather</code>/<code>scatter</code>, and a <a href="https://github.com/JuliaGPU/cuTile.jl/blob/main/examples/fmha.jl">Flash Multi-Head Attention</a> implementation with online <code>softmax</code> and causal masking.</p>
+<h2 id="breaking_changes"><a href="#breaking_changes" class="header-anchor">Breaking changes</a></h2>
+<ul>
+<li><p><strong><code>ct.where</code> removed</strong>: use <code>ifelse.&#40;cond, x, y&#41;</code> &#40;standard Julia broadcast&#41;;</p>
+</li>
+<li><p><strong>FP mode kwargs removed</strong>: per-operation <code>rounding_mode</code> and <code>flush_to_zero</code> kwargs on reductions/scans replaced with <code>ct.@fpmode</code> blocks &#40;see below&#41;;</p>
+</li>
+<li><p><strong>Matmul batch dimensions</strong>: <code>muladd</code> now uses trailing batch dims <code>&#40;M, K, B...&#41;</code> matching Julia convention, instead of leading <code>&#40;B, M, K&#41;</code>.</p>
+</li>
+</ul>
+<h2 id="native_for_loops"><a href="#native_for_loops" class="header-anchor">Native <code>for</code> loops</a></h2>
+<p>Previously, cuTile.jl required a <code>while</code>-loop workaround for iteration. Starting with v0.2, standard Julia <code>for</code> loops work directly:</p>
+<pre><code class="language-julia">for k in Int32&#40;1&#41;:K_tiles
+    a &#61; ct.load&#40;A; index&#61;&#40;pid_m, k&#41;, shape&#61;&#40;TILE_M, TILE_K&#41;&#41;
+    b &#61; ct.load&#40;B; index&#61;&#40;k, pid_n&#41;, shape&#61;&#40;TILE_K, TILE_N&#41;&#41;
+    acc &#61; muladd&#40;a, b, acc&#41;
+end</code></pre>
+<p>The compiler recognizes Julia&#39;s iterator protocol and lowers <code>for i in
+start:stop</code> and <code>for i in start:step:stop</code> to Tile IR <code>ForOp</code> directly.</p>
+<h2 id="floating-point_mode_ctfpmode"><a href="#floating-point_mode_ctfpmode" class="header-anchor">Floating-point mode: <code>ct.@fpmode</code></a></h2>
+<p>A new scoped macro controls floating-point rounding and flush-to-zero for all operations in its body, matching how FP modes work in hardware:</p>
+<pre><code class="language-julia">ct.@fpmode rounding_mode&#61;ct.Rounding.Approx flush_to_zero&#61;true begin
+    s &#61; sum&#40;tile; dims&#61;1&#41;
+    x &#61; exp2.&#40;tile&#41;
+end</code></pre>
+<p>Blocks can be nested, with inner blocks inheriting unspecified settings from the enclosing scope.</p>
+<h2 id="keyword_arguments_for_operations"><a href="#keyword_arguments_for_operations" class="header-anchor">Keyword arguments for operations</a></h2>
+<p>Most cuTile operations now use keyword arguments, aligning with cuTile Python&#39;s API and making call sites more readable:</p>
+<ul>
+<li><p><strong><code>load</code>/<code>store</code></strong>: <code>index</code>, <code>shape</code>, and <code>tile</code> are now kwargs &#40;<code>ct.load&#40;arr; index&#61;pid, shape&#61;&#40;M, N&#41;&#41;</code>&#41;. Positional syntax still works.</p>
+</li>
+<li><p><strong><code>arange</code></strong>: now works without a type, defaulting to <code>Int32</code>. Use <code>dtype</code> for other types &#40;e.g. <code>ct.arange&#40;16; dtype&#61;Int64&#41;</code>&#41;.</p>
+</li>
+<li><p><strong><code>gather</code>/<code>scatter</code></strong>: new <code>mask</code>, <code>padding_value</code>, and <code>check_bounds</code> kwargs. User masks are <code>AND</code>&#39;d with automatic bounds masks; <code>check_bounds&#61;false</code> skips bounds comparisons when indices are known safe.</p>
+</li>
+<li><p><strong>Atomics</strong>: all atomic operations accept <code>check_bounds</code> to optionally skip the bounds mask.</p>
+</li>
+<li><p><strong><code>allow_tma</code></strong>: default changed from <code>true</code> to <code>nothing</code> &#40;compiler decides&#41;.</p>
+</li>
+</ul>
+<h2 id="experimental_host_abstractions"><a href="#experimental_host_abstractions" class="header-anchor">Experimental host abstractions</a></h2>
+<p>cuTile.jl now provides a limited set of host-level APIs that generate cuTile kernels automatically, without writing explicit kernel code. They are exposed using the <code>ct.Tiled</code> wrapper type, which represents a tiled view of an array.</p>
+<p><strong>Broadcasting</strong> fuses an entire expression into a single cuTile kernel, with tile sizes chosen automatically:</p>
+<pre><code class="language-julia">ct.Tiled&#40;C&#41; .&#61; ct.Tiled&#40;A&#41; .&#43; ct.Tiled&#40;B&#41;
+
+# Or via the convenience macro &#40;wraps all arrays automatically&#41;:
+ct.@. C &#61; A &#43; sin&#40;B&#41;</code></pre>
+<p><strong><code>mapreduce</code></strong> on <code>Tiled</code> arrays generates a tiled reduction kernel:</p>
+<pre><code class="language-julia">mapreduce&#40;identity, &#43;, ct.Tiled&#40;A&#41;; dims&#61;1&#41;</code></pre>
+<p>These APIs are experimental and may not persist in their current form. The goal is to eventually fold them into the default <code>CuArray</code> operations in CUDA.jl.</p>
+<h2 id="debugging_with_printprintln"><a href="#debugging_with_printprintln" class="header-anchor">Debugging with <code>print</code>/<code>println</code></a></h2>
+<p>You can now use standard Julia <code>print</code> and <code>println</code> inside kernels:</p>
+<pre><code class="language-julia">function debug_kernel&#40;A, tile_size::Int&#41;
+    pid &#61; ct.bid&#40;1&#41;
+    tile &#61; ct.load&#40;A; index&#61;pid, shape&#61;&#40;tile_size,&#41;&#41;
+    println&#40;&quot;Block &quot;, pid, &quot;: sum&#61;&quot;, sum&#40;tile; dims&#61;1&#41;&#41;
+    return
+end</code></pre>
+<p>String constants, scalars, and tiles can be mixed freely. String interpolation &#40;<code>&quot;x&#61;&#36;x&quot;</code>&#41; is also supported.</p>
+<h2 id="minor_changes"><a href="#minor_changes" class="header-anchor">Minor changes</a></h2>
+<ul>
+<li><p><strong>Atomics</strong>: <code>atomic_max</code>, <code>atomic_min</code>, <code>atomic_or</code>, <code>atomic_and</code>, <code>atomic_xor</code> join the existing <code>atomic_cas</code>, <code>atomic_xchg</code>, and <code>atomic_add</code>;</p>
+</li>
+<li><p><strong><code>fill</code>/<code>zeros</code>/<code>ones</code> overlays</strong>: standard Base constructors now work inside kernels &#40;e.g. <code>zeros&#40;Float32, 64, 64&#41;</code>&#41;, thanks to <a href="https://github.com/AntonOresten">@AntonOresten</a>;</p>
+</li>
+<li><p><strong><code>isnan</code></strong>: works via a single unordered float self-comparison, avoiding Julia&#39;s bit-manipulation fallback;</p>
+</li>
+<li><p><strong>Debug info</strong>: source file and line information is now embedded in Tile IR bytecode;</p>
+</li>
+<li><p><strong>Julia 1.13</strong>: support for the upcoming Julia release.</p>
+</li>
+</ul>
+<h2 id="performance_improvements"><a href="#performance_improvements" class="header-anchor">Performance improvements</a></h2>
+<p>A major change in cuTile.jl 0.2 is under the hood: a new multi-pass optimization pipeline that significantly improves the quality of generated Tile IR. In v0.1, the compiler emitted IR almost directly from the structured Julia code; now, a series of passes transform and simplify it before bytecode emission.</p>
+<p>The foundation is a declarative IR rewrite infrastructure inspired by MLIR that makes it easy to express pattern-matched transformations:</p>
+<pre><code class="language-julia"># FMA fusion: mulf &#43; addf → fma
+@rewrite addf&#40;mulf&#40;~a, ~b&#41;, ~c&#41; &#61;&gt; fma&#40;~a, ~b, ~c&#41;
+
+# pow&#40;x, 2&#41; → x * x
+@rewrite pow&#40;~x, broadcast&#40;constant&#40;2.0&#41;&#41;&#41; &#61;&gt; mulf&#40;~x, ~x&#41;</code></pre>
+<p>Built on this, the pipeline includes:</p>
+<ul>
+<li><p><strong>Algebraic simplification</strong> cancels matching arithmetic pairs like <code>&#40;x &#43; 1&#41; -
+  1 → x</code>, even when reshapes or broadcasts sit in between. This eliminates the overhead of Julia&#39;s 1-based indexing normalization;</p>
+</li>
+<li><p><strong>Comparison strength reduction</strong> canonicalizes patterns like <code>&#40;x &#43; 1&#41; &lt;&#61; y</code> into <code>x &lt; y</code>, collapsing the two-instruction <code>arange</code>-plus-compare that results from Julia&#39;s 1-based <code>arange</code> mask idiom down to a single comparison. This alone reduced <code>layernorm</code>&#39;s SASS from 10036 to 3253 instructions;</p>
+</li>
+<li><p><strong>Pow2 strength reduction</strong> replaces <code>pow&#40;x, 2&#41;</code> with <code>x * x</code>, eliminating the expensive <code>pow</code> transcendental in <code>layernorm</code>&#39;s variance computation;</p>
+</li>
+<li><p><strong>LICM</strong> hoists loop-invariant operations out of loop bodies;</p>
+</li>
+<li><p><strong>Constant folding and propagation</strong> evaluates compile-time-known arithmetic and tracks constants through the IR for further optimizations;</p>
+</li>
+<li><p><strong>Alias-aware token ordering</strong> uses alias analysis to identify independent memory operations on different arrays, avoiding unnecessary serialization that previously blocked instruction-level parallelism;</p>
+</li>
+</ul>
+<p>Thanks to these improvements, all examples from cuTile Python that have been ported to Julia using cuTile.jl perform within 10&#37; of their Python counterparts, and some are even faster. For up to date performance comparisons, see the <a href="https://github.com/JuliaGPU/cuTile.jl/blob/main/README.md">cuTile.jl README</a>.</p>
+<h2 id="upcoming_webinar"><a href="#upcoming_webinar" class="header-anchor">Upcoming webinar</a></h2>
+<p>On <strong>May 12, 2026 at 1 PM ET</strong>, Tim Besard &#40;JuliaHub&#41; and Andy Terrel &#40;NVIDIA&#41; will present cuTile.jl in a joint webinar. We will cover the package&#39;s design, demonstrate writing GPU kernels in Julia using the tile programming model, and discuss what&#39;s next for cuTile.jl and its integration with the Julia GPU ecosystem. To sign up, see the <a href="https://juliahub.com/events/cutile.jl-for-high-performance-computing-in-julia">JuliaHub event</a>.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+    
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+<!-- Languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
+
+<script>hljs.highlightAll();</script>
+
+    
+
+    <footer id=footer class="mt-auto">
+        <div class="container text-center">
+            <ul class="footer-links">
+                <li><a href="https://github.com/JuliaGPU">GitHub</a></li>
+                <li><a href="https://discourse.julialang.org/c/domain/gpu/11">Discourse</a></li>
+                <li><a href="https://julialang.slack.com/messages/C689Y34LE/">Slack #gpu</a></li>
+                <li><a href="/previews/PR56/post/index.xml">RSS Feed</a></li>
+                <li><a href="/previews/PR56/post/">Blog</a></li>
+                <li><a href="/previews/PR56/learn/">Learn</a></li>
+            </ul>
+            <p style="font-size:0.85rem">
+                Made with <a href=https://franklinjl.org>Franklin.jl</a> and
+                <a href=https://julialang.org>the Julia programming language</a>.
+            </p>
+        </div>
+    </footer>
+
+    <!-- LUCIDE ICONS -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <script>lucide.createIcons();</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- DARK MODE TOGGLE -->
+    <script>
+    (function() {
+        var toggle = document.getElementById('theme-toggle');
+        var iconDark = document.getElementById('theme-icon-dark');
+        var iconLight = document.getElementById('theme-icon-light');
+
+        function updateIcons() {
+            var theme = document.documentElement.getAttribute('data-bs-theme');
+            if (theme === 'dark') {
+                iconDark.style.display = 'none';
+                iconLight.style.display = 'inline';
+            } else {
+                iconDark.style.display = 'inline';
+                iconLight.style.display = 'none';
+            }
+        }
+
+        updateIcons();
+
+        toggle.addEventListener('click', function() {
+            var current = document.documentElement.getAttribute('data-bs-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', next);
+            localStorage.setItem('theme', next);
+            updateIcons();
+        });
+    })();
+    </script>
+
+    <!-- CLIENT-SIDE SEARCH -->
+    <script>
+    (function() {
+        var searchIndex = null;
+        var searchInput = document.getElementById('site-search');
+        var searchResults = document.getElementById('search-results');
+
+        // Build search index from page data
+        function buildIndex() {
+            if (searchIndex) return;
+            searchIndex = [
+                {title: "Home", url: "/", text: "JuliaGPU GPU programming Julia high-performance"},
+                {title: "NVIDIA CUDA", url: "/backends/cuda/", text: "CUDA.jl NVIDIA GPU CuArray kernel programming cuBLAS cuFFT"},
+                {title: "AMD ROCm", url: "/backends/rocm/", text: "AMDGPU.jl AMD ROCm ROCArray HIP rocBLAS"},
+                {title: "Intel oneAPI", url: "/backends/oneapi/", text: "oneAPI.jl Intel GPU oneArray Level Zero oneMKL"},
+                {title: "Apple Metal", url: "/backends/metal/", text: "Metal.jl Apple Silicon MtlArray GPU M-series"},
+                {title: "OpenCL", url: "/backends/opencl/", text: "OpenCL.jl vendor-neutral GPU programming"},
+                {title: "Showcases", url: "/showcases/", text: "Oceananigans Flux DiffEqGPU climate machine learning simulation"},
+                {title: "Learn", url: "/learn/", text: "tutorials documentation CUDA workshop video"},
+                {title: "Blog / News", url: "/post/", text: "blog posts news updates releases"}
+            ];
+
+            // Add blog post entries from the page if available
+            var entries = document.querySelectorAll('.blog-entry');
+            entries.forEach(function(entry) {
+                var link = entry.querySelector('a');
+                if (link) {
+                    searchIndex.push({
+                        title: link.textContent.trim(),
+                        url: link.getAttribute('href'),
+                        text: entry.textContent
+                    });
+                }
+            });
+        }
+
+        searchInput.addEventListener('focus', buildIndex);
+
+        searchInput.addEventListener('input', function() {
+            var query = this.value.toLowerCase().trim();
+            if (query.length < 2) {
+                searchResults.classList.remove('active');
+                return;
+            }
+
+            buildIndex();
+            var results = searchIndex.filter(function(item) {
+                return item.title.toLowerCase().indexOf(query) !== -1 ||
+                       item.text.toLowerCase().indexOf(query) !== -1;
+            }).slice(0, 8);
+
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="search-result-item"><span class="result-title">No results found</span></div>';
+            } else {
+                searchResults.innerHTML = results.map(function(r) {
+                    return '<div class="search-result-item"><a href="' + r.url + '"><span class="result-title">' + r.title + '</span></a></div>';
+                }).join('');
+            }
+            searchResults.classList.add('active');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.remove('active');
+            }
+        });
+    })();
+    </script>
+
+  </body>
+</html>
