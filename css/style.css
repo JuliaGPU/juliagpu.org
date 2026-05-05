@@ -79,3 +79,38 @@ li p {
 .dropdown:hover .dropdown-menu {
    display: block;
 }
+
+/* Style Markdown-rendered tables to match Bootstrap's .table look. */
+#main table {
+   width: 100%;
+   margin-bottom: 1rem;
+   vertical-align: top;
+   border-color: var(--bs-border-color);
+   caption-side: bottom;
+   border-collapse: collapse;
+}
+
+#main table > :not(caption) > * > * {
+   padding: 0.2rem 0.75rem;
+   border-bottom: 1px solid var(--bs-border-color);
+}
+
+#main table > thead > tr > * {
+   padding-top: 0.5rem;
+   padding-bottom: 0.5rem;
+   border-bottom: 2px solid var(--bs-border-color);
+}
+
+#main table > tbody > tr:first-child > * {
+   padding-top: 0.5rem;
+}
+
+/* Honor the align="..." attribute that Franklin emits from Markdown
+   alignment syntax — Bootstrap's reboot otherwise leaves th left-aligned. */
+#main table th[align="right"],  #main table td[align="right"]  { text-align: right;  }
+#main table th[align="left"],   #main table td[align="left"]   { text-align: left;   }
+#main table th[align="center"], #main table td[align="center"] { text-align: center; }
+
+#main table > tbody > tr:hover > * {
+   background-color: rgba(0, 0, 0, 0.04);
+}

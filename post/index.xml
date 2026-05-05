@@ -19,6 +19,78 @@
 
 
 <item>
+  <title><![CDATA[cuTile.jl 0.3: CUDA.jl integration, and even better performance &amp; latency]]></title>
+  <link>https://juliagpu.org/post/2026-05-05-cutile_0.3/index.html</link>
+  <guid>https://juliagpu.org/2026-05-05-cutile_0.3/</guid>
+  <description><![CDATA[cuTile.jl v0.3 integrates with CUDA.jl, making it even easier to write and run CUDA Tile kernels in Julia. Performance has also been greatly improved, closing the gap with cuTile Python on every benchmark we ship. Added features include a random number generator, and support for array slicing.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>cuTile.jl v0.3 integrates with CUDA.jl, making it even easier to write and run CUDA Tile kernels in Julia. Performance has also been greatly improved, closing the gap with cuTile Python on every benchmark we ship. Added features include a random number generator, and support for array slicing.</p>
+<h2 id="performance_matching_cutile_python">Performance: matching cuTile Python</h2>
+<p>Three months ago, several of our benchmarks lagged cuTile Python by 5–15&#37;. Today, cuTile.jl matches or outperforms cuTile Python on every kernel we ship. The headline numbers &#40;RTX 5080, <code>tileiras</code> 13.2.51&#41;:</p>
+<table><tr><th align="left">Kernel</th><th align="center">Julia</th><th align="center">Python</th><th align="right">Δ</th></tr><tr><td align="left">Vector Addition</td><td align="center">845 GB/s</td><td align="center">846 GB/s</td><td align="right">&#61;</td></tr><tr><td align="left">Matrix Transpose</td><td align="center">812 GB/s</td><td align="center">814 GB/s</td><td align="right">&#61;</td></tr><tr><td align="left">Layer Norm fwd</td><td align="center">983 GB/s</td><td align="center">716 GB/s</td><td align="right">&#43;37&#37;</td></tr><tr><td align="left">Layer Norm bwd</td><td align="center">248 GB/s</td><td align="center">251 GB/s</td><td align="right">-1&#37;</td></tr><tr><td align="left">Matrix Multiplication</td><td align="center">47.5 TFLOPS</td><td align="center">43.5 TFLOPS</td><td align="right">&#43;9&#37;</td></tr><tr><td align="left">Batch Matrix Multiply</td><td align="center">34.0 TFLOPS</td><td align="center">30.8 TFLOPS</td><td align="right">&#43;10&#37;</td></tr><tr><td align="left">FFT &#40;3-stage Cooley-Tukey&#41;</td><td align="center">529 μs</td><td align="center">554 μs</td><td align="right">&#43;5&#37;</td></tr><tr><td align="left">Mixture of Experts</td><td align="center">27.0 TFLOPS</td><td align="center">20.1 TFLOPS</td><td align="right">&#43;34&#37;</td></tr><tr><td align="left">Attention &#40;FMHA, causal&#41;</td><td align="center">103.6 TFLOPS</td><td align="center">63.4 TFLOPS</td><td align="right">&#43;63&#37;</td></tr><tr><td align="left">Softmax &#40;TMA&#41;</td><td align="center">849 GB/s</td><td align="center">857 GB/s</td><td align="right">-1&#37;</td></tr><tr><td align="left">Softmax &#40;Chunked&#41;</td><td align="center">1684 GB/s</td><td align="center">1640 GB/s</td><td align="right">&#43;3&#37;</td></tr></table>
+<p>Most of the gains come from extending the IR-level optimization pipeline introduced in v0.2 with a new dataflow framework that now powers several analyses and transformations.</p>
+<h2 id="cudajl_integration_cuda_backendcutile">CUDA.jl integration: <code>@cuda backend&#61;cuTile</code></h2>
+<p>Until v0.3, launching a cuTile kernel meant calling <code>cuTile.launch&#40;...&#41;</code> directly. cuTile.jl now plugs into CUDA.jl&#39;s existing <code>@cuda</code> macro as a first-class backend, making it much easier to launch cuTile.jl kernels:</p>
+<pre><code class="language-julia">using CUDA, cuTile
+import cuTile as ctfunction vadd&#40;a::ct.TileArray&#123;Float32,1&#125;, b::ct.TileArray&#123;Float32,1&#125;,
+              c::ct.TileArray&#123;Float32,1&#125;&#41;
+    pid &#61; ct.bid&#40;1&#41;
+    ct.store&#40;c; index&#61;pid, tile&#61;ct.load&#40;a; index&#61;pid, shape&#61;&#40;128,&#41;&#41; &#43;
+                                ct.load&#40;b; index&#61;pid, shape&#61;&#40;128,&#41;&#41;&#41;
+    return
+enda &#61; CUDA.rand&#40;Float32, 1024&#41;
+b &#61; CUDA.rand&#40;Float32, 1024&#41;
+c &#61; CUDA.zeros&#40;Float32, 1024&#41;@cuda backend&#61;cuTile blocks&#61;8 vadd&#40;a, b, c&#41;</code></pre>
+<h2 id="time-to-first-launch">Time-to-first-launch</h2>
+<p>Compiling a cuTile kernel goes through several stages: Julia type inference, our IR rewriting passes, Tile IR bytecode emission, and finally <code>tileiras</code>-driven CUBIN generation. None of these are fast. Significant effort in v0.3 went into reducing the time-to-first-launch, and the latency is now comparable to a typical CUDA.jl kernel launch on the same hardware:</p>
+<pre><code class="language-text">Benchmark 1: julia -e &#39;using CUDACore;
+                       @cuda identity&#40;nothing&#41;&#39;
+  Time &#40;mean ± σ&#41;:      1.882 s ±  0.012 s    &#91;User: 2.554 s, System: 0.305 s&#93;
+  Range &#40;min … max&#41;:    1.867 s …  1.906 s    10 runsBenchmark 2: julia -e &#39;using CUDACore, cuTile;
+                       @cuda backend&#61;cuTile identity&#40;nothing&#41;&#39;
+  Time &#40;mean ± σ&#41;:      1.840 s ±  0.009 s    &#91;User: 2.488 s, System: 0.329 s&#93;
+  Range &#40;min … max&#41;:    1.827 s …  1.859 s    10 runs</code></pre>
+<h2 id="array_slicing">Array slicing</h2>
+<p><code>view</code> and <code>@view</code> now derive sub-range <code>TileArray</code>s from existing ones:</p>
+<pre><code class="language-julia">function copy_rows&#33;&#40;A::ct.TileArray&#123;Float32,2&#125;, B::ct.TileArray&#123;Float32,2&#125;,
+                    i::Int32, j::Int32&#41;
+    sub &#61; @view A&#91;i:j, :&#93;                         # sub-range TileArray
+    t &#61; ct.load&#40;sub; index&#61;&#40;1, 1&#41;, shape&#61;&#40;8, 8&#41;&#41;
+    ct.store&#40;B; index&#61;&#40;1, 1&#41;, tile&#61;t&#41;
+    return
+end@cuda backend&#61;cuTile copy_rows&#33;&#40;A, B, Int32&#40;3&#41;, Int32&#40;10&#41;&#41;</code></pre>
+<p>Each index must be <code>:</code> or a <code>UnitRange</code>; other forms &#40;<code>StepRange</code>, scalar indexes, <code>CartesianIndex</code>, ...&#41; are currently rejected at compile time. The result is itself a <code>TileArray</code>, and can be passed to <code>ct.load</code> / <code>ct.store</code> &#40;or sliced again, for nested views&#41;. The new divisibility analysis sees through the slicing chain so contiguous-axis fast paths are preserved, while literal slice sizes fold to compile-time-constant shape operands.</p>
+<h2 id="random_number_generation">Random number generation</h2>
+<p>cuTile.jl now ships a tile-vectorized <a href="https://www.thesalmons.org/john/random123/">Philox2x32-7</a> RNG, both as in-kernel intrinsics and as a host-side <code>cuTile.RNG</code> handle for filling <code>CuArray</code>s. The kernel API mirrors <code>Base.Random</code>:</p>
+<pre><code class="language-julia">function noise&#33;&#40;out::ct.TileArray&#123;Float32,1&#125;&#41;
+    pid &#61; ct.bid&#40;1&#41;
+    t &#61; randn&#40;Float32, &#40;128,&#41;&#41;                 # in-kernel randn
+    ct.store&#40;out; index&#61;pid, tile&#61;t&#41;
+    return
+end@cuda backend&#61;cuTile blocks&#61;cld&#40;N, 128&#41; noise&#33;&#40;A&#41;</code></pre>
+<p><code>rand</code> covers all of <code>Int&#123;8,16,32,64&#125;</code>, <code>UInt&#123;8,16,32,64&#125;</code>, <code>Float16</code>, <code>BFloat16</code>, <code>Float32</code>, and <code>Float64</code>; <code>randn</code> &#40;via Box-Muller, sharing its uniforms with the existing rand path&#41; and <code>randexp</code> &#40;via <code>-log&#40;U&#41;</code>&#41; cover the four floating-point types. <code>ct.DeviceRNG&#40;&#41;</code> opens an independent stream inside a kernel; <code>Random.seed&#33;</code> re-seeds.</p>
+<p>The host-side <code>cuTile.RNG</code> integrates with <code>Random.rand&#33;</code> / <code>Random.randn&#33;</code> / <code>Random.randexp&#33;</code> and auto-advances its counter, so consecutive fills produce disjoint streams:</p>
+<pre><code class="language-julia">A &#61; CUDACore.zeros&#40;Float32, 1 &lt;&lt; 20&#41;
+rng &#61; ct.RNG&#40;42&#41;
+randn&#33;&#40;rng, A&#41;                                 # fill via fused tile kernel
+B &#61; rand&#40;rng, Float64, 16&#41;                     # out-of-place</code></pre>
+<p>Performance of both the in-kernel and host-side APIs is excellent, matching or exceeding the performance of cuRAND and GPUArrays.jl&#39; new generator.</p>
+<h2 id="whats_next">What&#39;s next</h2>
+<p>If you&#39;ve been watching cuTile.jl from a distance: now&#39;s a good time to try it out: <code>add cuTile</code> from the Julia REPL, or grab the <a href="https://github.com/JuliaGPU/cuTile.jl/tree/main/examples">examples</a> to see how the moving parts fit together.</p>
+<p>There is a webinar scheduled on <strong>May 12, 2026 at 1 PM ET</strong>, where Tim Besard &#40;JuliaHub&#41; and Andy Terrel &#40;NVIDIA&#41; will present cuTile.jl in a joint webinar, covering the design of CUDA Tile, how cuTile.jl is built, and several relevant examples. <a href="https://juliahub.com/events/cutile.jl-for-high-performance-computing-in-julia">Click here</a> to sign up.</p>
+]]></content:encoded>
+    
+  <pubDate>Tue, 05 May 2026 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[cuTile.jl 0.2: New features, improved performance, and Julia 1.13 support]]></title>
   <link>https://juliagpu.org/post/2026-04-08-cutile_0.2/index.html</link>
   <guid>https://juliagpu.org/2026-04-08-cutile_0.2/</guid>
