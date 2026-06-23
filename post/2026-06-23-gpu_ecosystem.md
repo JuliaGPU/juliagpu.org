@@ -55,4 +55,3 @@ abstract = """
 
 - [Reactant.jl](https://github.com/EnzymeAD/Reactant.jl)
   - [ReactantCore.jl](https://github.com/EnzymeAD/Reactant.jl/tree/main/lib/ReactantCore)
-- [Enzyme.jl](https://github.com/EnzymeAd/Enzyme.jl)
