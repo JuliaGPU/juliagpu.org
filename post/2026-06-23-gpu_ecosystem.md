@@ -18,6 +18,7 @@ abstract = """
 - [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) (Intel)
 - [Metal.jl](https://github.com/JuliaGPU/Metal.jl) (Apple)
 - [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl)
+- [Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) / [Lava.jl](https://github.com/SimonDanisch/Lava.jl)
 
 ### Vendor detection
 
