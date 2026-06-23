@@ -20,10 +20,11 @@ abstract = """
 - [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl)
 - [Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) / [Lava.jl](https://github.com/SimonDanisch/Lava.jl)
 
-### Vendor detection
+### Vendor detection / translation
 
 - [GPUSelect.jl](https://github.com/SimonDanisch/GPUSelect.jl)
 - [GPUEnv.jl](https://github.com/hakkelt/GPUEnv.jl)
+- [Juliana.jl](https://github.com/artecs-group/Juliana.jl)
 
 ## Hardware-agnostic
 
