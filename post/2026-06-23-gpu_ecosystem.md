@@ -9,18 +9,22 @@ abstract = """
 
 ## Hardware-specific
 
-### Vendor packages
+### CUDA ecosystem
 
 - [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) (NVIDIA)
-  - Sublibraries: cuBLAS, cuSPARSE, etc.
-  - [cuTile.jl](https://github.com/JuliaGPU/cuTile.jl)
-  - [CUDSS.jl](https://github.com/exanauts/CUDSS.jl)
-  - [cuNumeric.jl](https://github.com/JuliaLegate/cuNumeric.jl)
+- Sublibraries: cuBLAS, cuSPARSE, etc.
+- [cuTile.jl](https://github.com/JuliaGPU/cuTile.jl)
+- [CUDSS.jl](https://github.com/exanauts/CUDSS.jl)
+- [cuNumeric.jl](https://github.com/JuliaLegate/cuNumeric.jl)
+
+### Other vendors
+
 - [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) (AMD)
 - [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) (Intel)
 - [Metal.jl](https://github.com/JuliaGPU/Metal.jl) (Apple)
 - [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl)
-- [Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) / [Lava.jl](https://github.com/SimonDanisch/Lava.jl)
+- [Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl)
+- [Lava.jl](https://github.com/SimonDanisch/Lava.jl)
 
 ### Vendor detection / translation
 
@@ -48,11 +52,13 @@ abstract = """
 - [GemmKernels.jl](https://github.com/JuliaGPU/GemmKernels.jl)
 - [KernelForge.jl](https://github.com/epilliat/KernelForge.jl)
 - [JACC.jl](https://github.com/JuliaGPU/JACC.jl)
-- Tensor operations:
-  - [Tullio.jl](https://github.com/mcabbott/Tullio.jl)
-  - [TensorCast.jl](https://github.com/mcabbott/TensorCast.jl)
-  - [OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl)
-  - [TensorOperations.jl](https://github.com/QuantumKitHub/TensorOperations.jl)
+
+### Tensor operations
+  
+- [Tullio.jl](https://github.com/mcabbott/Tullio.jl)
+- [TensorCast.jl](https://github.com/mcabbott/TensorCast.jl)
+- [OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl)
+- [TensorOperations.jl](https://github.com/QuantumKitHub/TensorOperations.jl)
 
 ### Whole-program optimization
 
