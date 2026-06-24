@@ -14,6 +14,8 @@ abstract = """
 - [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) (NVIDIA)
   - Sublibraries: cuBLAS, cuSPARSE, etc.
   - [cuTile.jl](https://github.com/JuliaGPU/cuTile.jl)
+  - [CUDSS.jl](https://github.com/exanauts/CUDSS.jl)
+  - [cuNumeric.jl](https://github.com/JuliaLegate/cuNumeric.jl)
 - [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) (AMD)
 - [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) (Intel)
 - [Metal.jl](https://github.com/JuliaGPU/Metal.jl) (Apple)
