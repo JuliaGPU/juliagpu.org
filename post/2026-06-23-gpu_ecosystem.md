@@ -54,6 +54,7 @@ While still under active development with some known limitations, it allows Mac 
 [OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl) provides a comprehensive Julia interface to the OpenCL standard, which targets GPUs, FPGAs, DSPs, and multicore CPUs from a single API.
 The package supports both traditional OpenCL C kernels and native Julia functions compiled to SPIR-V, making it the most broadly portable of the hardware-specific backends.
 It is a practical choice when targeting hardware not covered by the other backends, or when writing code that needs to run on a wide variety of devices.
+Through [PoCL](https://github.com/pocl/pocl), it also provides a way of running GPU kernels on the CPU.
 
 [Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) wraps the Vulkan graphics and compute API, generating bindings automatically from the official Vulkan specification with minimal overhead over the underlying C interface.
 Where OpenCL.jl offers portability at the cost of abstraction, Vulkan provides explicit, low-overhead control over GPU resources.
@@ -98,7 +99,7 @@ GPU libraries including CUDA.jl use Adapt.jl's extension hooks (`adapt_structure
 Two packages provide the primitives for writing custom GPU kernels in a portable way.
 
 [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) is the central abstraction layer for writing GPU kernels that run across multiple hardware backends.
-It provides a unified, minimal `@kernel` macro that compiles to NVIDIA CUDA, AMD ROCm, Intel oneAPI, and Apple Metal without any backend-specific rewrites.
+It provides a unified, minimal `@kernel` macro that compiles to NVIDIA CUDA, AMD ROCm, Intel oneAPI, Apple Metal, OpenCL and the CPU without any backend-specific rewrites.
 Most hardware-agnostic libraries in Julia—including AcceleratedKernels.jl, Lava.jl, and JACC.jl—build on top of it, making it the glue that holds the portable GPU stack together.
 
 [KernelIntrinsics.jl](https://github.com/epilliat/KernelIntrinsics.jl) provides low-level memory access primitives and warp-level operations for GPU kernel authors who need fine-grained control beyond what KernelAbstractions.jl exposes.
