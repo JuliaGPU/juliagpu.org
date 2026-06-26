@@ -32,8 +32,7 @@ It exposes three factorization methods (LDU, LDLᵀ, and LLᵀ) and fills a gap 
 The package is particularly relevant to scientific computing applications—optimization, finite elements, graph problems—where sparse system solves are a bottleneck.
 
 [cuNumeric.jl](https://github.com/JuliaLegate/cuNumeric.jl) wraps NVIDIA's cuPyNumeric C++ API to bring distributed, multi-GPU array computing to Julia.
-It provides an `NDArray` abstraction that supports standard array operations and can transparently dispatch work across both GPUs and CPUs.
-The package is a bridge to the Legate runtime, enabling Julia programs to scale to clusters of GPUs with minimal code changes.
+It provides an `NDArray` abstraction that supports standard array operations (e.g., broadcasting, matmul) and automatically partitions work across multi-GPU systems without intervention from the user.
 
 ### Other vendors
 
@@ -58,7 +57,7 @@ Through [PoCL](https://github.com/pocl/pocl), it also provides a way of running 
 
 [Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) wraps the Vulkan graphics and compute API, generating bindings automatically from the official Vulkan specification with minimal overhead over the underlying C interface.
 Where OpenCL.jl offers portability at the cost of abstraction, Vulkan provides explicit, low-overhead control over GPU resources.
-The package is still pre-1.0 but is actively developed, and serves as the foundation for higher-level graphics and compute work in Julia.
+The package hasn't reached 1.0 yet but is maintained and considered stable. It serves as a low-level foundation for higher-level graphics and compute work in Julia, and is rather meant for developers.
 
 [Lava.jl](https://github.com/SimonDanisch/Lava.jl) is a Julia GPU backend that compiles Julia code to SPIR-V for execution via Vulkan, functioning as a unified compute, graphics, and ray tracing platform.
 It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
@@ -100,7 +99,7 @@ Two packages provide the primitives for writing custom GPU kernels in a portable
 
 [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) is the central abstraction layer for writing GPU kernels that run across multiple hardware backends.
 It provides a unified, minimal `@kernel` macro that compiles to NVIDIA CUDA, AMD ROCm, Intel oneAPI, Apple Metal, OpenCL and the CPU without any backend-specific rewrites.
-Most hardware-agnostic libraries in Julia—including AcceleratedKernels.jl, Lava.jl, and JACC.jl—build on top of it, making it the glue that holds the portable GPU stack together.
+Most hardware-agnostic libraries in Julia—including AcceleratedKernels.jl, Lava.jl—build on top of it, making it the glue that holds the portable GPU stack together.
 
 [KernelIntrinsics.jl](https://github.com/epilliat/KernelIntrinsics.jl) provides low-level memory access primitives and warp-level operations for GPU kernel authors who need fine-grained control beyond what KernelAbstractions.jl exposes.
 It covers memory fencing, warp shuffle and reduction operations, and vectorized memory access, and does so across CUDA, ROCm, and Metal backends.
@@ -142,7 +141,7 @@ It is particularly useful for expressing data layout transformations that would 
 It uses Julia's multiple dispatch to select the most efficient backend for each contraction—standard matrix multiplication for simple cases, cuTENSOR for general tensor networks—without runtime overhead.
 The package is especially valuable in quantum computing and machine learning research, where large tensor network contractions are a core computational primitive.
 
-[TensorOperations.jl](https://github.com/QuantumKitHub/TensorOperations.jl) provides fast tensor contractions, permutations, and traces using Einstein index notation, with GPU acceleration through CUDA and integration with cuTENSOR v2.
+[TensorOperations.jl](https://github.com/QuantumKitHub/TensorOperations.jl) provides fast tensor contractions, permutations, and traces using Einstein index notation, with GPU acceleration through hardware-agnostic Strided.jl implementations as well as a dedicated cuTENSOR backend.
 The package supports automatic differentiation and offers flexible backend selection, allowing the same high-level expression to dispatch to optimized implementations on whichever hardware is available.
 It is a go-to tool in quantum chemistry and condensed matter physics, where tensor operations on large arrays are ubiquitous.
 
