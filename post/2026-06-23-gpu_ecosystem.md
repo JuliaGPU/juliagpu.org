@@ -7,7 +7,7 @@ abstract = """
 
 {{abstract}}
 
-> The text of this post was written by Claude Sonnet 4.6, then reviewed and edited by Guillaume Dalle. The initial structure and list of packages had been manually curated beforehand.
+> The text of this post was written by Claude Sonnet 4.6, then reviewed and edited by Guillaume Dalle and others. The initial structure and list of packages had been manually curated beforehand.
 
 Julia's GPU ecosystem has grown into a rich, layered stack that spans everything from vendor-specific low-level wrappers to hardware-agnostic high-level abstractions.
 This post gives an overview of the major packages, organized by where they sit in that stack.
@@ -20,16 +20,15 @@ The distinction between hardware-specific and hardware-agnostic packages is the 
 The CUDA ecosystem is the most mature part of Julia's GPU stack, built around NVIDIA hardware.
 
 [CUDA.jl](https://github.com/JuliaGPU/CUDA.jl) is the primary interface for programming NVIDIA GPUs in Julia.
-As a meta-package, it bundles a user-friendly array abstraction (`CuArray`), a compiler for writing CUDA kernels directly in Julia, and wrappers for a broad set of CUDA libraries including cuBLAS, cuSPARSE, cuFFT, cuSolver, and cuDNN.
-Most Julia users who target NVIDIA hardware start here and never need to go deeper.
+It bundles a user-friendly array abstraction (`CuArray`), a compiler for writing CUDA kernels directly in Julia, and can be supplemented with wrappers for a broad set of [CUDA libraries](https://github.com/JuliaGPU/CUDA.jl/tree/main/lib) including cuBLAS.jl, cuSPARSE.jl, cuFFT.jl, cuSolver.jl, and cuDNN.jl.
+Most Julia users who only target NVIDIA hardware start here and never need to go deeper.
 
 [cuTile.jl](https://github.com/JuliaGPU/cuTile.jl) exposes NVIDIA's tile-based programming model, available on Ampere and newer GPUs, through a high-level Julia interface to the Tile IR architecture.
-It shines at fusing complex operations into single kernels and supports specialized numeric types such as FP8 and mixed-precision formats that are central to modern machine learning workloads.
+It can fuse complex operations into single kernels and supports specialized numeric types such as FP8 and mixed-precision formats that are central to modern machine learning workloads.
 Whereas CUDA.jl covers the breadth of CUDA, cuTile.jl is the tool of choice when squeezing maximum throughput out of NVIDIA's latest tensor cores.
 
 [CUDSS.jl](https://github.com/exanauts/CUDSS.jl) is a Julia wrapper for NVIDIA's cuDSS library, which provides GPU-accelerated sparse linear solvers.
 It exposes three factorization methods (LDU, LDLᵀ, and LLᵀ) and fills a gap left by the main CUDA.jl bundle, since cuDSS remains in preview and is shipped separately.
-The package is particularly relevant to scientific computing applications—optimization, finite elements, graph problems—where sparse system solves are a bottleneck.
 
 [cuNumeric.jl](https://github.com/JuliaLegate/cuNumeric.jl) wraps NVIDIA's cuPyNumeric C++ API to bring distributed, multi-GPU array computing to Julia.
 It provides an `NDArray` abstraction that supports standard array operations (e.g., broadcasting, matmul) and automatically partitions work across multi-GPU systems without intervention from the user.
@@ -40,11 +39,9 @@ Beyond NVIDIA, Julia has backends for every major GPU platform.
 
 [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) brings AMD GPU computing to Julia through ROCm integration.
 It mirrors the structure of CUDA.jl—providing an array type, a kernel compiler, and library wrappers—for AMD's graphics and compute hardware.
-For users on AMD platforms or working with HPC systems where AMD GPUs are prevalent, AMDGPU.jl is the entry point.
 
 [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) targets Intel GPUs and accelerators through Intel's oneAPI unified programming toolkit.
 It provides low-level Level Zero API wrappers, a `oneArray` type that integrates with Julia's array ecosystem, and oneMKL bindings for optimized linear algebra and sparse matrix operations.
-This makes Intel GPU hardware—including integrated graphics on many laptops—a first-class target for Julia GPU code.
 
 [Metal.jl](https://github.com/JuliaGPU/Metal.jl) enables GPU programming on macOS using Apple's Metal framework, targeting M-series chips.
 The package offers three levels of abstraction: high-level array operations via `MtlArray`, custom kernel programming, and direct Metal API access through ObjectiveC bindings.
@@ -61,7 +58,7 @@ The package hasn't reached 1.0 yet but is maintained and considered stable. It s
 
 [Lava.jl](https://github.com/SimonDanisch/Lava.jl) is a Julia GPU backend that compiles Julia code to SPIR-V for execution via Vulkan, functioning as a unified compute, graphics, and ray tracing platform.
 It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
-The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers, and has demonstrated 1.4–2.5× speedups over AMDGPU on ray tracing workloads.
+The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers.
 
 ### Vendor detection and translation
 
@@ -107,23 +104,25 @@ The package is aimed at library developers rather than end users: it fills the g
 
 ### High-level kernels
 
-Several packages build on KernelAbstractions.jl to provide ready-made parallel algorithms.
+Several packages build on lower-level primitives to provide ready-made parallel algorithms.
 
 [AcceleratedKernels.jl](https://github.com/JuliaGPU/AcceleratedKernels.jl) provides cross-architecture parallel algorithms—sorting, reduction, accumulation, and more—that compile from a single codebase to multithreaded CPUs, CUDA, ROCm, oneAPI, and Metal.
-It leverages Julia's compilation model to generate efficient code for each target without maintaining separate hardware-specific implementations.
-For workloads that consist primarily of these standard operations, it offers a "write once, run everywhere" experience with native performance.
+It has utilities for setting the number of threads, the block size, or pre-allocate scratchspaces.
 
 [GemmKernels.jl](https://github.com/JuliaGPU/GemmKernels.jl) is a flexible framework for crafting optimized General Matrix Multiplication (GEMM) kernels on NVIDIA GPUs.
 It decomposes GEMM into modular, customizable components—parameters, layouts, transforms, operators, and epilogues—that users can mix and match through Julia's multiple dispatch system.
-The package delivers around 50–80% of the performance of cuBLAS and CUTLASS, and is the right tool when the standard BLAS interface is too inflexible for a particular memory layout or numeric type.
+The package can be useful when the standard BLAS interface is too inflexible for a particular memory layout or numeric type.
 
 [KernelForge.jl](https://github.com/epilliat/KernelForge.jl) is a pure Julia library of high-performance, portable GPU primitives including map-reduce, prefix scans, matrix-vector products, and sorting.
 It targets both NVIDIA and AMD hardware and aims for performance comparable to optimized C++ libraries, without requiring any non-Julia dependencies.
-The package fills a practical gap for authors who need efficient low-level building blocks but want to stay within the Julia ecosystem.
 
-[JACC.jl](https://github.com/JuliaGPU/JACC.jl) provides a vendor-neutral API for CPU and GPU computing inspired by C++ frameworks like Kokkos and RAJA.
-Its `parallel_for` and `parallel_reduce` primitives deploy to CUDA, AMD, Metal, oneAPI, or CPU threads from a single codebase, with the backend selected at package load time.
-The package is particularly well suited for HPC workloads: developers can write and test kernels on a laptop CPU and then deploy them to multi-GPU supercomputer nodes without changing any application code.
+[JACC.jl](https://github.com/JuliaGPU/JACC.jl) provides a simple vendor-neutral API for CPU and GPU computing.
+It targets HPC users familiar with C++ frameworks like Kokkos, RAJA, SYCL or TBB.
+Its array construction (`zeros/ones/fill`), `parallel_for` and `parallel_reduce` primitives deploy to NVIDIA, AMD, Apple or Intel GPUs using JuliaGPU's vendor-specific backends.
+They can also leverage CPU threads using Polyester.jl.
+Backend selection is done outside code using Preferences.jl mechanisms (e.g., `LocalPreferences.toml`).
+The package is well-suited for HPC prototyping: developers can write and test kernels on a laptop CPU or GPU and then deploy them to multi-GPU supercomputer nodes without changing any application code.
+Users of the default APIs, do not need prior CPU/GPU programming knowledge to parallelize their codes, but JACC.jl provides low-level performance APIs (e.g., blocks, threads, async, shared memory, stream, multi-GPU, etc.) for hardware-specific optimizations.
 
 ### Tensor operations
 
@@ -149,4 +148,5 @@ It is a go-to tool in quantum chemistry and condensed matter physics, where tens
 
 [Reactant.jl](https://github.com/EnzymeAD/Reactant.jl) takes a different approach to GPU execution: rather than offering array types or kernel abstractions, it compiles entire Julia functions to MLIR and optimizes them for execution on CPUs, GPUs, and TPUs via XLA.
 It works by tracing the program to remove control flow and type instabilities, then handing the resulting computation graph to XLA for whole-program optimization and device dispatch.
+Starting from you code written with existing packages, like CUDA.jl or KernelAbstractions.jl, Reactant will automatically perform optimizations like kernel fusion, and offload to your chosen architecture.
 A companion sub-package, ReactantCore.jl, exposes the minimal type hierarchy needed by other packages to be Reactant-aware, allowing the broader Julia ecosystem to interoperate with Reactant's compilation pipeline.
