@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR60/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR60/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+ 
+
+  <link rel="stylesheet" href="/previews/PR60/css/style.css">
+
+  
+  
+    <title>Metal.jl 1.10: Linear algebra, FFTs, and a faster runtime ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-sm navbar-light">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
+navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <ul class=navbar-nav>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR60/"><i data-feather=home></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/previews/PR60/post/"><i data-feather=file-text></i> News</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR60/showcases/"><i data-feather=star></i> Showcases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR60/learn/"><i data-feather=book-open></i> Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-feather=cpu></i> Backends
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <a class="dropdown-item " href="/previews/PR60/backends/cuda/">CUDA</a>
+                        <a class="dropdown-item " href="/previews/PR60/backends/rocm/">ROCm</a>
+                        <a class="dropdown-item " href="/previews/PR60/backends/oneapi/">oneAPI</a>
+                        <a class="dropdown-item " href="/previews/PR60/backends/metal/">Metal</a>
+                        <a class="dropdown-item " href="/previews/PR60/backends/opencl/">OpenCL</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>Metal.jl 1.10: Linear algebra, FFTs, and a faster runtime</h1>
+      <i data-feather=calendar></i>
+<time datetime=2026-7-1>Jul 1, 2026</time><br>
+<i data-feather=edit-2></i>
+Christian Guinard, Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+<p> <p>Metal.jl 1.10 is a big release. It adds native matrix multiplication, GPU-accelerated linear solvers and FFTs, BFloat16 support, and MPS-backed reductions, scans and sorting. The runtime also got considerably faster and leaner, and there is a new in-process profiler.</p></p>
+<p>Before getting into the new features, one thing to flag up front: <strong>Metal.jl 1.10 requires macOS 14 or later</strong>, up from macOS 13. On older systems the package now refuses to initialize, and <code>Metal.functional&#40;&#41;</code> returns <code>false</code>. The supported range is macOS 14 through 26, on Julia 1.10 through 1.13.</p>
+<p>Tied to that requirement is a change in how kernels are compiled. Previously Metal.jl pinned a conservative baseline &#40;AIR 2.5 / metallib v1.2.6&#41; regardless of the host. Since Metal.jl only ever compiles for the machine it runs on, <a href="https://github.com/JuliaGPU/Metal.jl/pull/808">it now emits the newest AIR, MSL and metallib versions the host macOS supports</a>, exactly like Apple&#39;s offline <code>metal</code> compiler does. That unlocks newer language features for free: AIR 2.6 / Metal 3.1 on macOS 14, up to AIR 2.8 / Metal 4.0 on macOS 26 &#40;and Metal 4.1 on the macOS 27 beta&#41;. You can see what your machine targets in <code>versioninfo</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; Metal.versioninfo&#40;&#41;
+macOS 26.6.0, Darwin 25.6.0
+
+Toolchain:
+- Julia: 1.12.6
+- LLVM: 18.1.7
+- Metal: 4.0 &#40;MSL&#41;, 2.8 &#40;AIR&#41;, 1.2.9 &#40;metallib&#41;
+
+Julia packages:
+- Metal.jl: 1.10.0
+- GPUArrays: 11.5.8
+- GPUCompiler: 1.22.7
+- KernelAbstractions: 0.9.42
+- ObjectiveC: 6.0.0
+- LLVM: 9.10.0
+- LLVMDowngrader_jll: 0.8.1&#43;0
+
+1 device:
+- Apple M3 Pro &#40;14 GPU cores, 80.000 KiB allocated; Apple9, Metal4 family&#41;</code></pre>
+<h2 id="native_matrix_multiplication"><a href="#native_matrix_multiplication" class="header-anchor">Native matrix multiplication</a></h2>
+<p>Up to now, every <code>A * B</code> on an <code>MtlArray</code> went straight to Apple&#39;s vendor libraries &#40;Metal Performance Shaders or MPSGraph&#41;. That works well on large matrices, but it leaves us at the mercy of the vendor: there are eltypes MPS does not support, small matrices pay a steep launch overhead, and bugs like the <a href="https://github.com/JuliaGPU/Metal.jl/issues/381">M1/M2 matmul NaN issue</a> are out of our hands. Anything unsupported fell back to GPUArrays&#39; generic implementation, resulting in poor performance.</p>
+<p>Metal.jl 1.10 <a href="https://github.com/JuliaGPU/Metal.jl/pull/815">ships its own native GEMM kernels</a>. You pick a backend through the <code>Metal.matmul_alg</code> scoped value, which defaults to <code>:auto</code>:</p>
+<ul>
+<li><p><code>:scalar</code> is a per-element tiled kernel that handles any Metal-supported eltype &#40;integers, complex, BFloat16&#41; and any transpose or offset. It&#39;s the universal fallback.</p>
+</li>
+<li><p><code>:simd</code> is a <code>simdgroup_matrix</code> kernel for <code>Float16</code>/<code>Float32</code> &#40;and BFloat16&#41; with Float32 accumulation</p>
+</li>
+<li><p><code>:tensor</code> is a <a href="https://github.com/JuliaGPU/Metal.jl/pull/780">Metal 4 <code>tensor_ops::matmul2d</code> kernel</a>, available on Metal 4-capable devices running macOS 26&#43;.</p>
+</li>
+<li><p><code>:native</code> picks the best of the three, per device and per operand.</p>
+</li>
+<li><p><code>:auto</code> &#40;the default&#41; tries the vendor libraries first, then falls back to <code>:native</code>.</p>
+</li>
+</ul>
+<h2 id="linear_solvers"><a href="#linear_solvers" class="header-anchor">Linear solvers</a></h2>
+<p>Closing a long-standing request, many more standard <code>LinearAlgebra</code> operations on <code>Float32</code>/<code>Float16</code> <code>MtlMatrix</code>es now run on the GPU through <a href="https://github.com/JuliaGPU/Metal.jl/pull/853">MPS-backed solvers</a>. That covers <code>\</code>, <code>lu</code>, <code>cholesky</code> &#40;including on <code>Symmetric</code>/<code>Hermitian</code> wrappers&#41;, triangular solves, and <code>inv</code>/<code>det</code>/<code>logdet</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; using Metal, LinearAlgebra
+
+julia&gt; A &#61; MtlArray&#40;rand&#40;Float32, 512, 512&#41; &#43; 512I&#41;;
+
+julia&gt; b &#61; MtlArray&#40;rand&#40;Float32, 512&#41;&#41;;
+
+julia&gt; x &#61; A \ b;                              # MPS LU solve, on the GPU
+
+julia&gt; norm&#40;Array&#40;A&#41; * Array&#40;x&#41; - Array&#40;b&#41;&#41;    # residual, at the Float32 noise floor
+4.4064095f-6
+
+julia&gt; M &#61; MtlArray&#40;rand&#40;Float32, 256, 256&#41;&#41;;
+
+julia&gt; logdet&#40;cholesky&#40;Symmetric&#40;M&#39;M &#43; I&#41;&#41;&#41;    # cholesky factorization, also on the GPU
+638.44586f0</code></pre>
+<h2 id="bfloat16"><a href="#bfloat16" class="header-anchor">BFloat16</a></h2>
+<p>BFloat16 arrays <a href="https://github.com/JuliaGPU/Metal.jl/pull/821">now run natively on the GPU</a> as well:</p>
+<pre><code class="language-julia-repl">julia&gt; using Metal, BFloat16s
+
+julia&gt; a &#61; MtlArray&#40;BFloat16&#91;1.5, 2.5, 3.5&#93;&#41;
+3-element MtlVector&#123;BFloat16, Metal.PrivateStorage&#125;:
+ 1.5
+ 2.5
+ 3.5
+
+julia&gt; sum&#40;a .* BFloat16&#40;2&#41;&#41;
+BFloat16&#40;15.0f0&#41;</code></pre>
+<p>All Julia versions are supported, but before Julia 1.13 operations involving scalar BFloat16 values &#40;e.g. <code>a .&#43; BFloat16&#40;1&#41;</code>&#41; may be slower because they go through a software emulation path in BFloats.jl.</p>
+<h2 id="flashattention_example"><a href="#flashattention_example" class="header-anchor">FlashAttention example</a></h2>
+<p>To tie the new building blocks together, there is a <a href="https://github.com/JuliaGPU/Metal.jl/pull/780">FlashAttention example</a> that spells out scaled dot-product attention in four different ways, one per programming model Metal.jl exposes:</p>
+<ul>
+<li><p>with plain array operations &#40;<code>*</code>, broadcasting, <code>maximum</code>, <code>sum</code>, <code>exp</code>&#41;;</p>
+</li>
+<li><p>with MPSGraph&#39;s fused <code>scaledDotProductAttention</code> op;</p>
+</li>
+<li><p>with a hand-written kernel built on <code>MtlSimdgroupMatrix&#123;Float16,8,8&#125;</code>;</p>
+</li>
+<li><p>and with a fused kernel using the Metal 4 <code>tensor_ops::matmul2d</code> primitives.</p>
+</li>
+</ul>
+<p>It&#39;s a good read if you want to see how the simdgroup and tensor intrinsics look in practice; you&#39;ll find it in <a href="https://github.com/JuliaGPU/Metal.jl/blob/main/examples/flashattention.jl"><code>examples/flashattention.jl</code></a>.</p>
+<h2 id="reductions_scans_and_sorting"><a href="#reductions_scans_and_sorting" class="header-anchor">Reductions, scans and sorting</a></h2>
+<p>Reductions, prefix scans and sorting <a href="https://github.com/JuliaGPU/Metal.jl/pull/855">now route through MPSGraph</a> when it makes sense. This speeds up reductions and scans, and introduces support for sorting:</p>
+<pre><code class="language-julia-repl">julia&gt; sort&#40;MtlVector&#40;Int16&#91;5, -3, 2, 9, -7, 0&#93;&#41;&#41;
+6-element MtlVector&#123;Int16, Metal.PrivateStorage&#125;:
+ -7
+ -3
+  0
+  2
+  5
+  9
+
+julia&gt; accumulate&#40;max, MtlVector&#40;Int32&#91;1, 3, 2, 5, 4&#93;&#41;&#41;
+5-element MtlVector&#123;Int32, Metal.PrivateStorage&#125;:
+ 1
+ 3
+ 3
+ 5
+ 5</code></pre>
+<h2 id="neural-network_primitives"><a href="#neural-network_primitives" class="header-anchor">Neural-network primitives</a></h2>
+<p>Metal.jl 1.10 also <a href="https://github.com/JuliaGPU/Metal.jl/pull/854">wraps the core MPSGraph neural-network primitives</a>: softmax and logsoftmax, 2D convolution, and max/mean pooling, each with its gradient. These are wired up as the Metal backend for <a href="https://github.com/FluxML/NNlib.jl/pull/725">NNlib.jl</a>, so once that release lands, Flux models gain GPU acceleration on Apple hardware through the functions you already use &#40;<code>conv</code>, <code>maxpool</code>, <code>softmax</code>, …&#41; rather than any Metal-specific API.</p>
+<h2 id="ffts"><a href="#ffts" class="header-anchor">FFTs</a></h2>
+<p>On the back of the MPSGraph work, Metal.jl now <a href="https://github.com/JuliaGPU/Metal.jl/pull/713">supports FFTs through the AbstractFFTs.jl interface</a>:</p>
+<pre><code class="language-julia-repl">julia&gt; using Metal, AbstractFFTs
+
+julia&gt; x &#61; MtlArray&#40;rand&#40;ComplexF32, 2048, 2048&#41;&#41;;
+
+julia&gt; y &#61; fft&#40;x&#41;;          # just works
+
+julia&gt; Array&#40;ifft&#40;y&#41;&#41; ≈ Array&#40;x&#41;
+true
+
+julia&gt; p &#61; plan_fft&#40;x&#41;;     # reusable plans, too
+
+julia&gt; Array&#40;p * x&#41; ≈ Array&#40;y&#41;
+true</code></pre>
+<p>Real transforms &#40;<code>rfft</code>/<code>irfft</code>&#41;, transforms along specific dimensions, and batched transforms are all supported. Running on the GPU is a large win over a CPU FFT, even one backed by AppleAccelerate. The following are timings on a 30-core M2 Max:</p>
+<table><tr><th align="right">Size</th><th align="right">CPU &#40;FFTW&#41;</th><th align="right">CPU &#40;FFTW &#43; AppleAccelerate&#41;</th><th align="right">GPU &#40;Metal&#41;</th><th align="right">speedup vs. Accelerate</th></tr><tr><td align="right">512×512</td><td align="right">4.2 ms</td><td align="right">766.2 µs</td><td align="right">173.4 µs</td><td align="right">4.4×</td></tr><tr><td align="right">1024×1024</td><td align="right">19.7 ms</td><td align="right">3.7 ms</td><td align="right">246.3 µs</td><td align="right">15×</td></tr><tr><td align="right">2048×2048</td><td align="right">99.5 ms</td><td align="right">20.8 ms</td><td align="right">588.4 µs</td><td align="right">35×</td></tr><tr><td align="right">4096×4096</td><td align="right">580.1 ms</td><td align="right">99.0 ms</td><td align="right">2.5 ms</td><td align="right">39×</td></tr></table>
+<h2 id="a_faster_leaner_runtime"><a href="#a_faster_leaner_runtime" class="header-anchor">A faster, leaner runtime</a></h2>
+<p>A lot of work in this cycle went into the cost of getting work onto the GPU and back.</p>
+<p><strong>Batched command submission.</strong> Metal.jl used to create, encode and commit a fresh command buffer for every single launch. It now <a href="https://github.com/JuliaGPU/Metal.jl/pull/847">keeps one command buffer open</a> and submits launches into it, flushing on synchronization or other triggers. That amortizes the per-launch command-buffer overhead, which is the dominant cost for workloads built out of many small kernels.</p>
+<p><strong>Non-blocking synchronization.</strong> Synchronization was <a href="https://github.com/JuliaGPU/Metal.jl/pull/783">ported from CUDA.jl</a> to a spin-then-yield scheme instead of blocking inside Metal. The primary motivation is correctness &#40;a blocked main thread can deadlock against a Metal callback that needs to do I/O&#41;, but it is also dramatically faster on the fast paths:</p>
+<table><tr><th align="right">Scenario</th><th align="right">before</th><th align="right">after</th><th align="right">speedup</th></tr><tr><td align="right"><code>synchronize&#40;&#41;</code> on a queue that never ran work</td><td align="right">15.87 µs</td><td align="right">0.19 µs</td><td align="right">~86×</td></tr><tr><td align="right"><code>synchronize&#40;&#41;</code> when the queue is idle</td><td align="right">15.55 µs</td><td align="right">0.37 µs</td><td align="right">~42×</td></tr><tr><td align="right">small kernel &#43; <code>synchronize&#40;&#41;</code> in a tight loop</td><td align="right">359 µs</td><td align="right">149 µs</td><td align="right">~2.4×</td></tr></table>
+<p><strong>GC under memory pressure.</strong> Because <code>MtlArray</code> buffers are allocated by Metal, Julia&#39;s garbage collector can&#39;t see them, and on a unified-memory Mac that means it happily lets you allocate until the system starts paging and <a href="https://github.com/JuliaGPU/Metal.jl/issues/524">freezes</a>. Metal.jl now <a href="https://github.com/JuliaGPU/Metal.jl/pull/852">reads the memory pressure straight from Metal</a> and triggers an incremental GC when usage gets high &#40;above 75&#37; normally, lower on synchronization points where the pause is hidden behind a wait anyway&#41;, rate-limited so it never spends more than a small fraction of wall-clock time collecting.</p>
+<p><strong>Cheaper object lifetimes.</strong> The hand-rolled retain/release/finalizer bookkeeping for Metal objects was <a href="https://github.com/JuliaGPU/Metal.jl/pull/851">replaced with ObjectiveC.jl&#39;s automatic reference counting</a>, removing a few hundred lines of fiddly code and simplifying per-launch bookkeeping .</p>
+<p><strong>Faster large copies.</strong> Shared-storage GPU→GPU copies used to always go through a CPU <code>memcpy</code>. For large arrays it&#39;s <a href="https://github.com/JuliaGPU/Metal.jl/pull/716">faster to use a GPU blit</a>, so copies above 32 MB now switch to that path &#40;small copies stay on <code>memcpy</code>, where the API overhead would dominate&#41;:</p>
+<table><tr><th align="right">Size</th><th align="right">before &#40;CPU memcpy&#41;</th><th align="right">after</th><th align="right">speedup</th></tr><tr><td align="right">64 MB</td><td align="right">3.28 ms</td><td align="right">1.19 ms</td><td align="right">2.8×</td></tr><tr><td align="right">256 MB</td><td align="right">6.54 ms</td><td align="right">2.08 ms</td><td align="right">3.1×</td></tr><tr><td align="right">1024 MB</td><td align="right">21.55 ms</td><td align="right">5.98 ms</td><td align="right">3.6×</td></tr></table>
+<p>Separately, copies larger than 4 GiB <a href="https://github.com/JuliaGPU/Metal.jl/pull/712">no longer silently fail</a>; they are chunked into pieces Metal can handle.</p>
+<p><strong>Time to first kernel.</strong> A <a href="https://github.com/JuliaGPU/Metal.jl/pull/747">real precompilation workload</a> plus some despecialization brought the time to a first kernel down significantly:</p>
+<pre><code class="language-shell">&#36; julia -e &#39;using Metal; a &#61; MtlArray&#40;&#91;1, 2, 3&#93;&#41;; @time a .&#43; 1&#39;
+0.161035 seconds &#40;178.09 k allocations: 8.552 MiB, 52.46&#37; compilation time: 22&#37; of which was recompilation&#41;</code></pre>
+<p>Compare that to the previous version of Metal.jl:</p>
+<pre><code class="language-shell">&#36; julia -e &#39;using Metal; a &#61; MtlArray&#40;&#91;1, 2, 3&#93;&#41;; @time a .&#43; 1&#39;
+8.133787 seconds &#40;33.91 M allocations: 1.636 GiB, 3.64&#37; gc time, 99.25&#37; compilation time: 1&#37; of which was recompilation&#41;</code></pre>
+<h2 id="a_profiler_that_doesnt_need_xcode"><a href="#a_profiler_that_doesnt_need_xcode" class="header-anchor">A profiler that doesn&#39;t need Xcode</a></h2>
+<p>Timing a single kernel with BenchmarkTools is easy enough, but understanding where time goes in a larger program used to mean reaching for Xcode&#39;s Instruments. Metal.jl 1.10 adds an <a href="https://github.com/JuliaGPU/Metal.jl/pull/842">in-process profiler</a>, <code>Metal.@profile</code>, that captures the GPU operations Metal.jl submits and prints a summary, no Xcode required:</p>
+<pre><code class="language-julia-repl">julia&gt; a &#61; Metal.rand&#40;Float32, 1024, 1024&#41;; b &#61; similar&#40;a&#41;; c &#61; similar&#40;a&#41;;
+
+julia&gt; b .&#61; a .&#43; 1f0; c .&#61; sqrt.&#40;b&#41;; Metal.synchronize&#40;&#41;;   # warm up
+
+julia&gt; Metal.@profile begin
+           b .&#61; a .&#43; 1f0
+           c .&#61; sqrt.&#40;b&#41;
+       end
+Profiled over 58.7 ms.
+
+Host-side activity: 42 Objective-C calls taking 118.0 µs &#40;0.20&#37; of wall-clock&#41;
+┌──────────┬────────────┬───────┬──────────────────────────────────────────┐
+│ Time &#40;&#37;&#41; │ Total time │ Calls │ Name                                     │
+├──────────┼────────────┼───────┼──────────────────────────────────────────┤
+│    0.06&#37; │   33.29 µs │     2 │ &#91;MTLCommandBuffer commit&#93;                │
+│    0.04&#37; │   22.17 µs │     2 │ &#91;MTLCommandQueue commandBuffer&#93;          │
+│    0.04&#37; │    22.0 µs │     2 │ &#91;MTLCommandBuffer computeCommandEncoder&#93; │
+│     ...  │     ...    │   ... │ ...                                      │
+└──────────┴────────────┴───────┴──────────────────────────────────────────┘
+
+Device-side activity: GPU was busy 831.75 µs &#40;1.42&#37; of wall-clock&#41;
+┌──────────┬────────────┬───────┬───────────────────────────┬──────────────┐
+│ Time &#40;&#37;&#41; │ Total time │ Calls │ Time distribution         │ Name         │
+├──────────┼────────────┼───────┼───────────────────────────┼──────────────┤
+│    1.42&#37; │  831.75 µs │     2 │ 415.87 µs ± 220.62        │ broadcast_2d │
+└──────────┴────────────┴───────┴───────────────────────────┴──────────────┘</code></pre>
+<p>The host table groups the Objective-C calls, the device table groups kernels and blits, and the slowest operations are color-highlighted. Pass <code>trace&#61;true</code> for a chronological timeline &#40;with threadgroup, occupancy and threadgroup-memory columns&#41; instead of a summary, and use <code>Metal.@bprofile</code> to benchmark a snippet by running it repeatedly. The old Xcode-based capture is still there under <code>Metal.@profile external&#61;true</code>. One caveat worth knowing: MPS and MPSGraph operations, including the default matmul backend, submit their own command buffers and don&#39;t show up in the integrated trace yet, so reach for the external profiler to inspect those.</p>
+<h2 id="better_debugging"><a href="#better_debugging" class="header-anchor">Better debugging</a></h2>
+<p><strong>Device-side printing.</strong> On macOS 15&#43;, you can now <a href="https://github.com/JuliaGPU/Metal.jl/pull/418">print from inside a kernel</a>, built on Apple&#39;s <code>os_log</code>. There&#39;s <code>@mtlprintf</code>, plus the friendlier <code>@mtlprint</code>, <code>@mtlprintln</code>, and <code>@mtlshow</code>:</p>
+<pre><code class="language-julia-repl">julia&gt; function device_println&#40;&#41;
+           @mtlprintln&#40;&quot;Hello, world&#33;&quot;&#41;
+           return
+       end
+
+julia&gt; @metal device_println&#40;&#41;;
+Hello, world&#33;</code></pre>
+<p>It also wires up KernelAbstractions&#39; <code>@print</code>, so the same works in KA kernels.</p>
+<p><strong>Richer exceptions.</strong> When a kernel throws, say a bounds error, that used to surface as an opaque failure. Device exceptions are now <a href="https://github.com/JuliaGPU/Metal.jl/pull/796">reported back to the host as a <code>KernelException</code></a> carrying the actual cause:</p>
+<pre><code class="language-julia-repl">julia&gt; function oob&#40;a&#41;
+           a&#91;2&#93; &#61; 1f0   # a has length 1
+           return
+       end
+
+julia&gt; a &#61; MtlArray&#40;zeros&#40;Float32, 1&#41;&#41;;
+
+julia&gt; @metal threads&#61;1 oob&#40;a&#41;
+ERROR: KernelException: A BoundsError was thrown</code></pre>
+<p><a href="https://github.com/JuliaGPU/Metal.jl/pull/805">Launching with <code>debug_level&#61;2</code></a> adds a full device-side stacktrace. The detailed machinery only kicks in at the higher debug level, so the common case stays fast.</p>
+<p><strong>Device-side allocation.</strong> A <a href="https://github.com/JuliaGPU/Metal.jl/pull/781">minimal device-side <code>malloc</code></a> means kernels that need dynamic allocation &#40;notably exception-throwing code and some broadcasts&#41; now compile and run where they previously failed outright.</p>
+<h2 id="new_intrinsics"><a href="#new_intrinsics" class="header-anchor">New intrinsics</a></h2>
+<p>The warp-level primitive set is now much more complete. Metal.jl 1.10 adds the indexed <a href="https://github.com/JuliaGPU/Metal.jl/pull/741"><code>simd_shuffle</code>/<code>simd_shuffle_xor</code></a> shuffles, the <a href="https://github.com/JuliaGPU/Metal.jl/pull/744"><code>simd_ballot</code>/<code>simd_vote_all</code>/<code>simd_vote_any</code></a> voting intrinsics, and the full set of <a href="https://github.com/JuliaGPU/Metal.jl/pull/811">quad-group &#40;4-thread&#41; equivalents</a>: <code>quad_shuffle</code>, <code>quad_ballot</code>, <code>quad_vote_all</code>, and friends. There are also <code>UInt16</code> variants of <a href="https://github.com/JuliaGPU/Metal.jl/pull/725">every thread- and grid-indexing intrinsic</a> &#40;<code>thread_position_in_grid_i16&#40;&#41;</code> and so on&#41; for when 16-bit indices are enough.</p>
+<p>Please refer to the <a href="https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf">Metal Shading Language Specification</a> to verify where indexing types must match for a kernel to be valid.</p>
+<h2 id="other_improvements"><a href="#other_improvements" class="header-anchor">Other improvements</a></h2>
+<p>Metal.jl 1.10 includes plenty more:</p>
+<ul>
+<li><p>The default host RNG <a href="https://github.com/JuliaGPU/Metal.jl/pull/767">switched to the GPUArrays counter-based generator</a>, matching CUDA.jl. It is faster for <code>randn</code>, fixes the <a href="https://github.com/JuliaGPU/Metal.jl/issues/474">NaN issue</a>, and supports types MPS can&#39;t &#40;<code>Float16</code>, complex types, etc&#41;. The MPS generator is still available via <code>Metal.mps_rng&#40;&#41;</code>.</p>
+</li>
+<li><p><code>unsafe_wrap</code> <a href="https://github.com/JuliaGPU/Metal.jl/pull/814">can now build multi-dimensional <code>MtlArray</code>s from a pointer</a> without a copy.</p>
+</li>
+<li><p><a href="https://github.com/JuliaGPU/Metal.jl/pull/789">Experimental support for paravirtualized GPUs on macOS 15&#43;</a>.</p>
+</li>
+</ul>
+<p>One breaking fix to be aware of: launching a kernel with a grid dimension larger than <code>typemax&#40;UInt32&#41;</code> used to silently truncate. It now <a href="https://github.com/JuliaGPU/Metal.jl/pull/751">raises an error</a> instead, so use grid-stride loops for kernels that need to cover arrays larger than that.</p>
+<p>As always, update to the latest version to get these improvements, and check out the <a href="https://github.com/JuliaGPU/Metal.jl/releases/tag/v1.10.0">changelog</a> for the full list.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+    
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+<!-- Languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
+
+<script>hljs.highlightAll();</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
