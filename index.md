@@ -1,17 +1,25 @@
 +++
 title = "JuliaGPU"
+hascode = true
 +++
 
 ~~~
-<div class="p-5 mb-5">
-  <div class="container text-center">
+<div class="hero">
+  <div class="container">
     <h1>
-      <img height=70 src="/assets/logo_crop.png">
+      <img height=70 src="/assets/logo_crop.png" alt="JuliaGPU">
       JuliaGPU
     </h1>
-    <p class="font-125">
+    <p class="lead">
       High-performance GPU programming in a high-level language.
     </p>
+    <div class="hero-code">
+      <pre><code class="language-julia">using CUDA
+
+A = CUDA.randn(1024, 1024)
+B = CUDA.randn(1024, 1024)
+C = A * B  # runs on the GPU</code></pre>
+    </div>
   </div>
 </div>
 ~~~
@@ -24,6 +32,68 @@ without sacrificing performance**.
 Many applications and libraries in the Julia ecosystem rely on GPU support, and
 the number is growing rapidly. Head over to the [showcases](/showcases/) page
 if you want to see some examples of how Julia's GPU support is used in practice.
+
+
+## Platform comparison
+
+~~~
+<div class="table-responsive">
+<table class="backend-table">
+  <thead>
+    <tr>
+      <th>Platform</th>
+      <th>Package</th>
+      <th>Maturity</th>
+      <th>Array Type</th>
+      <th>Kernel Macro</th>
+      <th>Vendor Libraries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="/backends/cuda/">NVIDIA CUDA</a></td>
+      <td><a href="https://github.com/JuliaGPU/CUDA.jl">CUDA.jl</a></td>
+      <td><span class="badge badge-mature">Mature</span></td>
+      <td><code>CuArray</code></td>
+      <td><code>@cuda</code></td>
+      <td>cuBLAS, cuFFT, cuDNN, cuSOLVER, cuSPARSE, cuTENSOR</td>
+    </tr>
+    <tr>
+      <td><a href="/backends/rocm/">AMD ROCm</a></td>
+      <td><a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a></td>
+      <td><span class="badge badge-stable">Stable</span></td>
+      <td><code>ROCArray</code></td>
+      <td><code>@roc</code></td>
+      <td>rocBLAS, rocFFT, rocSOLVER, rocSPARSE</td>
+    </tr>
+    <tr>
+      <td><a href="/backends/oneapi/">Intel oneAPI</a></td>
+      <td><a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a></td>
+      <td><span class="badge badge-developing">Developing</span></td>
+      <td><code>oneArray</code></td>
+      <td><code>@oneapi</code></td>
+      <td>oneMKL (partial)</td>
+    </tr>
+    <tr>
+      <td><a href="/backends/metal/">Apple Metal</a></td>
+      <td><a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a></td>
+      <td><span class="badge badge-stable">Stable</span></td>
+      <td><code>MtlArray</code></td>
+      <td><code>@metal</code></td>
+      <td>MPS (partial)</td>
+    </tr>
+    <tr>
+      <td><a href="/backends/opencl/">OpenCL</a></td>
+      <td><a href="https://github.com/JuliaGPU/OpenCL.jl">OpenCL.jl</a></td>
+      <td><span class="badge badge-early">Pre-release</span></td>
+      <td><code>CLArray</code></td>
+      <td><code>@opencl</code></td>
+      <td>&mdash;</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+~~~
 
 
 ## Supported platforms
