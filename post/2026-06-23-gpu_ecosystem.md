@@ -38,7 +38,7 @@ It provides an `NDArray` abstraction that supports standard array operations (e.
 Beyond NVIDIA, Julia has backends for every major GPU platform.
 
 [AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl) brings AMD GPU computing to Julia through ROCm integration.
-It mirrors the structure of CUDA.jl—providing an array type, a kernel compiler, and library wrappers—for AMD's graphics and compute hardware.
+It mirrors the structure of CUDA.jl providing an array type (`ROCArray`), a kernel compiler, and library wrappers for AMD's graphics and compute hardware.
 
 [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) targets Intel GPUs and accelerators through Intel's oneAPI unified programming toolkit.
 It provides low-level Level Zero API wrappers, a `oneArray` type that integrates with Julia's array ecosystem, and oneMKL bindings for optimized linear algebra and sparse matrix operations.
@@ -153,6 +153,10 @@ It is a go-to tool in quantum chemistry and condensed matter physics, where tens
 ### Whole-program optimization
 
 [Reactant.jl](https://github.com/EnzymeAD/Reactant.jl) takes a different approach to GPU execution: rather than offering array types or kernel abstractions, it compiles entire Julia functions to MLIR and optimizes them for execution on CPUs, GPUs, and TPUs via XLA.
-It works by tracing the program to remove control flow and type instabilities, then handing the resulting computation graph to XLA for whole-program optimization and device dispatch.
+It uses operator tracing (aka partial evaluation) to obtain an equivalent MLIR code of the program. It then runs a ton of compiler optimizations that perform automatic differentiation, parallelization and optimization.
+It can also trace through control-flow constructs (like `if`, `for` and `while`) by prefixing the `@trace` macro.
 Starting from you code written with existing packages, like CUDA.jl or KernelAbstractions.jl, Reactant will automatically perform optimizations like kernel fusion, and offload to your chosen architecture.
 A companion sub-package, ReactantCore.jl, exposes the minimal type hierarchy needed by other packages to be Reactant-aware, allowing the broader Julia ecosystem to interoperate with Reactant's compilation pipeline.
+
+### Task Runtimes
+[Dagger.jl](https://github.com/JuliaParallel/Dagger.jl) is a Julia task runtime and scheduler that supports scalable, distributed multi-GPU execution across all 5 main GPU backends, with built-in support for KernelAbstractions-written kernels. Dagger allows the expression of generic scalable algorithms that seamlessly scale from 0 to 1 to N GPUs without having to handle the vagaries of GPU programming and state management - Dagger handles this in the background, while maximizing throughput.
