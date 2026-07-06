@@ -43,7 +43,7 @@ It mirrors the structure of CUDA.jl—providing an array type, a kernel compiler
 [oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl) targets Intel GPUs and accelerators through Intel's oneAPI unified programming toolkit.
 It provides low-level Level Zero API wrappers, a `oneArray` type that integrates with Julia's array ecosystem, and oneMKL bindings for optimized linear algebra and sparse matrix operations.
 
-[Metal.jl](https://github.com/JuliaGPU/Metal.jl) enables GPU programming on macOS using Apple's Metal framework, targeting M-series chips.
+[Metal.jl](https://github.com/JuliaGPU/Metal.jl) enables GPU programming on macOS using Apple's Metal framework, targeting Apple Silicon.
 The package offers three levels of abstraction: high-level array operations via `MtlArray`, custom kernel programming, and direct Metal API access through ObjectiveC bindings.
 While still under active development with some known limitations, it allows Mac users to run GPU-accelerated Julia code without any external hardware.
 
@@ -69,8 +69,8 @@ It provides applications with a one-liner interface to load the appropriate back
 The package is designed for end-user applications rather than libraries, handling both detection and, when needed, automatic installation of the relevant backend.
 
 [GPUEnv.jl](https://github.com/hakkelt/GPUEnv.jl) simplifies multi-backend development by automatically detecting available GPU hardware and creating temporary overlay environments containing only the relevant backend packages.
-Rather than permanently including all GPU dependencies in a project, it conditionally activates only the packages that match the host machine's hardware.
-This keeps parent environments lean and fast to resolve, which matters especially in CI and shared HPC environments.
+Rather than permanently including all GPU dependencies in a project, it conditionally activates only the packages that match the host machine's hardware using lightweight probe functions.
+This keeps parent environments lean and fast to resolve.
 
 [Juliana.jl](https://github.com/artecs-group/Juliana.jl) is a translation tool that automatically converts Julia code written for CUDA.jl into portable multi-backend code compatible with KernelAbstractions.jl.
 This allows GPU programs originally written for NVIDIA hardware to run on Intel, AMD, and Apple GPUs without manual rewriting.
@@ -124,6 +124,8 @@ Backend selection is done outside code using Preferences.jl mechanisms (e.g., `L
 The package is well-suited for HPC prototyping: developers can write and test kernels on a laptop CPU or GPU and then deploy them to multi-GPU supercomputer nodes without changing any application code.
 Users of the default APIs, do not need prior CPU/GPU programming knowledge to parallelize their codes, but JACC.jl provides low-level performance APIs (e.g., blocks, threads, async, shared memory, stream, multi-GPU, etc.) for hardware-specific optimizations.
 
+[Strided.jl](https://github.com/QuantumKitHub/Strided.jl) provides a vendor-neutral API for writing `map`- or `mapreduce`- kernels over input arrays with varying strides.
+This allows for writing operations that fuse (strided) views and `permutedims` operations with the following kernel calls.
 ### Tensor operations
 
 For operations on multi-dimensional arrays expressed through index notation, several packages provide GPU-aware implementations.
