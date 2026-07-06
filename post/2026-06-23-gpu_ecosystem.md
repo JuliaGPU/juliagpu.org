@@ -124,6 +124,8 @@ Backend selection is done outside code using Preferences.jl mechanisms (e.g., `L
 The package is well-suited for HPC prototyping: developers can write and test kernels on a laptop CPU or GPU and then deploy them to multi-GPU supercomputer nodes without changing any application code.
 Users of the default APIs, do not need prior CPU/GPU programming knowledge to parallelize their codes, but JACC.jl provides low-level performance APIs (e.g., blocks, threads, async, shared memory, stream, multi-GPU, etc.) for hardware-specific optimizations.
 
+[MatrixAlgebraKit.jl](https://github.com/QuantumKitHub/MatrixAlgebraKit.jl) provides a high-level interface to linear algebra routines provided by the various GPU vendors.
+It features a unified way of accessing these kernels that exposes access to more in-place operations than LinearAlgebra.jl, as well as compatibility with the various automatic differentiation libraries.
 [Strided.jl](https://github.com/QuantumKitHub/Strided.jl) provides a vendor-neutral API for writing `map`- or `mapreduce`- kernels over input arrays with varying strides.
 This allows for writing operations that fuse (strided) views and `permutedims` operations with the following kernel calls.
 ### Tensor operations
