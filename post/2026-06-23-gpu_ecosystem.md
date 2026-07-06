@@ -47,35 +47,6 @@ It provides low-level Level Zero API wrappers, a `oneArray` type that integrates
 The package offers three levels of abstraction: high-level array operations via `MtlArray`, custom kernel programming, and direct Metal API access through ObjectiveC bindings.
 While still under active development with some known limitations, it allows Mac users to run GPU-accelerated Julia code without any external hardware.
 
-[OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl) provides a comprehensive Julia interface to the OpenCL standard, which targets GPUs, FPGAs, DSPs, and multicore CPUs from a single API.
-The package supports both traditional OpenCL C kernels and native Julia functions compiled to SPIR-V, making it the most broadly portable of the hardware-specific backends.
-It is a practical choice when targeting hardware not covered by the other backends, or when writing code that needs to run on a wide variety of devices.
-Through [PoCL](https://github.com/pocl/pocl), it also provides a way of running GPU kernels on the CPU.
-
-[Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) wraps the Vulkan graphics and compute API, generating bindings automatically from the official Vulkan specification with minimal overhead over the underlying C interface.
-Where OpenCL.jl offers portability at the cost of abstraction, Vulkan provides explicit, low-overhead control over GPU resources.
-The package hasn't reached 1.0 yet but is maintained and considered stable. It serves as a low-level foundation for higher-level graphics and compute work in Julia, and is rather meant for developers.
-
-[Lava.jl](https://github.com/SimonDanisch/Lava.jl) is a Julia GPU backend that compiles Julia code to SPIR-V for execution via Vulkan, functioning as a unified compute, graphics, and ray tracing platform.
-It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
-The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers.
-
-### Vendor detection and translation
-
-As the number of backends grows, tooling for selecting and migrating between them becomes important.
-
-[GPUSelect.jl](https://github.com/SimonDanisch/GPUSelect.jl) automates GPU backend selection for KernelAbstractions.jl by detecting available hardware at runtime through driver libraries.
-It provides applications with a one-liner interface to load the appropriate backend—whether CUDA, AMDGPU, Metal, oneAPI, or Vulkan—without manual configuration.
-The package is designed for end-user applications rather than libraries, handling both detection and, when needed, automatic installation of the relevant backend.
-
-[GPUEnv.jl](https://github.com/hakkelt/GPUEnv.jl) simplifies multi-backend development by automatically detecting available GPU hardware and creating temporary overlay environments containing only the relevant backend packages.
-Rather than permanently including all GPU dependencies in a project, it conditionally activates only the packages that match the host machine's hardware using lightweight probe functions.
-This keeps parent environments lean and fast to resolve.
-
-[Juliana.jl](https://github.com/artecs-group/Juliana.jl) is a translation tool that automatically converts Julia code written for CUDA.jl into portable multi-backend code compatible with KernelAbstractions.jl.
-This allows GPU programs originally written for NVIDIA hardware to run on Intel, AMD, and Apple GPUs without manual rewriting.
-It is most useful for porting existing CUDA.jl codebases toward hardware-agnostic designs without starting from scratch.
-
 ## Hardware-agnostic
 
 ### Data types
@@ -102,6 +73,15 @@ Most hardware-agnostic libraries in Julia—including AcceleratedKernels.jl, Lav
 It covers memory fencing, warp shuffle and reduction operations, and vectorized memory access, and does so across CUDA, ROCm, and Metal backends.
 The package is aimed at library developers rather than end users: it fills the gap between high-level kernel abstractions and the raw hardware intrinsics that performance-critical GPU code sometimes requires.
 
+[OpenCL.jl](https://github.com/JuliaGPU/OpenCL.jl) provides a comprehensive Julia interface to the OpenCL standard, which targets GPUs, FPGAs, DSPs, and multicore CPUs from a single API.
+The package supports both traditional OpenCL C kernels and native Julia functions compiled to SPIR-V, making it the most broadly portable of the hardware-specific backends.
+It is a practical choice when targeting hardware not covered by the other backends, or when writing code that needs to run on a wide variety of devices.
+Through [PoCL](https://github.com/pocl/pocl), it also provides a way of running GPU kernels on the CPU.
+
+[Vulkan.jl](https://github.com/JuliaGPU/Vulkan.jl) wraps the Vulkan graphics and compute API, generating bindings automatically from the official Vulkan specification with minimal overhead over the underlying C interface.
+Where OpenCL.jl offers portability at the cost of abstraction, Vulkan provides explicit, low-overhead control over GPU resources.
+The package hasn't reached 1.0 yet but is maintained and considered stable. It serves as a low-level foundation for higher-level graphics and compute work in Julia, and is rather meant for developers.
+
 ### High-level kernels
 
 Several packages build on lower-level primitives to provide ready-made parallel algorithms.
@@ -124,10 +104,32 @@ Backend selection is done outside code using Preferences.jl mechanisms (e.g., `L
 The package is well-suited for HPC prototyping: developers can write and test kernels on a laptop CPU or GPU and then deploy them to multi-GPU supercomputer nodes without changing any application code.
 Users of the default APIs, do not need prior CPU/GPU programming knowledge to parallelize their codes, but JACC.jl provides low-level performance APIs (e.g., blocks, threads, async, shared memory, stream, multi-GPU, etc.) for hardware-specific optimizations.
 
-[MatrixAlgebraKit.jl](https://github.com/QuantumKitHub/MatrixAlgebraKit.jl) provides a high-level interface to linear algebra routines provided by the various GPU vendors.
-It features a unified way of accessing these kernels that exposes access to more in-place operations than LinearAlgebra.jl, as well as compatibility with the various automatic differentiation libraries.
 [Strided.jl](https://github.com/QuantumKitHub/Strided.jl) provides a vendor-neutral API for writing `map`- or `mapreduce`- kernels over input arrays with varying strides.
 This allows for writing operations that fuse (strided) views and `permutedims` operations with the following kernel calls.
+
+[MatrixAlgebraKit.jl](https://github.com/QuantumKitHub/MatrixAlgebraKit.jl) provides a high-level interface to linear algebra routines provided by the various GPU vendors.
+It features a unified way of accessing these kernels that exposes access to more in-place operations than LinearAlgebra.jl, as well as compatibility with the various automatic differentiation libraries.
+
+[Lava.jl](https://github.com/SimonDanisch/Lava.jl) is a Julia GPU backend that compiles Julia code to SPIR-V for execution via Vulkan, functioning as a unified compute, graphics, and ray tracing platform.
+It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
+The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers.
+
+### Vendor detection and translation
+
+As the number of backends grows, tooling for selecting and migrating between them becomes important.
+
+[GPUSelect.jl](https://github.com/SimonDanisch/GPUSelect.jl) automates GPU backend selection for KernelAbstractions.jl by detecting available hardware at runtime through driver libraries.
+It provides applications with a one-liner interface to load the appropriate backend—whether CUDA, AMDGPU, Metal, oneAPI, or Vulkan—without manual configuration.
+The package is designed for end-user applications rather than libraries, handling both detection and, when needed, automatic installation of the relevant backend.
+
+[GPUEnv.jl](https://github.com/hakkelt/GPUEnv.jl) simplifies multi-backend development by automatically detecting available GPU hardware and creating temporary overlay environments containing only the relevant backend packages.
+Rather than permanently including all GPU dependencies in a project, it conditionally activates only the packages that match the host machine's hardware using lightweight probe functions.
+This keeps parent environments lean and fast to resolve.
+
+[Juliana.jl](https://github.com/artecs-group/Juliana.jl) is a translation tool that automatically converts Julia code written for CUDA.jl into portable multi-backend code compatible with KernelAbstractions.jl.
+This allows GPU programs originally written for NVIDIA hardware to run on Intel, AMD, and Apple GPUs without manual rewriting.
+It is most useful for porting existing CUDA.jl codebases toward hardware-agnostic designs without starting from scratch.
+
 ### Tensor operations
 
 For operations on multi-dimensional arrays expressed through index notation, several packages provide GPU-aware implementations.
