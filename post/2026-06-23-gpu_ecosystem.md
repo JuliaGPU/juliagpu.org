@@ -82,6 +82,10 @@ Through [PoCL](https://github.com/pocl/pocl), it also provides a way of running 
 Where OpenCL.jl offers portability at the cost of abstraction, Vulkan provides explicit, low-overhead control over GPU resources.
 The package hasn't reached 1.0 yet but is maintained and considered stable. It serves as a low-level foundation for higher-level graphics and compute work in Julia, and is rather meant for developers.
 
+[Lava.jl](https://github.com/SimonDanisch/Lava.jl) is a Julia GPU backend that compiles Julia code to SPIR-V for execution via Vulkan, functioning as a unified compute, graphics, and ray tracing platform.
+It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
+The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers.
+
 ### High-level kernels
 
 Several packages build on lower-level primitives to provide ready-made parallel algorithms.
@@ -109,10 +113,6 @@ This allows for writing operations that fuse (strided) views and `permutedims` o
 
 [MatrixAlgebraKit.jl](https://github.com/QuantumKitHub/MatrixAlgebraKit.jl) provides a high-level interface to linear algebra routines provided by the various GPU vendors.
 It features a unified way of accessing these kernels that exposes access to more in-place operations than LinearAlgebra.jl, as well as compatibility with the various automatic differentiation libraries.
-
-[Lava.jl](https://github.com/SimonDanisch/Lava.jl) is a Julia GPU backend that compiles Julia code to SPIR-V for execution via Vulkan, functioning as a unified compute, graphics, and ray tracing platform.
-It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
-The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers.
 
 ### Vendor detection and translation
 
@@ -159,4 +159,6 @@ Starting from you code written with existing packages, like CUDA.jl or KernelAbs
 A companion sub-package, ReactantCore.jl, exposes the minimal type hierarchy needed by other packages to be Reactant-aware, allowing the broader Julia ecosystem to interoperate with Reactant's compilation pipeline.
 
 ### Task Runtimes
-[Dagger.jl](https://github.com/JuliaParallel/Dagger.jl) is a Julia task runtime and scheduler that supports scalable, distributed multi-GPU execution across all 5 main GPU backends, with built-in support for KernelAbstractions-written kernels. Dagger allows the expression of generic scalable algorithms that seamlessly scale from 0 to 1 to N GPUs without having to handle the vagaries of GPU programming and state management - Dagger handles this in the background, while maximizing throughput.
+
+[Dagger.jl](https://github.com/JuliaParallel/Dagger.jl) is a Julia task runtime and scheduler that supports scalable, distributed multi-GPU execution across all 5 main GPU backends, with built-in support for KernelAbstractions-written kernels.
+Dagger allows the expression of generic scalable algorithms that seamlessly scale from 0 to 1 to N GPUs without having to handle the vagaries of GPU programming and state management - Dagger handles this in the background, while maximizing throughput.
