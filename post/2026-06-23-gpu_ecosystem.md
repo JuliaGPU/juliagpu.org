@@ -155,7 +155,7 @@ It is a go-to tool in quantum chemistry and condensed matter physics, where tens
 [Reactant.jl](https://github.com/EnzymeAD/Reactant.jl) takes a different approach to GPU execution: rather than offering array types or kernel abstractions, it compiles entire Julia functions to MLIR and optimizes them for execution on CPUs, GPUs, and TPUs via XLA.
 It uses operator tracing (aka partial evaluation) to obtain an equivalent MLIR code of the program. It then runs a ton of compiler optimizations that perform automatic differentiation, parallelization and optimization.
 It can also trace through control-flow constructs (like `if`, `for` and `while`) by prefixing the `@trace` macro.
-Starting from you code written with existing packages, like CUDA.jl or KernelAbstractions.jl, Reactant will automatically perform optimizations like kernel fusion, and offload to your chosen architecture.
+Starting from your code written with existing packages, like CUDA.jl or KernelAbstractions.jl, Reactant will automatically perform optimizations like kernel fusion, and offload to your chosen architecture.
 A companion sub-package, ReactantCore.jl, exposes the minimal type hierarchy needed by other packages to be Reactant-aware, allowing the broader Julia ecosystem to interoperate with Reactant's compilation pipeline.
 
 ### Task Runtimes
