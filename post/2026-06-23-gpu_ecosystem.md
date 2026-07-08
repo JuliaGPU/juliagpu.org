@@ -86,7 +86,7 @@ The package hasn't reached 1.0 yet but is maintained and considered stable. It s
 It serves as a drop-in replacement for other GPU backends through the KernelAbstractions.jl and GPUArrays.jl interface, while additionally enabling graphics shaders and hardware-accelerated ray tracing written entirely in Julia rather than GLSL.
 The package supports cross-platform execution on NVIDIA, AMD, Intel, Apple, and software renderers.
 
-### High-level kernels
+### High-level programming
 
 Several packages build on lower-level primitives to provide ready-made parallel algorithms.
 
