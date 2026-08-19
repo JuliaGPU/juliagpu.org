@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/previews/PR62/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/previews/PR62/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
+ 
+
+  <link rel="stylesheet" href="/previews/PR62/css/style.css">
+
+  
+  
+    <title>CUDA.jl 6.3: Compiler caching, a new cuDNN, and dependent launches ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-sm navbar-light">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
+navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <ul class=navbar-nav>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR62/"><i data-feather=home></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/previews/PR62/post/"><i data-feather=file-text></i> News</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR62/showcases/"><i data-feather=star></i> Showcases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/previews/PR62/learn/"><i data-feather=book-open></i> Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-feather=cpu></i> Backends
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <a class="dropdown-item " href="/previews/PR62/backends/cuda/">CUDA</a>
+                        <a class="dropdown-item " href="/previews/PR62/backends/rocm/">ROCm</a>
+                        <a class="dropdown-item " href="/previews/PR62/backends/oneapi/">oneAPI</a>
+                        <a class="dropdown-item " href="/previews/PR62/backends/metal/">Metal</a>
+                        <a class="dropdown-item " href="/previews/PR62/backends/opencl/">OpenCL</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>CUDA.jl 6.3: Compiler caching, a new cuDNN, and dependent launches</h1>
+      <i data-feather=calendar></i>
+<time datetime=2026-8-19>Aug 19, 2026</time><br>
+<i data-feather=edit-2></i>
+Tim Besard
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>CUDA.jl 6.3 features better integration with Julia&#39;s compiler caches, so that GPU-side inference done while a package precompiles survives across sessions. The cuDNN wrappers have been rebuilt on cuDNN 9&#39;s backend graph API, and there is also support for programmatic dependent launch.</p>
+<h2 id="kernel_compilation_with_compilercachingjl"><a href="#kernel_compilation_with_compilercachingjl" class="header-anchor">Kernel compilation with CompilerCaching.jl</a></h2>
+<p>When you launch a kernel, CUDA.jl has to find the compiled code for it. Until now it kept that mapping itself: a dictionary per CUDA context, from &#40;method instance, world age, compiler configuration&#41; to a <code>CuFunction</code>. It worked, but it duplicated bookkeeping Julia already does for the same method instances, and the cached entries did not survive across Julia sessions.</p>
+<p>CUDA.jl 6.3 <a href="https://github.com/JuliaGPU/CUDA.jl/pull/3185">adopts GPUCompiler 2</a>, which builds on <a href="https://github.com/maleadt/CompilerCaching.jl">CompilerCaching.jl</a>, and drops that dictionary. Compilation results are now stored in the <code>CodeInstance</code> that Julia caches anyway. This makes it possible to cache on disk, by saving into system or package images.</p>
+<p>Right now, we only store inferred code. Work is underway to make the generated LLVM IR and machine code relocatable, which will enable caching those as well. However, just caching the inference results is already a big win. Let&#39;s demonstrate using a simple package:</p>
+<pre><code class="language-julia">module Blur
+
+using CUDA
+using PrecompileTools
+
+function blur_kernel&#33;&#40;dst, src, ::Val&#123;R&#125;&#41; where R
+    i &#61; &#40;blockIdx&#40;&#41;.x - 1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+    if i &lt;&#61; length&#40;dst&#41;
+        acc &#61; zero&#40;eltype&#40;src&#41;&#41;
+        for k in -R:R
+            @inbounds acc &#43;&#61; src&#91;clamp&#40;i &#43; k, 1, length&#40;src&#41;&#41;&#93; / &#40;1 &#43; abs&#40;k&#41;&#41;
+        end
+        @inbounds dst&#91;i&#93; &#61; sqrt&#40;abs&#40;acc&#41;&#41;
+    end
+    return
+end
+
+function blur&#40;src, ::Val&#123;R&#125; &#61; Val&#40;4&#41;&#41; where R
+    dst &#61; similar&#40;src&#41;
+    @cuda threads&#61;256 blocks&#61;cld&#40;length&#40;dst&#41;, 256&#41; blur_kernel&#33;&#40;dst, src, Val&#40;R&#41;&#41;
+    return dst
+end
+
+@setup_workload begin
+    @compile_workload begin
+        blur&#40;CUDA.zeros&#40;Float32, 1024&#41;&#41;
+    end
+end
+
+end</code></pre>
+<p>Timing the first call in a fresh session, on an RTX 5080 with Julia 1.12 and CUDA 13.3:</p>
+<pre><code class="language-julia-repl">julia&gt; using Blur, CUDA
+
+julia&gt; src &#61; CUDA.rand&#40;Float32, 1024&#41;;
+
+julia&gt; @time Blur.blur&#40;src&#41;;
+  0.129540 seconds &#40;14.94 k allocations: 2.432 MiB, 71.87&#37; compilation time: &lt;1&#37; of which was recompilation&#41;</code></pre>
+<p>Delete the <code>@setup_workload</code> block, precompile again, and the same call in a fresh session costs this instead:</p>
+<pre><code class="language-julia-repl">julia&gt; @time Blur.blur&#40;src&#41;;
+  1.292274 seconds &#40;5.43 M allocations: 262.556 MiB, 14.88&#37; gc time, 95.62&#37; compilation time: 10&#37; of which was recompilation&#41;</code></pre>
+<p>Note that this requires Julia 1.11 or later.</p>
+<h2 id="cudnn_rebuilt_on_the_graph_api"><a href="#cudnn_rebuilt_on_the_graph_api" class="header-anchor">cuDNN, rebuilt on the graph API</a></h2>
+<p>cuDNN has two programming models: the legacy API, a fixed set of fixed-function operations and fusion patterns with a C entry point each, and the graph API, where you describe a computation as a graph of operations and let cuDNN pick an engine for the whole thing. The graph API can be reached two ways: directly through the C back-end API, or through NVIDIA&#39;s <a href="https://github.com/NVIDIA/cudnn-frontend"><code>cudnn-frontend</code></a>, whose C&#43;&#43; and Python layers provide a simplified programming model that covers most use cases.</p>
+<p>cuDNN.jl was written against the fixed-function API. In version 6.3, it is <a href="https://github.com/JuliaGPU/CUDA.jl/pull/3191">rebuilt</a> on the back-end API, with a front-end mimicking <code>cudnn-frontend</code>: a graph API and a set of operations implemented on top of it. The fixed-function wrappers are unchanged and remain available.</p>
+<h3 id="graph_front-end"><a href="#graph_front-end" class="header-anchor">Graph front-end</a></h3>
+<p><code>Graph</code> and <code>Tensor</code> describe a computation, <code>build&#33;</code> lowers it, runs cuDNN&#39;s heuristics and selects an execution plan, and <code>execute&#33;</code> binds arrays and runs it. Intermediate tensors are marked virtual, which is how the engine knows it may fuse instead of materializing them. As an example, a batched matrix multiply followed by a bias add and a ReLU, as one plan:</p>
+<pre><code class="language-julia">using CUDA, cuDNN
+using cuDNN: Graph, tensor&#33;, matmul&#33;, pointwise&#33;, build&#33;, execute&#33;
+
+A    &#61; CUDA.rand&#40;Float16, 256, 256, 8&#41;
+B    &#61; CUDA.rand&#40;Float16, 256, 256, 8&#41;
+bias &#61; CUDA.rand&#40;Float16, 256, 1, 8&#41;
+C    &#61; CUDA.zeros&#40;Float16, 256, 256, 8&#41;
+
+g &#61; Graph&#40;io_dtype&#61;Float16, intermediate_dtype&#61;Float32, compute_dtype&#61;Float32&#41;
+ta, tb &#61; tensor&#33;&#40;g, A; name&#61;&quot;A&quot;&#41;, tensor&#33;&#40;g, B; name&#61;&quot;B&quot;&#41;
+tbias  &#61; tensor&#33;&#40;g, bias; name&#61;&quot;Bias&quot;&#41;
+tc     &#61; tensor&#33;&#40;g, C; name&#61;&quot;C&quot;&#41;
+
+tmm  &#61; matmul&#33;&#40;g, ta, tb; name&#61;&quot;MM&quot;&#41;    # virtual
+tsum &#61; pointwise&#33;&#40;g, :add, tmm, tbias&#41;  # virtual
+pointwise&#33;&#40;g, :relu, tsum; y&#61;tc&#41;        # writes C
+
+build&#33;&#40;g&#41;
+execute&#33;&#40;g, Dict&#40;ta &#61;&gt; A, tb &#61;&gt; B, tbias &#61;&gt; bias, tc &#61;&gt; C&#41;&#41;</code></pre>
+<h3 id="operations_layer"><a href="#operations_layer" class="header-anchor">Operations layer</a></h3>
+<p>On top of the frontend sits a higher-level API that&#39;s easier to use: <code>attention&#33;</code> and <code>attention_backward&#33;</code>, <code>convolution&#33;</code> with its two gradients, <code>maxpool&#33;</code>/<code>meanpool&#33;</code> and their gradients, and the <code>batchnorm_*</code> family. These take <code>CuArray</code>s in Julia memory order and hide the graph entirely.</p>
+<p>Both of these APIs are very new, and minor changes to the design or implementation are to be expected in future releases. Feedback is very welcome, so please report issues or missing features on the CUDA.jl bug tracker.</p>
+<h2 id="programmatic_dependent_launch"><a href="#programmatic_dependent_launch" class="header-anchor">Programmatic dependent launch</a></h2>
+<p>Two kernels back-to-back in the same stream are fully serialized: the second one does not start until the last block of the first one retires. That is often more ordering than needed. If the consumer starts with work that does not touch the producer&#39;s output, like loading weights or zeroing an accumulator, that work could have been running while the producer&#39;s last few blocks were still draining.</p>
+<p>CUDA calls the escape hatch <em>programmatic dependent launch</em>, and CUDA.jl 6.3 <a href="https://github.com/JuliaGPU/CUDA.jl/pull/3225">supports it</a>. The producer signals when its dependents may start, the consumer is launched with <code>dependent&#61;true</code>, and the consumer waits before it touches anything the producer wrote:</p>
+<pre><code class="language-julia">@inline function busy&#40;x::Float32, n::Int&#41;   # stand-in for real work
+    for _ in 1:n
+        x &#61; fma&#40;x, 1.0000001f0, 1f-7&#41;
+    end
+    return x
+end
+
+function producer&#33;&#40;out, n&#41;
+    i &#61; &#40;blockIdx&#40;&#41;.x - 1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+    trigger_programmatic_launch_completion&#40;&#41;
+    @inbounds out&#91;i&#93; &#61; busy&#40;Float32&#40;i&#41;, n&#41;   # the tail
+    return
+end
+
+function consumer&#33;&#40;out, in, n&#41;
+    i &#61; &#40;blockIdx&#40;&#41;.x - 1&#41; * blockDim&#40;&#41;.x &#43; threadIdx&#40;&#41;.x
+    pre &#61; busy&#40;Float32&#40;i&#41; * 0.5f0, n&#41;        # independent preamble
+    grid_dependency_synchronize&#40;&#41;
+    @inbounds out&#91;i&#93; &#61; pre &#43; in&#91;i&#93;
+    return
+end
+
+@cuda threads&#61;256 blocks&#61;32 producer&#33;&#40;a, 20_000&#41;
+@cuda threads&#61;256 blocks&#61;32 dependent&#61;true consumer&#33;&#40;b, a, 20_000&#41;</code></pre>
+<p>Each of these kernels takes about 36 µs on its own, and the grid is small enough that both fit on the device at once. Run back to back they cost 69 µs; with the trigger, the wait and <code>dependent&#61;true</code> they cost 38 µs, so the consumer&#39;s preamble hides almost entirely behind the producer.</p>
+<p>The trigger belongs at the point in the producer after which nothing else has to run before dependents may start, which is usually the top; a block that exits without calling it triggers completion implicitly. <code>grid_dependency_synchronize</code> is what makes the producer&#39;s writes visible, so the consumer needs it even when the trigger has already run. And the overlap is opportunistic: code whose correctness depends on the two kernels running concurrently can deadlock. Programmatic dependent launch requires compute capability 9.0 or higher.</p>
+<h2 id="other_changes"><a href="#other_changes" class="header-anchor">Other changes</a></h2>
+<ul>
+<li><p>Support for CUDA 13.4. Since this version is still in early-access, it needs explicit opt-in by calling <code>CUDA.set_runtime_version&#33;</code> or by configuring <code>LocalPreferences.toml</code>.</p>
+</li>
+<li><p>cuTENSOR.jl <a href="https://github.com/JuliaGPU/CUDA.jl/pull/3239">has been updated to cuTENSOR v2.7</a>. Block-sparse <code>contract&#33;</code> and <code>plan_contraction</code> take a <code>reproducible</code> keyword argument for bitwise reproducible contractions, and the compute-descriptor list gained the 16BF and FP-emulation descriptors that Hopper and Blackwell use.</p>
+</li>
+<li><p>There is a <a href="https://github.com/JuliaGPU/CUDA.jl/pull/3197">low-level API for conversion-free launches</a>: <code>KernelCall</code> converts a kernel&#39;s function and arguments once, <code>kernel_compile</code> compiles the call, <code>kernel_launch</code> launches it without converting again, and <code>rebind</code> replaces a single argument. The KernelAbstractions back-end uses it when selecting a workgroup size, which removes a second conversion from operations such as broadcast.&#61;</p>
+</li>
+</ul>
+<p>The full list is in <a href="https://github.com/JuliaGPU/CUDA.jl/blob/main/NEWS.md"><code>NEWS.md</code></a> and the <a href="https://github.com/JuliaGPU/CUDA.jl/releases/tag/v6.3.0">release notes</a>. If something in here breaks for you, please file an issue.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+    
+        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+<!-- Languages -->
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
+
+<script>hljs.highlightAll();</script>
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
