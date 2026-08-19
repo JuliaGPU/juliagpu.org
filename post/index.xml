@@ -121,6 +121,133 @@ end@cuda threads&#61;256 blocks&#61;32 producer&#33;&#40;a, 20_000&#41;
 </item>
 
 <item>
+  <title><![CDATA[cuTile.jl 1.0: Tile windows, atomics, and sparse views]]></title>
+  <link>https://juliagpu.org/post/2026-08-19-cutile_1.0/index.html</link>
+  <guid>https://juliagpu.org/2026-08-19-cutile_1.0/</guid>
+  <description><![CDATA[cuTile.jl has reached 1.0&#33; The release adds tile windows via &lt;code&gt;eachtile&lt;/code&gt;, masked and view-based atomics, an &lt;code&gt;@atomic&lt;/code&gt; macro, sparse views, compiler remarks, and support for Tile IR 13.4, alongside a dedicated documentation site.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>cuTile.jl has reached 1.0&#33; The release adds tile windows via <code>eachtile</code>, masked and view-based atomics, an <code>@atomic</code> macro, sparse views, compiler remarks, and support for Tile IR 13.4, alongside a dedicated documentation site.</p>
+<p>The package started as an experiment in expressing NVIDIA&#39;s tile-based programming model in Julia. Six months and three releases later, we&#39;re confident tagging an initial stable release. This comes with a dedicated <a href="https://juliagpu.github.io/cuTile.jl">documentation site</a>.</p>
+<p>Compared to v0.3, the 1.0 release adds the following features.</p>
+<h2 id="tile_windows">Tile windows</h2>
+<p>Previously, walking an array tile by tile meant passing the array, index, and shape to every <code>ct.load</code> and <code>ct.store</code>. The new <code>ct.eachtile</code> instead returns an indexable collection of fixed-shape windows. A blocked matrix multiplication shows the difference:</p>
+<pre><code class="language-julia">using CUDA, cuTile
+import cuTile as ctfunction matmul&#33;&#40;C, A, B&#41;
+    a_tiles &#61; ct.eachtile&#40;A, &#40;64, 32&#41;&#41;
+    b_tiles &#61; ct.eachtile&#40;B, &#40;32, 64&#41;&#41;
+    c_tiles &#61; ct.eachtile&#40;C, &#40;64, 64&#41;&#41;    m, n &#61; ct.bid&#40;1&#41;, ct.bid&#40;2&#41;
+    acc &#61; zeros&#40;Float32, &#40;64, 64&#41;&#41;
+    for k in Int32&#40;1&#41;:Int32&#40;size&#40;a_tiles, 2&#41;&#41;
+        acc &#61; muladd&#40;a_tiles&#91;m, k&#93;, b_tiles&#91;k, n&#93;, acc&#41;
+    end
+    c_tiles&#91;m, n&#93; &#61; acc
+    return
+endA &#61; CUDA.rand&#40;Float16, 256, 128&#41;
+B &#61; CUDA.rand&#40;Float16, 128, 256&#41;
+C &#61; CUDA.zeros&#40;Float32, 256, 256&#41;
+@cuda backend&#61;cuTile blocks&#61;&#40;4, 4&#41; matmul&#33;&#40;C, A, B&#41;</code></pre>
+<p><code>size&#40;a_tiles, 2&#41;</code> returns the number of windows along that dimension, avoiding a separate trip-count calculation. <code>step</code> controls the distance between window origins: a smaller value produces overlap, while a larger one leaves gaps.</p>
+<pre><code class="language-julia">adjacent &#61; ct.eachtile&#40;a, &#40;8, 8&#41;&#41;               # step defaults to the shape
+overlap  &#61; ct.eachtile&#40;a, &#40;8, 8&#41;; step&#61;&#40;4, 8&#41;&#41;  # neighboring windows overlap</code></pre>
+<p>Partial edge windows are handled by the padding mode, as with a normal load. Unequal shape and step require Tile IR bytecode v13.3 or newer.</p>
+<h2 id="atomics">Atomics</h2>
+<p>cuTile now has three atomic-operation families, with different return values and ordering options.</p>
+<p>The read-modify-write functions &#40;<code>ct.atomic_add</code> and friends&#41; return the old value and take a configurable memory order. In 1.0 they also accept a <code>mask</code>, useful for the tail block of a grid that does not divide the data evenly:</p>
+<pre><code class="language-julia">function histogram&#33;&#40;counts, data, n::Int32&#41;
+    pid &#61; ct.bid&#40;1&#41;
+    offs &#61; &#40;pid - Int32&#40;1&#41;&#41; * Int32&#40;128&#41; .&#43; ct.arange&#40;128&#41;
+    vals &#61; ct.load&#40;data; index&#61;pid, shape&#61;&#40;128,&#41;&#41;
+    active &#61; offs .&lt;&#61; n                    # mask off the tail
+    ct.atomic_add&#40;counts, vals, Int32&#40;1&#41;; mask&#61;active&#41;
+    return
+end</code></pre>
+<p>The new <code>ct.atomic_store_*</code> family lowers to Tile IR&#39;s view-based atomic reductions. These reduce a tile into an array or an <code>eachtile</code> window and return <code>nothing</code>, using relaxed device-wide ordering:</p>
+<pre><code class="language-julia">function accumulate_tiles&#33;&#40;out, src&#41;
+    tiles &#61; ct.eachtile&#40;out, &#40;128,&#41;&#41;
+    pid &#61; ct.bid&#40;1&#41;
+    ct.atomic_store_add&#40;tiles, 1, ct.load&#40;src; index&#61;pid, shape&#61;&#40;128,&#41;&#41;&#41;
+    return
+end</code></pre>
+<p><code>ct.@atomic</code> provides <code>Base</code>-style statement and value forms:</p>
+<pre><code class="language-julia">ct.@atomic counters&#91;i&#93; &#43;&#61; update
+ct.@atomic counters&#91;i&#93; &#61; max&#40;counters&#91;i&#93;, value&#41;
+old_new &#61; ct.@atomic counters&#91;i&#93; &#43; value      # returns old &#61;&gt; new</code></pre>
+<p>Statement forms default to relaxed ordering, while value forms default to acquire-release. View-based reductions and <code>ct.@atomic</code> require Tile IR 13.3.</p>
+<h2 id="sparse_views">Sparse views</h2>
+<p><code>view</code> and <code>@view</code> on a <code>TileArray</code> now accept positive step ranges. On arrays with two or more dimensions, one dimension may instead use a 1D integer tile, creating a <em>sparse view</em> that <code>ct.load</code> and <code>ct.store</code> lower to a Tile IR gather/scatter view:</p>
+<pre><code class="language-julia">function pick_rows&#33;&#40;dst, src&#41;
+    rows &#61; ct.arange&#40;4; start&#61;1, step&#61;2&#41;      # rows 1, 3, 5, 7
+    selected &#61; @view src&#91;rows, 1:8&#93;
+    tile &#61; ct.load&#40;selected, &#40;4, 8&#41;&#41;
+    ct.store&#40;dst, &#40;1, 1&#41;, tile&#41;
+    return
+end</code></pre>
+<p>The load shape is explicit and static, while the range starts may be runtime values. Sparse loads apply the requested padding and stores clip partially out-of-bounds elements; repeated indices are fine for loads, but conflicting stores are undefined. Step ranges and sparse views require Tile IR 13.3.</p>
+<h2 id="compiler_remarks">Compiler remarks</h2>
+<p><code>tileiras</code> can report whether it selected tensor cores, vector loads, and other optimizations. <code>code_tiled</code> and <code>@device_code_tiled</code> now print those diagnostics with <code>remarks&#61;true</code>.</p>
+<p>Compile the matmul above with <code>Float32</code> inputs:</p>
+<pre><code class="language-julia">A &#61; CUDA.rand&#40;Float32, 256, 128&#41;
+B &#61; CUDA.rand&#40;Float32, 128, 256&#41;
+C &#61; CUDA.zeros&#40;Float32, 256, 256&#41;
+ct.@device_code_tiled remarks&#61;true @cuda backend&#61;cuTile blocks&#61;&#40;4, 4&#41; matmul&#33;&#40;C, A, B&#41;</code></pre>
+<pre><code class="language-text">// tileiras optimization remarks
+// Name:            RemarkMemoryLoadInstructionSelected
+//   - RemarkId:    3
+//   - Remark:      Load instruction selected
+// Name:            RemarkTensorCoreMMA
+//   - RemarkId:    1
+//   - Remark:      MMA operation failed to optimize to use Tensor Cores, it is using FMA instructions instead</code></pre>
+<p>For this kernel, the <code>Float32</code> multiply uses FMA instructions. With <code>Float16</code> inputs and a <code>Float32</code> accumulator, the compiler instead reports:</p>
+<pre><code class="language-text">// Name:            RemarkTensorCoreMMA
+//   - Remark:      MMA operation successfully optimized to use Tensor Cores</code></pre>
+<p>Remarks require <code>tileiras</code> 13.4 or newer, which is still in early-access.</p>
+<h2 id="programmatic_dependent_launch">Programmatic dependent launch</h2>
+<p>Programmatic dependent launch can overlap the tail of a producer kernel with an independent preamble in the next kernel on the same stream. The producer signals when its dependents may start; the consumer is launched with <code>dependent&#61;true</code> and waits before reading the producer&#39;s results:</p>
+<pre><code class="language-julia">function producer&#40;a, producer_out&#41;
+    ct.grid_dependency_control_launch_dependents&#40;&#41;
+    tile &#61; ct.load&#40;a, 1, &#40;32,&#41;&#41;               # may overlap with the consumer
+    ct.store&#40;producer_out, 1, tile&#41;
+    return
+endfunction consumer&#40;b, producer_out, out&#41;
+    tile &#61; ct.load&#40;b, 1, &#40;32,&#41;&#41;               # independent preamble
+    ct.grid_dependency_control_wait&#40;&#41;
+    ct.store&#40;out, 1, tile &#43; ct.load&#40;producer_out, 1, &#40;32,&#41;&#41;&#41;
+    return
+endstream &#61; CUDA.stream&#40;&#41;
+@cuda backend&#61;cuTile blocks&#61;1 stream producer&#40;a, producer_out&#41;
+@cuda backend&#61;cuTile blocks&#61;1 dependent&#61;true stream consumer&#40;b, producer_out, out&#41;</code></pre>
+<p>The overlap is opportunistic, so correctness must never depend on the two kernels actually running concurrently. The feature requires Tile IR 13.4 and compute capability 9.0 or newer.</p>
+<h2 id="other_changes">Other changes</h2>
+<ul>
+<li><p><strong>Tile IR 13.4</strong> is supported and emitted by default when <code>tileiras</code> accepts it. It brings <code>ct.insert</code>, the inverse of <code>ct.extract</code>, and <code>check_bounds&#61;false</code> on <code>ct.load</code>/<code>ct.store</code>, an explicit promise that the whole tile is in bounds which drops the padding and selects Tile IR&#39;s unchecked encoding.</p>
+</li>
+<li><p><strong>Explicit rounding modes</strong> on float-to-float conversions: <code>Float32.&#40;tile, RoundDown&#41;</code>, with <code>RoundNearest</code>, <code>RoundToZero</code>, <code>RoundDown</code>, <code>RoundUp</code> and <code>RoundNearestTiesAway</code>. Supported modes and source/target pairs depend on the Tile IR version. Directed rounding generally requires 13.4; some conversions to <code>Float8_E8M0FNU</code> are available in 13.3.</p>
+</li>
+<li><p><strong>64-bit indexing.</strong> <code>TileArray</code> gained an index-type parameter, and arrays whose sizes or strides exceed the 32-bit range automatically use <code>Int64</code>. Smaller arrays continue to use <code>Int32</code>. <code>ct.TileArray&#40;a; index&#61;Int64&#41;</code> selects wide indexing explicitly. Wide indexing requires Tile IR 13.3.</p>
+</li>
+<li><p><strong>Array construction syntax</strong> works in kernels: <code>&#91;a, b, c&#93;</code>, typed forms like <code>Float32&#91;a, b&#93;</code>, bracket concatenation &#40;<code>&#91;A; B&#93;</code>, <code>&#91;a b; C&#93;</code>, <code>&#91;A;;; B&#93;</code>&#41; and <code>cat&#40;A, B...; dims&#41;</code>. <code>ct.cat</code> was removed in favor of these.</p>
+</li>
+<li><p><strong>Multi-dimensional reductions.</strong> <code>dims</code> now takes an integer, an iterable of integers, or <code>:</code>, for both tile-level and host-level <code>ct.Tiled</code> reductions.</p>
+</li>
+<li><p><strong>Memory ordering on plain loads and stores</strong>, not just atomics: <code>ct.load</code> and <code>ct.store</code> accept <code>memory_order</code> and <code>memory_scope</code>.</p>
+</li>
+<li><p><strong>Configuration moved to preferences.</strong> The <code>JULIA_CUTILE_CACHE_DIR</code> and <code>JULIA_CUTILE_CACHE_SIZE</code> environment variables were replaced by the <code>disk_cache</code>, <code>cache_dir</code>, and <code>cache_size_bytes</code> preferences. A new <code>compiler_timeout_seconds</code> preference bounds each <code>tileiras</code> invocation.</p>
+</li>
+</ul>
+<p>cuTile.jl 1.0 requires CUDA.jl 6.3. See <a href="https://github.com/JuliaGPU/cuTile.jl/blob/main/NEWS.md"><code>NEWS.md</code></a> for the user-facing release history and the <a href="https://github.com/JuliaGPU/cuTile.jl/releases/tag/v1.0.0">release notes</a> for the merged pull requests. Please file an issue if you run into a problem.</p>
+]]></content:encoded>
+    
+  <pubDate>Wed, 19 Aug 2026 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Tim Besard</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[State of Julia&#39;s GPU ecosystem in 2026]]></title>
   <link>https://juliagpu.org/post/2026-08-03-gpu_ecosystem/index.html</link>
   <guid>https://juliagpu.org/2026-08-03-gpu_ecosystem/</guid>
