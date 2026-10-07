@@ -46,12 +46,12 @@ function hfun_post_date()
     author_line = ""
     if !isnothing(author)
         author_line = """
-            <i data-feather=edit-2></i>
+            <i data-lucide=pencil></i>
             $author
             """
     end
     return """
-           <i data-feather=calendar></i>
+           <i data-lucide=calendar></i>
            <time datetime=$y-$m-$d>$(MONTH[m]) $d, $y</time><br>
            $author_line
            """
@@ -59,14 +59,14 @@ end
 
 function blogpost_entry_html(link, title, y, m, d; ext=false)
     return """
-        <p>
+        <div class="blog-entry">
           <a class=font-125 href="$link">
             $title
           </a>$(ifelse(ext, "<span>&nbsp;&#8599;</span>", ""))
           <br>
-          <i data-feather=calendar></i>
-          <time datetime=$y-$m-$d>$(MONTH[m]) $d, $y</time><br>
-        </p>
+          <i data-lucide=calendar style="width:14px;height:14px"></i>
+          <time datetime=$y-$m-$d>$(MONTH[m]) $d, $y</time>
+        </div>
         """
 end
 
@@ -80,7 +80,11 @@ function blogpost_entry(fpath)
         return nothing
     end
     ext = something(pagevar(rpath, :external), false)
-    title = pagevar(rpath, :title)::String
+    title = pagevar(rpath, :title)
+    if title === nothing
+        return nothing
+    end
+    title = title::String
     y, m, d = getdate(fpath)
     rpath = replace(fpath, r"\.md$" => "")
     date = Date(y, m, d)

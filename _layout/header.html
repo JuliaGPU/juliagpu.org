@@ -1,28 +1,27 @@
 <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
+    <nav class="navbar navbar-expand-md">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
             <ul class=navbar-nav>
                 <li class="nav-item">
-                    <a class="nav-link {{ispage index}}active{{end}}" href="/"><i data-feather=home></i> Home</a>
+                    <a class="nav-link {{ispage index}}active{{end}}" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ispage post/*}}active{{end}}" href="/post/"><i data-feather=file-text></i> News</a>
+                    <a class="nav-link {{ispage post/*}}active{{end}}" href="/post/">Blog</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ispage showcases}}active{{end}}" href="/showcases/"><i data-feather=star></i> Showcases</a>
+                    <a class="nav-link {{ispage showcases}}active{{end}}" href="/showcases/">Showcases</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ispage learn}}active{{end}}" href="/learn/"><i data-feather=book-open></i> Learn</a>
+                    <a class="nav-link {{ispage learn}}active{{end}}" href="/learn/">Learn</a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle {{ispage backends/*}}active{{end}}" href="#" id="backendDropdown"
                         role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
+                        Backends
                     </a>
                     <div class="dropdown-menu" aria-labelledby="backendDropdown">
                         <a class="dropdown-item {{ispage backends/cuda}}active{{end}}" href="/backends/cuda/">CUDA</a>
@@ -33,6 +32,12 @@ navigation">
                     </div>
                 </li>
             </ul>
+            <div class="ms-md-3">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+                    <i data-lucide=moon id="theme-icon-dark" style="display:none"></i>
+                    <i data-lucide=sun id="theme-icon-light" style="display:none"></i>
+                </button>
+            </div>
         </div>
     </nav>
 </div>

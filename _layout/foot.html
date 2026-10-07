@@ -6,27 +6,59 @@
         {{ insert foot_highlight.html }}
     {{ end }}
 
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    <footer id=footer class="mt-auto">
+        <div class="container text-center">
+            <ul class="footer-links">
+                <li><a href="https://github.com/JuliaGPU">GitHub</a></li>
+                <li><a href="https://discourse.julialang.org/c/domain/gpu/11">Discourse</a></li>
+                <li><a href="https://julialang.slack.com/messages/C689Y34LE/">Slack #gpu</a></li>
+                <li><a href="/post/index.xml">RSS Feed</a></li>
+                <li><a href="/post/">Blog</a></li>
+                <li><a href="/learn/">Learn</a></li>
+            </ul>
+            <p style="font-size:0.85rem">
+                Made with <a href=https://franklinjl.org>Franklin.jl</a> and
+                <a href=https://julialang.org>the Julia programming language</a>.
+            </p>
+        </div>
     </footer>
 
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
+    <!-- LUCIDE ICONS -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <script>lucide.createIcons();</script>
 
     <!-- BOOTSTRAP -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- GOOGLE ANALYTICS -->
+    <!-- DARK MODE TOGGLE -->
     <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
+    (function() {
+        var toggle = document.getElementById('theme-toggle');
+        var iconDark = document.getElementById('theme-icon-dark');
+        var iconLight = document.getElementById('theme-icon-light');
+
+        function updateIcons() {
+            var theme = document.documentElement.getAttribute('data-bs-theme');
+            if (theme === 'dark') {
+                iconDark.style.display = 'none';
+                iconLight.style.display = 'inline';
+            } else {
+                iconDark.style.display = 'inline';
+                iconLight.style.display = 'none';
+            }
+        }
+
+        updateIcons();
+
+        toggle.addEventListener('click', function() {
+            var current = document.documentElement.getAttribute('data-bs-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-bs-theme', next);
+            localStorage.setItem('theme', next);
+            updateIcons();
+        });
+    })();
     </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
 
   </body>
 </html>

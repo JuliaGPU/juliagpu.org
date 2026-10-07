@@ -57,7 +57,7 @@ external_entries = [
 ~~~
 <h1>
   Blog
-  <a href=/post/index.xml><i data-feather=rss></i></a>
+  <a href=/post/index.xml><i data-lucide=rss></i></a>
 </h1>
 ~~~
 
