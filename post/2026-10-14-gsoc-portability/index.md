@@ -21,20 +21,20 @@ results for each operation, and what is left.
 ## The problem
 
 The Julia GPU ecosystem lets users write array programs that run on NVIDIA, AMD, and
-Intel GPUs. That portability relies on `GPUArrays.jl`, which defines the common
+Intel GPUs. That portability relies on GPUArrays.jl, which defines the common
 interface every vendor package implements. Several common operations did not have a
 shared implementation. `reverse`, `findall`, `accumulate!`, and `mapreduce` either
 failed on backends with no vendor-specific method, or fell back to CPU execution by
-copying data to the host and back. A source review of `GPUArrays.jl`, `CUDA.jl`,
-`AMDGPU.jl`, `oneAPI.jl`, and `Metal.jl` confirmed the gaps: `reverse` and `findall`
+copying data to the host and back. A source review of GPUArrays.jl, CUDA.jl,
+AMDGPU.jl, oneAPI.jl, and Metal.jl confirmed the gaps: `reverse` and `findall`
 were missing from the shared fallback, `accumulate!` existed only as a scalar CPU
 fallback, and `mapreducedim!` was an `error("Not implemented")` stub, so each backend
 carried its own copy.
 
 The project addresses these gaps by moving the kernels into
-[`AcceleratedKernels.jl`](https://github.com/JuliaGPU/AcceleratedKernels.jl) (AK),
-which is written once against `KernelAbstractions.jl` and runs on every backend, and
-by keeping `GPUArrays.jl` as a thin layer that delegates to it. Because Julia's
+[AcceleratedKernels.jl](https://github.com/JuliaGPU/AcceleratedKernels.jl) (AK),
+which is written once against KernelAbstractions.jl and runs on every backend, and
+by keeping GPUArrays.jl as a thin layer that delegates to it. Because Julia's
 multiple dispatch selects the most specific method, routing the `AnyGPUArray` fallback
 to AK means a backend that already has a vendor method keeps it, while a backend
 without one receives the AK implementation instead of an error or a host round trip.
@@ -44,7 +44,7 @@ without one receives the AK implementation instead of an error or a host round t
 The goals I set with my mentors were:
 
 - Add the missing data-parallel primitives (`reverse`, `findall`, `accumulate`,
-  `mapreduce`, and the `sort` family) as portable AK kernels, so `GPUArrays.jl` can
+  `mapreduce`, and the `sort` family) as portable AK kernels, so GPUArrays.jl can
   use one implementation instead of each backend maintaining its own.
 - Add dimension-wise (`dims`) support across these operations, since array code
   reduces, scans, reverses, and sorts along an axis, not only over a flat vector.
@@ -56,7 +56,7 @@ The goals I set with my mentors were:
 
 ## What I did
 
-I merged the work as 15 pull requests, released in `AcceleratedKernels.jl` 0.5. AK 0.5
+I merged the work as 15 pull requests, released in AcceleratedKernels.jl 0.5. AK 0.5
 also reworked the host API (algorithms passed as values, an `Auto()` selector that
 chooses a strategy per input, and explicit workspaces), so every operation now has one
 calling convention across backends.
@@ -174,31 +174,31 @@ operations (`reduce`, `map`), which already ran at the memory limit.
 
 ## What got merged upstream
 
-The table lists the pull requests from the project and their status. All of the
-primitive work is merged and released in `AcceleratedKernels.jl` 0.5.
+All of the primitive work is merged and released in AcceleratedKernels.jl 0.5; the
+one AMDGPU.jl fix is merged there.
 
-| Repo | PR | What it does | Status |
-|------|----|--------------|--------|
-| `AcceleratedKernels.jl` | [#83](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/83) | Dimensional `mapreduce` / `reduce` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#90](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/90) | Opt-in `RadixSort` via `alg` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#97](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/97) | Optimize radix sort | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#102](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/102) | `reverse!` / `reverse` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#105](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/105) | Vectorized by-block reduce loads | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#107](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/107) | `items_per_thread` for reductions | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#108](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/108) | `items_per_thread` for scans | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#114](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/114) | `dims` for `reverse` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#115](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/115) | `findall` (stream compaction) | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#116](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/116) | Device-scope fence for DecoupledLookback | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#117](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/117) | `dims` for `sort` / `sortperm` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#126](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/126) | `BitonicSort` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#129](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/129) | Segmented `RadixSort` along `dims` | Merged (0.5) |
-| `AcceleratedKernels.jl` | [#130](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/130) | Multi-source `map` / `map!` | Merged (0.5) |
-| `AMDGPU.jl` | [#1069](https://github.com/JuliaGPU/AMDGPU.jl/pull/1069) | Guard empty-array `reverse` launch | Merged |
+| PR | What it does |
+|:---|:-------------|
+| [#83](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/83) | Dimensional `mapreduce` / `reduce` |
+| [#90](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/90) | Opt-in `RadixSort` via `alg` |
+| [#97](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/97) | Optimize radix sort |
+| [#102](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/102) | `reverse!` / `reverse` |
+| [#105](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/105) | Vectorized by-block reduce loads |
+| [#107](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/107) | `items_per_thread` for reductions |
+| [#108](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/108) | `items_per_thread` for scans |
+| [#114](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/114) | `dims` for `reverse` |
+| [#115](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/115) | `findall` (stream compaction) |
+| [#116](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/116) | Device-scope fence for DecoupledLookback |
+| [#117](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/117) | `dims` for `sort` / `sortperm` |
+| [#126](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/126) | `BitonicSort` |
+| [#129](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/129) | Segmented `RadixSort` along `dims` |
+| [#130](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/130) | Multi-source `map` / `map!` |
+| [AMDGPU.jl #1069](https://github.com/JuliaGPU/AMDGPU.jl/pull/1069) | Guard empty-array `reverse` launch |
 
 Two measurement write-ups are recorded as open issues so the data lives in the repo:
 `Int32` indexing in [#149](https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/149)
 and device-aware tuning in [#150](https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/150).
-The `GPUArrays.jl` delegation that consumes this work has merged as
+The GPUArrays.jl delegation that consumes this work has merged as
 [#790](https://github.com/JuliaGPU/GPUArrays.jl/pull/790); it is maintained by Tim and
 builds on the AK 0.5 host-API rework, which also merged and shipped in 0.5.
 
@@ -213,7 +213,7 @@ Measured against the stated goals:
 - **Performance at least at parity:** done, as the per-operation charts show.
 - **Regression check:** done, through the full benchmark run.
 
-The `GPUArrays.jl` delegation merged in
+The GPUArrays.jl delegation merged in
 [#790](https://github.com/JuliaGPU/GPUArrays.jl/pull/790), which builds on the AK 0.5
 host-API rework. A backend without a vendor method now uses the AK implementation.
 
@@ -264,29 +264,10 @@ bandwidth-bound operations reach parity, which is the expected ceiling.
 - **Small and whole-array reductions.** A known slowdown is tracked in
   [#135](https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/135), which I am
   looking into.
-- **GPUArrays on top of AK.** The larger plan is to build `GPUArrays.jl` on top of AK
+- **GPUArrays on top of AK.** The larger plan is to build GPUArrays.jl on top of AK
   so backends no longer depend on it directly. The first delegation PR
   [#790](https://github.com/JuliaGPU/GPUArrays.jl/pull/790) has merged, and more
   operations can follow the same path.
-
-## Links
-
-- `AcceleratedKernels.jl` pull requests: [#83](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/83),
-  [#90](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/90),
-  [#97](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/97),
-  [#102](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/102),
-  [#105](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/105),
-  [#107](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/107),
-  [#108](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/108),
-  [#114](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/114),
-  [#115](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/115),
-  [#116](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/116),
-  [#117](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/117),
-  [#126](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/126),
-  [#129](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/129),
-  [#130](https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/130).
-- `AMDGPU.jl`: [#1069](https://github.com/JuliaGPU/AMDGPU.jl/pull/1069).
-- `GPUArrays.jl` delegation: [#790](https://github.com/JuliaGPU/GPUArrays.jl/pull/790).
 
 Thanks to Tim Besard and Christian Guinard for their mentorship, and to the JuliaGPU
 community.
