@@ -21,19 +21,25 @@ results for each operation, and what is left.
 ## The problem
 
 The Julia GPU ecosystem lets users write array programs that run on NVIDIA, AMD, and
-Intel GPUs. That portability relies on GPUArrays.jl, which defines the common
+Intel GPUs. That portability relies on
+[GPUArrays.jl](https://github.com/JuliaGPU/GPUArrays.jl), which defines the common
 interface every vendor package implements. Several common operations did not have a
 shared implementation. `reverse`, `findall`, `accumulate!`, and `mapreduce` either
 failed on backends with no vendor-specific method, or fell back to CPU execution by
-copying data to the host and back. A source review of GPUArrays.jl, CUDA.jl,
-AMDGPU.jl, oneAPI.jl, and Metal.jl confirmed the gaps: `reverse` and `findall`
+copying data to the host and back. A source review of GPUArrays.jl,
+[CUDA.jl](https://github.com/JuliaGPU/CUDA.jl),
+[AMDGPU.jl](https://github.com/JuliaGPU/AMDGPU.jl),
+[oneAPI.jl](https://github.com/JuliaGPU/oneAPI.jl), and
+[Metal.jl](https://github.com/JuliaGPU/Metal.jl) confirmed the gaps: `reverse` and `findall`
 were missing from the shared fallback, `accumulate!` existed only as a scalar CPU
 fallback, and `mapreducedim!` was an `error("Not implemented")` stub, so each backend
 carried its own copy.
 
 The project addresses these gaps by moving the kernels into
 [AcceleratedKernels.jl](https://github.com/JuliaGPU/AcceleratedKernels.jl) (AK),
-which is written once against KernelAbstractions.jl and runs on every backend, and
+which is written once against
+[KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl) and runs on
+every backend, and
 by keeping GPUArrays.jl as a thin layer that delegates to it. Because Julia's
 multiple dispatch selects the most specific method, routing the `AnyGPUArray` fallback
 to AK means a backend that already has a vendor method keeps it, while a backend
@@ -61,21 +67,24 @@ also reworked the host API (algorithms passed as values, an `Auto()` selector th
 chooses a strategy per input, and explicit workspaces), so every operation now has one
 calling convention across backends.
 
-**Primitives and `dims` support.** I gave reductions and scans N-dimensional axis
-handling, added `reverse` and then extended it to arbitrary `dims`, built `findall` as
-a scan-based stream compaction, and generalized `map` and `map!` to take several source
-arrays.
+**Primitives and `dims` support.** Vendor packages already provided dimension-wise
+(`dims`) support for some of these operations on their own array types; the portable AK
+kernels did not. I added that coverage to AK so it can stand in for the per-backend
+versions and improve on them rather than regress them: I gave reductions and scans
+N-dimensional axis handling, added `reverse` and then extended it to arbitrary `dims`,
+built `findall` as a scan-based stream compaction, and generalized `map` and `map!` to
+take several source arrays.
 
 **Sorting.** A single comparison sort is not the best choice for every shape, since it
-is good on short slices but grows as `L log L` on long ones. I added an opt-in LSD
-`RadixSort` and tuned it with portable, capability-gated changes (a larger block size,
+is good on short slices but grows as `L log L` on long ones. I added an opt-in
+least-significant-digit (LSD) `RadixSort` and tuned it with portable, capability-gated changes (a larger block size,
 atomic histograms, chunked scatter), added a `BitonicSort` network for short slices,
 and added a segmented `RadixSort` path for sorting along `dims` whose cost depends
 little on slice length. The `Auto()` selector chooses between them per input.
 
 **Benchmarking.** I measured each operation on the same data on an NVIDIA RTX 5080,
 timing on the device with `CUDA.@elapsed` and taking the minimum of 12 warmed runs. For
-mutating operations I refreshed the input each iteration. Every run used AK's default
+mutating operations, I refreshed the input each iteration. Every run used AK's default
 settings with no per-device tuning. I compare each operation against the state of
 AcceleratedKernels before the project and against the CUDA.jl vendor path. The "before"
 numbers come from checking out AK at the exact commit just before this work began
@@ -248,8 +257,10 @@ result is as useful as a positive one.
 
 The main lesson is that portability and performance are compatible once the algorithm
 fits the operation. The compute-bound operations improve because one portable kernel can
-use a work-efficient algorithm that each backend would otherwise reimplement, and the
-bandwidth-bound operations reach parity, which is the expected ceiling.
+use a work-efficient algorithm that each backend would otherwise reimplement. The
+bandwidth-bound operations reach parity because they are limited by memory bandwidth: once
+a kernel already saturates the memory bus, there is no headroom left to beat, so matching
+the vendor path is the best result available rather than a shortfall.
 
 ## What is left
 
