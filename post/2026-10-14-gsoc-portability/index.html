@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" class=h-100>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+  <meta content="index, follow" name=robots>
+  <link rel="icon" href="/assets/favicon.ico">
+  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+
+  
+  
+    <title>GSoC 2026: Portable data-parallel primitives for the Julia GPU stack ⋅ JuliaGPU</title>
+  
+</head>
+<body class="d-flex flex-column h-100">
+  <div id=nav-border class=container>
+    <nav class="navbar navbar-expand-sm navbar-light">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
+navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+            <ul class=navbar-nav>
+                <li class="nav-item">
+                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/post/"><i data-feather=file-text></i> News</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-feather=cpu></i> Backends
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
+                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
+                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
+                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
+                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
+                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+
+  <div class="container">
+    <main id=main>
+
+    
+      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
+      
+
+      <h1>GSoC 2026: Portable data-parallel primitives for the Julia GPU stack</h1>
+      <i data-feather=calendar></i>
+<time datetime=2026-10-14>Oct 14, 2026</time><br>
+<i data-feather=edit-2></i>
+Shreyas Hegde
+
+
+      <br><br>
+    
+<!-- Content appended here -->
+
+<p>This Google Summer of Code 2026 project added the data-parallel primitives that the Julia GPU stack was missing and tuned them to serve as the shared implementation for every backend. The work was merged as 15 pull requests in AcceleratedKernels.jl 0.5. Each operation is benchmarked on an NVIDIA RTX 5080 against the pre-GSoC AK release and the CUDA.jl vendor path, showing real speedups where a better algorithm applies, new functionality where AK had nothing before, and parity on the bandwidth-bound operations.</p>
+<p>This post is my Google Summer of Code 2026 final report for <a href="https://julialang.org/">The Julia Language</a> &#40;JuliaGPU&#41;, mentored by Tim Besard and Christian Guinard. It covers the project goals, what I did, what was merged, the benchmark results for each operation, and what is left.</p>
+<h2 id="the_problem"><a href="#the_problem" class="header-anchor">The problem</a></h2>
+<p>The Julia GPU ecosystem lets users write array programs that run on NVIDIA, AMD, and Intel GPUs. That portability relies on <a href="https://github.com/JuliaGPU/GPUArrays.jl">GPUArrays.jl</a>, which defines the common interface every vendor package implements. Several common operations did not have a shared implementation. <code>reverse</code>, <code>findall</code>, <code>accumulate&#33;</code>, and <code>mapreduce</code> either failed on backends with no vendor-specific method, or fell back to CPU execution by copying data to the host and back. A source review of GPUArrays.jl, <a href="https://github.com/JuliaGPU/CUDA.jl">CUDA.jl</a>, <a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a>, <a href="https://github.com/JuliaGPU/oneAPI.jl">oneAPI.jl</a>, and <a href="https://github.com/JuliaGPU/Metal.jl">Metal.jl</a> confirmed the gaps: <code>reverse</code> and <code>findall</code> were missing from the shared fallback, <code>accumulate&#33;</code> existed only as a scalar CPU fallback, and <code>mapreducedim&#33;</code> was an <code>error&#40;&quot;Not implemented&quot;&#41;</code> stub, so each backend carried its own copy.</p>
+<p>The project addresses these gaps by moving the kernels into <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl">AcceleratedKernels.jl</a> &#40;AK&#41;, which is written once against <a href="https://github.com/JuliaGPU/KernelAbstractions.jl">KernelAbstractions.jl</a> and runs on every backend, and by keeping GPUArrays.jl as a thin layer that delegates to it. Because Julia&#39;s multiple dispatch selects the most specific method, routing the <code>AnyGPUArray</code> fallback to AK means a backend that already has a vendor method keeps it, while a backend without one receives the AK implementation instead of an error or a host round trip.</p>
+<h2 id="project_goals"><a href="#project_goals" class="header-anchor">Project goals</a></h2>
+<p>The goals I set with my mentors were:</p>
+<ul>
+<li><p>Add the missing data-parallel primitives &#40;<code>reverse</code>, <code>findall</code>, <code>accumulate</code>, <code>mapreduce</code>, and the <code>sort</code> family&#41; as portable AK kernels, so GPUArrays.jl can use one implementation instead of each backend maintaining its own.</p>
+</li>
+<li><p>Add dimension-wise &#40;<code>dims</code>&#41; support across these operations, since array code reduces, scans, reverses, and sorts along an axis, not only over a flat vector.</p>
+</li>
+<li><p>Tune the kernels so the portable path is at least as fast as the vendor and <code>Base</code> implementations, and add further sort algorithms where one strategy does not fit every input shape.</p>
+</li>
+<li><p>Run a benchmark across every operation to check for regressions and to find where tuning is still required.</p>
+</li>
+</ul>
+<h2 id="what_i_did"><a href="#what_i_did" class="header-anchor">What I did</a></h2>
+<p>I merged the work as 15 pull requests, released in AcceleratedKernels.jl 0.5. AK 0.5 also reworked the host API &#40;algorithms passed as values, an <code>Auto&#40;&#41;</code> selector that chooses a strategy per input, and explicit workspaces&#41;, so every operation now has one calling convention across backends.</p>
+<p><strong>Primitives and <code>dims</code> support.</strong> Vendor packages already provided dimension-wise &#40;<code>dims</code>&#41; support for some of these operations on their own array types; the portable AK kernels did not. I added that coverage to AK so it can stand in for the per-backend versions and improve on them rather than regress them: I gave reductions and scans N-dimensional axis handling, added <code>reverse</code> and then extended it to arbitrary <code>dims</code>, built <code>findall</code> as a scan-based stream compaction, and generalized <code>map</code> and <code>map&#33;</code> to take several source arrays.</p>
+<p><strong>Sorting.</strong> A single comparison sort is not the best choice for every shape, since it is good on short slices but grows as <code>L log L</code> on long ones. I added an opt-in least-significant-digit &#40;LSD&#41; <code>RadixSort</code> and tuned it with portable, capability-gated changes &#40;a larger block size, atomic histograms, chunked scatter&#41;, added a <code>BitonicSort</code> network for short slices, and added a segmented <code>RadixSort</code> path for sorting along <code>dims</code> whose cost depends little on slice length. The <code>Auto&#40;&#41;</code> selector chooses between them per input.</p>
+<p><strong>Benchmarking.</strong> I measured each operation on the same data on an NVIDIA RTX 5080, timing on the device with <code>CUDA.@elapsed</code> and taking the minimum of 12 warmed runs. For mutating operations, I refreshed the input each iteration. Every run used AK&#39;s default settings with no per-device tuning. I compare each operation against the state of AcceleratedKernels before the project and against the CUDA.jl vendor path. The &quot;before&quot; numbers come from checking out AK at the exact commit just before this work began &#40;<code>bfe4d84</code>, the v0.4.3 line&#41; and profiling it on the same machine. The results per operation follow.</p>
+<h2 id="results_by_operation"><a href="#results_by_operation" class="header-anchor">Results by operation</a></h2>
+<p>In every chart, lower time is better, and both axes use a logarithmic scale unless noted. The series are:</p>
+<ul>
+<li><p><strong>Before GSoC &#40;AK v0.4.3&#41;:</strong> the state of AcceleratedKernels before this work. For the operations AK already had &#40;<code>sort</code>, <code>sortperm</code>, <code>reduce</code>, <code>accumulate</code>, <code>map</code>, and reduction along <code>dims</code>&#41;, this is the pre-GSoC AK kernel. For <code>reverse</code> and <code>findall</code>, AK had no kernel at all before this project, so there is no pre-GSoC AK line and the before-state is the CUDA.jl path shown instead.</p>
+</li>
+<li><p><strong>CUDA.jl:</strong> the vendor GPU implementation that already shipped, reached by calling the standard function on a <code>CuArray</code> &#40;through CUDA.jl and GPUArrays.jl&#41;.</p>
+</li>
+<li><p><strong>AK &#40;this work&#41;:</strong> the current AcceleratedKernels.jl kernel.</p>
+</li>
+</ul>
+<p>One thing to set out up front: pre-GSoC AK was already a capable library. For some operations the result is a clear speedup, for others it is functionality that did not exist before, and for the bandwidth-bound operations it is parity with no regression. I call out each case below.</p>
+<h3 id="sort"><a href="#sort" class="header-anchor">Sort</a></h3>
+<p>Pre-GSoC AK already had a <code>MergeSort</code> that was well ahead of the CUDA.jl sort &#40;about 6 to 7 times faster at large sizes&#41;. The contribution here is the new <code>RadixSort</code>, which is about twice as fast as the old <code>MergeSort</code> on large integer arrays &#40;at 128M <code>Int32</code>, 83 ms for <code>MergeSort</code> versus 39 ms for <code>RadixSort</code>&#41;, plus a <code>BitonicSort</code> for short slices and the <code>Auto</code> selector. <code>Auto</code> currently tracks the merge path at these <code>Int32</code> sizes, so <code>RadixSort</code> is the fast option to pick explicitly.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/sort.png" alt="Flat Int32 sort time versus array size: pre-GSoC MergeSort, CUDA.jl, AK Auto, and AK RadixSort">
+</figure>
+
+<h3 id="sortperm"><a href="#sortperm" class="header-anchor">sortperm</a></h3>
+<p><code>sortperm</code> is faster than pre-GSoC AK by about 1.5 times at large sizes &#40;191 ms to 125 ms at 128M <code>Int32</code>&#41;, and both are far ahead of the CUDA.jl <code>sortperm</code>, which is slow on the GPU.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/sortperm.png" alt="Flat Int32 sortperm time versus array size: pre-GSoC AK, CUDA.jl, and AK">
+</figure>
+
+<h3 id="accumulate"><a href="#accumulate" class="header-anchor">accumulate</a></h3>
+<p>The scan rework is a clear win. The <code>Float32</code> cumulative sum is about 2 to 3 times faster than pre-GSoC AK &#40;7.6 ms to 2.7 ms at 128M&#41;, and faster than the CUDA.jl scan across sizes.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/accumulate.png" alt="Float32 cumsum time versus array size: pre-GSoC AK, CUDA.jl, and AK">
+</figure>
+
+<h3 id="reduce_and_mapreduce"><a href="#reduce_and_mapreduce" class="header-anchor">reduce and mapreduce</a></h3>
+<p>A whole-array reduction reads the input a fixed number of times, so it is limited by memory bandwidth. It was already at that limit in pre-GSoC AK, so the result is parity: the three lines sit together, with a slight mid-size dip in the current version that is tracked in <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/135">#135</a>.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/reduce.png" alt="Whole-array Float32 reduce time versus array size: pre-GSoC AK, CUDA.jl, and AK">
+</figure>
+
+<p>Reduction along a dimension is close to the pre-GSoC path per shape; PR #83 mainly widened which dimensions and shapes are handled rather than changing the per-shape time, and the result stays ahead of the CUDA.jl <code>dims</code> reduction on most shapes.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/mapreduce_dims.png" alt="mapreduce along dims=2 time by array shape: pre-GSoC AK, CUDA.jl, and AK">
+</figure>
+
+<h3 id="findall"><a href="#findall" class="header-anchor">findall</a></h3>
+<p><code>findall</code> did not exist in AK before this project; it was added as a scan-based stream compaction. The chart compares it against the CUDA.jl <code>findall</code> you would have used instead, which it matches or slightly beats across densities.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/findall.png" alt="findall time versus array size at density 0.5: CUDA.jl (before) and AK">
+</figure>
+
+<h3 id="reverse"><a href="#reverse" class="header-anchor">reverse</a></h3>
+<p><code>reverse</code> was also new to AK. It is bandwidth-limited, so it sits at parity with the CUDA.jl <code>reverse&#33;</code> that was the only option before.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/reverse.png" alt="Flat Int32 reverse time versus array size: CUDA.jl (before) and AK">
+</figure>
+
+<h3 id="map"><a href="#map" class="header-anchor">map</a></h3>
+<p>Single-source <code>map</code> is bandwidth-limited and sits at parity with pre-GSoC AK and the CUDA.jl <code>map&#33;</code>. The new capability here is multi-source <code>map</code> and <code>map&#33;</code>, which did not exist before.</p>
+<figure>
+  <img src="/post/2026-10-14-gsoc-portability/map.png" alt="Float32 map time versus array size: pre-GSoC AK, CUDA.jl, and AK">
+</figure>
+
+<p>Taken together: a real speedup where a better algorithm applies &#40;<code>RadixSort</code>, the faster scan behind <code>accumulate</code>, and <code>sortperm</code>&#41;, new functionality where AK had nothing before &#40;<code>findall</code>, <code>reverse</code>, <code>BitonicSort</code>, sorting and reducing along <code>dims</code>, multi-source <code>map</code>&#41;, and parity with no regression on the bandwidth-bound operations &#40;<code>reduce</code>, <code>map</code>&#41;, which already ran at the memory limit.</p>
+<h2 id="what_got_merged_upstream"><a href="#what_got_merged_upstream" class="header-anchor">What got merged upstream</a></h2>
+<p>All of the primitive work is merged and released in AcceleratedKernels.jl 0.5; the one AMDGPU.jl fix is merged there.</p>
+<table><tr><th align="left">PR</th><th align="left">What it does</th></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/83">#83</a></td><td align="left">Dimensional <code>mapreduce</code> / <code>reduce</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/90">#90</a></td><td align="left">Opt-in <code>RadixSort</code> via <code>alg</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/97">#97</a></td><td align="left">Optimize radix sort</td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/102">#102</a></td><td align="left"><code>reverse&#33;</code> / <code>reverse</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/105">#105</a></td><td align="left">Vectorized by-block reduce loads</td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/107">#107</a></td><td align="left"><code>items_per_thread</code> for reductions</td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/108">#108</a></td><td align="left"><code>items_per_thread</code> for scans</td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/114">#114</a></td><td align="left"><code>dims</code> for <code>reverse</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/115">#115</a></td><td align="left"><code>findall</code> &#40;stream compaction&#41;</td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/116">#116</a></td><td align="left">Device-scope fence for DecoupledLookback</td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/117">#117</a></td><td align="left"><code>dims</code> for <code>sort</code> / <code>sortperm</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/126">#126</a></td><td align="left"><code>BitonicSort</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/129">#129</a></td><td align="left">Segmented <code>RadixSort</code> along <code>dims</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/130">#130</a></td><td align="left">Multi-source <code>map</code> / <code>map&#33;</code></td></tr><tr><td align="left"><a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1069">AMDGPU.jl #1069</a></td><td align="left">Guard empty-array <code>reverse</code> launch</td></tr></table>
+<p>Two measurement write-ups are recorded as open issues so the data lives in the repo: <code>Int32</code> indexing in <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/149">#149</a> and device-aware tuning in <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/150">#150</a>. The GPUArrays.jl delegation that consumes this work has merged as <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/790">#790</a>; it is maintained by Tim and builds on the AK 0.5 host-API rework, which also merged and shipped in 0.5.</p>
+<h2 id="current_state"><a href="#current_state" class="header-anchor">Current state</a></h2>
+<p>Measured against the stated goals:</p>
+<ul>
+<li><p><strong>Missing primitives as portable AK kernels:</strong> done and merged. <code>reverse</code>, <code>findall</code>, <code>accumulate</code>, <code>mapreduce</code> or <code>reduce</code>, and the <code>sort</code> and <code>sortperm</code> family are in AK 0.5 and run on every backend.</p>
+</li>
+<li><p><strong><code>dims</code> support:</strong> done. Reductions, scans, <code>reverse</code>, and <code>sort</code> take <code>dims</code>.</p>
+</li>
+<li><p><strong>Performance at least at parity:</strong> done, as the per-operation charts show.</p>
+</li>
+<li><p><strong>Regression check:</strong> done, through the full benchmark run.</p>
+</li>
+</ul>
+<p>The GPUArrays.jl delegation merged in <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/790">#790</a>, which builds on the AK 0.5 host-API rework. A backend without a vendor method now uses the AK implementation.</p>
+<h2 id="challenges_and_lessons_learned"><a href="#challenges_and_lessons_learned" class="header-anchor">Challenges and lessons learned</a></h2>
+<p><strong>A single-pass scan needs a real device-scope fence.</strong> The decoupled-lookback scan that makes <code>accumulate</code> fast is a single pass in which blocks read each other&#39;s partial results, so it is correct only if every backend provides a device-scope memory fence between the write and the read. The first version passed on one backend and produced wrong results on another. The fix &#40;<a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/116">#116</a>&#41; added a real device-scope fence on every backend. A memory-ordering assumption that holds on one vendor is not portable until it is checked on each.</p>
+<p><strong>GPU predicates have to stay type-stable.</strong> Building <code>findall</code> as a stream compaction &#40;<a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/pull/115">#115</a>&#41; failed to compile whenever the predicate closure captured a <code>Type</code> or returned a type-unstable value. I had to write the kernels so the predicate stays type-stable. GPU code is less forgiving than CPU code here, and the fix came down to being careful about what a device closure captures.</p>
+<p><strong>Edge cases show up only on real hardware.</strong> The out-of-place <code>reverse</code> failed when launched on an empty array, but only on AMD, and only when the tests ran on actual AMD hardware &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1069">AMDGPU.jl #1069</a>&#41;. Portability work needs to run on each backend.</p>
+<p><strong>Measure before adding complexity.</strong> Two changes that looked promising, a <code>shfl_down</code> subgroup reduction and <code>Int32</code> index arithmetic, gave no improvement once measured, because both operations are limited by memory bandwidth rather than by the part being changed. Measuring them early kept that complexity out of the code. A recorded negative result is as useful as a positive one.</p>
+<p>The main lesson is that portability and performance are compatible once the algorithm fits the operation. The compute-bound operations improve because one portable kernel can use a work-efficient algorithm that each backend would otherwise reimplement. The bandwidth-bound operations reach parity because they are limited by memory bandwidth: once a kernel already saturates the memory bus, there is no headroom left to beat, so matching the vendor path is the best result available rather than a shortfall.</p>
+<h2 id="what_is_left"><a href="#what_is_left" class="header-anchor">What is left</a></h2>
+<ul>
+<li><p><strong>Device-aware <code>Auto</code> tuning.</strong> The per-backend override belongs in a package extension through the <code>reduce_tuning</code> and <code>sort_tuning</code> hooks. Now that the AK host-API rework has landed, this can be added without a full autotuner. Data in <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/150">#150</a>.</p>
+</li>
+<li><p><strong>Narrow-integer &#40;<code>Int32</code>&#41; indexing.</strong> This is being handled at the GPU compiler level &#40;by Tim&#41; by adding <code>llvm.assume</code> range hints so the compiler narrows <code>i64</code> to <code>i32</code> with no source changes. In a memory-bound regime the effect is small. Measurements in <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/149">#149</a>.</p>
+</li>
+<li><p><strong>Small and whole-array reductions.</strong> A known slowdown is tracked in <a href="https://github.com/JuliaGPU/AcceleratedKernels.jl/issues/135">#135</a>, which I am looking into.</p>
+</li>
+<li><p><strong>GPUArrays on top of AK.</strong> The larger plan is to build GPUArrays.jl on top of AK so backends no longer depend on it directly. The first delegation PR <a href="https://github.com/JuliaGPU/GPUArrays.jl/pull/790">#790</a> has merged, and more operations can follow the same path.</p>
+</li>
+</ul>
+<p>Thanks to Tim Besard and Christian Guinard for their mentorship, and to the JuliaGPU community.</p>
+<!-- CONTENT ENDS HERE -->
+      </main>
+    </div> <!-- class="container" -->
+
+    
+
+    <footer id=footer class="mt-auto text-center text-muted">
+        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
+    </footer>
+
+    <!-- FEATHER -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
+    <script>feather.replace()</script>
+
+    <!-- BOOTSTRAP -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- GOOGLE ANALYTICS -->
+    <script>
+    window.ga = window.ga || function() {
+        (ga.q = ga.q || []).push(arguments)
+    };
+    ga.l = +new Date;
+    ga('create', 'UA-154489943-1', 'auto');
+    ga('send', 'pageview');
+    </script>
+    <script async src=https://www.google-analytics.com/analytics.js></script>
+
+  </body>
+</html>
