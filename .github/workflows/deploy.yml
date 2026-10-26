@@ -42,6 +42,9 @@ jobs:
            using Franklin;
            optimize(minify=false, prerender=false);'
 
+    - name: Add the performance dashboard
+      run: rsync -a --exclude README.md perf/ __site/perf/
+
     - name: Deploy (preview)
       # if this build is a PR build and the PR is NOT from a fork
       if: github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name

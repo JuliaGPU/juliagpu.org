@@ -1,7 +1,8 @@
 +++
 # General
 author = "JuliaGPU"
-ignore = ["node_modules/", "README.md", ".aider.chat.history.md"]
+# perf/ is a static app, copied into the site as-is by the deploy workflow
+ignore = ["node_modules/", "README.md", ".aider.chat.history.md", "perf/"]
 
 # RSS stuff
 generate_rss = true
