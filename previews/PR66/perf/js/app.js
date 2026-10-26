@@ -1,5 +1,6 @@
-import { STATS, loadRegistry, loadPackage, annotations } from "./data.js";
-import * as S from "./stats.js";
+import { STATS, annotations } from "benchmark-action/data.js";
+import * as S from "benchmark-action/stats.js";
+import { loadRegistry, loadPackage } from "./load.js";
 
 const MAX_SERIES = 8;
 const DEFAULT_WINDOW = 180;
@@ -10,6 +11,7 @@ const $ = (id) => document.getElementById(id);
 const state = {
   pkg: null,
   dataUrl: null,
+  configUrl: null,
   cat: null,
   view: "history",
   stat: null,
@@ -128,6 +130,7 @@ function readURL() {
   const p = new URLSearchParams(location.search);
   state.pkg = p.get("pkg");
   state.dataUrl = p.get("data");
+  state.configUrl = p.get("config");
   state.cat = p.get("cat");
   state.view = p.get("view") === "compare" ? "compare" : "history";
   state.stat = p.get("stat");
@@ -144,6 +147,7 @@ function writeURL() {
   const p = new URLSearchParams();
   if (state.pkg) p.set("pkg", state.pkg);
   if (state.dataUrl) p.set("data", state.dataUrl);
+  if (state.configUrl) p.set("config", state.configUrl);
   p.set("cat", state.cat);
   if (state.view === "compare") p.set("view", "compare");
   if (state.stat && state.stat !== defaultStat()) p.set("stat", state.stat);
@@ -165,7 +169,7 @@ function writeURL() {
 
 function defaultStat() {
   if (!ds) return null;
-  for (const s of ["min", "time", "median", "mean"]) if (ds.stats[s]) return s;
+  for (const s of [ds.config.stat, "min", "time", "median", "mean"]) if (ds.stats[s]) return s;
   return Object.keys(ds.stats)[0];
 }
 
@@ -174,7 +178,7 @@ function values() {
 }
 
 function category() {
-  return registry.categories.find((c) => c.id === state.cat);
+  return ds.config.categories.find((c) => c.id === state.cat);
 }
 
 function windowRange() {
@@ -295,7 +299,7 @@ function renderHeader() {
 
   const cats = $("categories");
   cats.innerHTML = "";
-  for (const c of registry.categories) {
+  for (const c of ds.config.categories) {
     const n = ds.benches.filter((b) => b.category === c.id).length;
     if (n === 0) continue;
     const b = document.createElement("button");
@@ -424,7 +428,7 @@ function renderChart(from, to, chains, overall) {
       radii.push(f ? 5 : 2);
     }
     series.push({
-      label: name,
+      label: ds.benches[i].short,
       data,
       bench: i,
       borderColor: seriesColor(benchKeys[0]),
@@ -444,7 +448,8 @@ function renderChart(from, to, chains, overall) {
         if (bench >= 0) level = chainOf([bench], from, to).level;
       }
       if (!level) continue;
-      series.push({ label: key.slice(2), data: relativeSeries(level, from, to), bench, borderColor: seriesColor(key) });
+      const label = bench == null ? key.slice(2) : ds.benches[bench].short;
+      series.push({ label, data: relativeSeries(level, from, to), bench, borderColor: seriesColor(key) });
     }
   }
 
@@ -716,6 +721,7 @@ function renderBenchTable(from, to, idx) {
     rows.push({
       i,
       name: b.name,
+      short: b.short,
       latest: s.latest,
       latestRun: s.latestRun,
       current,
@@ -757,7 +763,7 @@ function renderBenchTable(from, to, idx) {
         r.better.length ? `<span class="better" title="${esc(runList(r.better))}">▼${r.better.length}</span>` : "",
       ].join(" ");
       return `<tr data-key="${esc(key)}" class="${on ? "selected" : ""}">
-        <td class="name"><span class="chip" style="${chip}"></span>${esc(r.name)}</td>
+        <td class="name" title="${esc(r.name)}"><span class="chip" style="${chip}"></span>${esc(r.short)}</td>
         <td>${r.current ? "" : `<span class="muted" title="Not measured since">${formatDate(ds.runs[r.latestRun].date)}</span> `}${formatValue(r.latest)}</td>
         <td class="${Math.abs(r.trendSigned) >= 0.01 ? changeClass(r.trendSigned) : ""}">${formatPct(r.trendSigned * 100)}</td>
         <td>${formatChange(r.lastD)} ${verdict(r.lastSign, true)}</td>
@@ -802,11 +808,11 @@ function renderCompare() {
 
   const v = values();
   const results = new Map();
-  for (const c of registry.categories) {
+  for (const c of ds.config.categories) {
     const rows = [];
     for (const i of benchesIn(c.id)) {
       const cmp = S.compareRuns(v[i], a, b, { boundaries: boundaries(i), floor: c.floor });
-      rows.push({ i, name: ds.benches[i].name, ...cmp });
+      rows.push({ i, name: ds.benches[i].name, short: ds.benches[i].short, ...cmp });
     }
     if (rows.length) results.set(c.id, rows);
   }
@@ -814,12 +820,12 @@ function renderCompare() {
   // one card per category
   const cards = [];
   for (const [cat, rows] of results) {
-    const c = registry.categories.find((x) => x.id === cat);
+    const c = ds.config.categories.find((x) => x.id === cat);
     const both = rows.filter((r) => !isNaN(r.d) && !r.boundary);
     const g = both.length ? both.reduce((s, r) => s + r.d, 0) / both.length : NaN;
     const worse = rows.filter((r) => r.sign > 0).length;
     const better = rows.filter((r) => r.sign < 0).length;
-    cards.push(`<div class="card${cat === state.cat ? " active" : ""}" data-cat="${cat}">
+    cards.push(`<div class="card${cat === state.cat ? " active" : ""}" data-cat="${esc(cat)}">
       <h3>${esc(c.label)}</h3>
       <div class="big ${Math.abs(g) >= 0.01 ? changeClass(g) : ""}" title="Geometric mean of the change of the ${both.length} benchmarks measured in both runs">${formatChange(g)}</div>
       <div class="counts"><span class="worse">▲ ${worse} worse</span><span class="better">▼ ${better} better</span><span class="muted">${both.length} compared</span></div>
@@ -867,7 +873,7 @@ function renderCompare() {
       else if (!isNaN(r.va) && isNaN(r.vb)) note = `<span class="muted">not measured</span>`;
       else if (r.sign === null && !isNaN(r.d)) note = `<span class="muted" title="Not enough history to estimate the noise">noise unknown</span>`;
       return `<tr data-name="${esc(r.name)}" title="Show the history of this benchmark">
-        <td>${esc(r.name)}</td>
+        <td title="${esc(r.name)}">${esc(r.short)}</td>
         <td>${formatValue(r.va)}</td>
         <td>${formatValue(r.vb)}</td>
         <td class="${r.sign ? changeClass(r.sign) : ""}">${formatChange(r.d)}</td>
@@ -908,7 +914,7 @@ function compareMarkdown() {
   let md = `${name}${category().label.toLowerCase()} benchmarks, ${STATS[state.stat].label.toLowerCase()}: ${link(runs[a])} → ${link(runs[b])}\n\n`;
   md += `| Benchmark | Baseline | Compared | Change | |\n|:--|--:|--:|--:|:--|\n`;
   for (const r of shown)
-    md += `| \`${r.name}\` | ${formatValue(r.va)} | ${formatValue(r.vb)} | ${formatChange(r.d)} | ${r.boundary ? "not comparable" : r.sign > 0 ? "▲ worse" : r.sign < 0 ? "▼ better" : ""} |\n`;
+    md += `| \`${r.short}\` | ${formatValue(r.va)} | ${formatValue(r.vb)} | ${formatChange(r.d)} | ${r.boundary ? "not comparable" : r.sign > 0 ? "▲ worse" : r.sign < 0 ? "▼ better" : ""} |\n`;
   md += `\n[Details](${location.href})\n`;
   return md;
 }
@@ -920,7 +926,7 @@ function render() {
   if (!ds.stats[state.stat]) state.stat = defaultStat();
   if (!category() || !ds.benches.some((b) => b.category === state.cat)) {
     if (state.cat) state.selected = null;
-    state.cat = registry.categories.find((c) => ds.benches.some((b) => b.category === c.id)).id;
+    state.cat = ds.config.categories.find((c) => ds.benches.some((b) => b.category === c.id)).id;
   }
   renderHeader();
   $("history").hidden = state.view !== "history";
@@ -948,14 +954,16 @@ let loading = 0;
 
 async function load() {
   const generation = ++loading;
-  // `?data=` replaces the data of `?pkg=` (to preview it), or shows data of its own
-  const base = registry.packages[state.pkg];
-  const pkg = state.dataUrl ? { ...(base || { name: state.dataUrl }), history: state.dataUrl, data: undefined } : base;
-  const key = state.dataUrl || state.pkg;
+  // `?data=` and `?config=` replace those of `?pkg=` (to preview them), or show data of
+  // their own
+  let pkg = registry.packages[state.pkg] || { name: state.dataUrl };
+  if (state.dataUrl) pkg = { ...pkg, history: state.dataUrl, data: undefined };
+  if (state.configUrl) pkg = { ...pkg, config: state.configUrl };
+  const key = [state.pkg, state.dataUrl, state.configUrl].join(" ");
   showMessage(`Loading ${pkg.name} benchmarks…`);
   document.body.style.cursor = "progress";
   try {
-    if (!datasets.has(key)) datasets.set(key, loadPackage(pkg, registry.categories));
+    if (!datasets.has(key)) datasets.set(key, loadPackage(pkg));
     const loaded = await datasets.get(key);
     // the user may have switched to another package in the meantime
     if (generation !== loading) return;

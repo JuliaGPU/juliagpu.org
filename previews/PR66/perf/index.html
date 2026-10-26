@@ -16,6 +16,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <!-- the data formats and statistics are shared with the workflow that publishes the
+         results and comments on pull requests -->
+    <script type="importmap">
+      {
+        "imports": {
+          "benchmark-action/": "https://cdn.jsdelivr.net/gh/JuliaGPU/benchmark-action@4db20f57dcab8959adc207f0c929f55193d769cf/lib/"
+        }
+      }
+    </script>
     <script type="module" src="js/app.js"></script>
   </head>
   <body>
