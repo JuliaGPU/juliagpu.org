@@ -1,4 +1,4 @@
-import { STATS, annotations } from "benchmark-action/data.js";
+import { STATS, annotations, environmentDiff } from "benchmark-action/data.js";
 import * as S from "benchmark-action/stats.js";
 import { loadRegistry, loadPackage } from "./load.js";
 
@@ -542,6 +542,13 @@ function renderChart(from, to, chains, overall) {
               return `${formatPct(y)}  ${item.dataset.label}${abs}`;
             },
             labelPointStyle: () => ({ pointStyle: "line", rotation: 0 }),
+            // what explains a change the commit does not
+            afterBody: (items) => {
+              const r = items[0]?.raw.x;
+              if (!r) return [];
+              const diff = environmentDiff(ds.runs[r - 1].env, ds.runs[r].env);
+              return diff.length ? ["", ...diff.map((d) => `${d.label} ${d.from} → ${d.to}`)] : [];
+            },
             footer: (items) => (items[0]?.raw.x > 0 ? "Click to compare with the previous run" : ""),
           },
         },
@@ -833,6 +840,10 @@ function renderCompare() {
   }
   const summary = $("compare-summary");
   summary.innerHTML = cards.join("");
+  const diff = environmentDiff(runs[a].env, runs[b].env);
+  $("compare-env").innerHTML = diff.length
+    ? `<strong>Environment:</strong> ${diff.map((d) => `${esc(d.label)} ${esc(d.from)} → ${esc(d.to)}`).join(", ")}`
+    : "";
   summary.querySelectorAll(".card").forEach((el) => {
     el.onclick = () => {
       state.cat = el.dataset.cat;
