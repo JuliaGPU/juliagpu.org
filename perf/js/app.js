@@ -113,6 +113,29 @@ function changeClass(x) {
 }
 
 // a slower measurement is worse, for every metric we record
+// Going from no allocations to some, or back, is a change whatever the noise, but it has
+// no ratio to judge (see `zeroCrossing` in benchmark-action's stats.js)
+const COUNTS = new Set(["allocs", "memory"]);
+
+function crossingNote(sign) {
+  return `<span class="flag ${changeClass(sign)}">${sign > 0 ? "▲ allocates" : "▼ no longer allocates"}</span>`;
+}
+
+// The zero crossings of `s` between consecutive measured runs in `from..to`
+function zeroCrossings(s, from, to, bounds) {
+  const out = [];
+  let prev = -1;
+  for (let k = from; k <= to; k++) {
+    if (isNaN(s[k])) continue;
+    if (prev >= 0) {
+      const sign = S.zeroCrossing(s, prev, k, { boundaries: bounds });
+      if (sign) out.push({ to: k, sign, crossing: true });
+    }
+    prev = k;
+  }
+  return out;
+}
+
 function verdict(sign, unconfirmed) {
   if (!sign) return "";
   const cls = `flag ${changeClass(sign)}${unconfirmed ? " unconfirmed" : ""}`;
@@ -720,8 +743,9 @@ function renderBenchTable(from, to, idx) {
     if (!s) continue;
     // a change the next run has not confirmed yet only shows as the last change
     const confirmed = s.flagged.filter((f) => !f.unconfirmed);
-    const worse = confirmed.filter((f) => f.sign > 0);
-    const better = confirmed.filter((f) => f.sign < 0);
+    const crossings = COUNTS.has(state.stat) ? zeroCrossings(v[i], from, to, boundaries(i)) : [];
+    const worse = [...confirmed, ...crossings].filter((f) => f.sign > 0);
+    const better = [...confirmed, ...crossings].filter((f) => f.sign < 0);
     // the last change of a series that is no longer measured is history, not news
     const current = s.latestRun === to;
     if (!current) s.last = null;
@@ -737,8 +761,9 @@ function renderBenchTable(from, to, idx) {
       last: s.last ? Math.abs(s.last.d) : NaN,
       lastD: s.last?.d,
       lastSign: s.last?.sign,
+      lastCrossing: current ? crossings.find((f) => f.to === s.latestRun)?.sign : undefined,
       noise: s.noise,
-      unusual: confirmed.length,
+      unusual: confirmed.length + crossings.length,
       worse,
       better,
     });
@@ -759,7 +784,13 @@ function renderBenchTable(from, to, idx) {
     render,
   );
 
-  const runList = (fs) => fs.map((f) => `${formatDate(ds.runs[f.to].date)} ${ds.runs[f.to].short} ${formatChange(f.d)}`).join("\n");
+  const runList = (fs) =>
+    fs
+      .map((f) => {
+        const change = f.crossing ? (f.sign > 0 ? "allocates" : "no longer allocates") : formatChange(f.d);
+        return `${formatDate(ds.runs[f.to].date)} ${ds.runs[f.to].short} ${change}`;
+      })
+      .join("\n");
   const body = rows
     .map((r) => {
       const key = `b:${r.name}`;
@@ -773,7 +804,7 @@ function renderBenchTable(from, to, idx) {
         <td class="name" title="${esc(r.name)}"><span class="chip" style="${chip}"></span>${esc(r.short)}</td>
         <td>${r.current ? "" : `<span class="muted" title="Not measured since">${formatDate(ds.runs[r.latestRun].date)}</span> `}${formatValue(r.latest)}</td>
         <td class="${Math.abs(r.trendSigned) >= 0.01 ? changeClass(r.trendSigned) : ""}">${formatPct(r.trendSigned * 100)}</td>
-        <td>${formatChange(r.lastD)} ${verdict(r.lastSign, true)}</td>
+        <td>${r.lastCrossing ? crossingNote(r.lastCrossing) : `${formatChange(r.lastD)} ${verdict(r.lastSign, true)}`}</td>
         <td>${formatNoise(r.noise)}</td>
         <td>${changes}</td>
       </tr>`;
@@ -819,7 +850,8 @@ function renderCompare() {
     const rows = [];
     for (const i of benchesIn(c.id)) {
       const cmp = S.compareRuns(v[i], a, b, { boundaries: boundaries(i), floor: c.floor });
-      rows.push({ i, name: ds.benches[i].name, short: ds.benches[i].short, ...cmp });
+      const crossing = COUNTS.has(state.stat) ? S.zeroCrossing(v[i], a, b, { boundaries: boundaries(i) }) : 0;
+      rows.push({ i, name: ds.benches[i].name, short: ds.benches[i].short, ...cmp, crossing, sign: crossing || cmp.sign });
     }
     if (rows.length) results.set(c.id, rows);
   }
@@ -858,7 +890,9 @@ function renderCompare() {
     .filter((r) => !state.onlyUnusual || r.sign)
     .map((r) => {
       const threshold = Math.max(S.NOISE_FACTOR * (isNaN(r.noise) ? 0 : r.noise), Math.log(1 + floor));
-      return { ...r, change: Math.abs(r.d), score: isNaN(r.d) ? NaN : Math.abs(r.d) / threshold };
+      // a zero crossing has no ratio, but is always unusual
+      const score = r.crossing ? Infinity : isNaN(r.d) ? NaN : Math.abs(r.d) / threshold;
+      return { ...r, change: Math.abs(r.d), score };
     });
   sortRows(rows, state.compareSort);
   lastCompare = { a, b, rows };
@@ -878,7 +912,7 @@ function renderCompare() {
   );
   const body = rows
     .map((r) => {
-      let note = verdict(r.sign);
+      let note = r.crossing ? crossingNote(r.crossing) : verdict(r.sign);
       if (r.boundary) note = `<span class="muted" title="The way this benchmark is measured changed between the two runs">not comparable</span>`;
       else if (isNaN(r.va) && !isNaN(r.vb)) note = `<span class="muted">new</span>`;
       else if (!isNaN(r.va) && isNaN(r.vb)) note = `<span class="muted">not measured</span>`;
