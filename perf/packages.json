@@ -23,6 +23,13 @@
       "data": "https://metal.juliagpu.org/bench/data.js",
       "branch": "main",
       "hardware": "Apple silicon"
+    },
+    "kernelabstractions": {
+      "name": "KernelAbstractions.jl",
+      "repo": "https://github.com/JuliaGPU/KernelAbstractions.jl",
+      "history": "https://juliagpu.github.io/KernelAbstractions.jl/bench/history.json",
+      "branch": "main",
+      "hardware": "Intel Core i7-9700K (PoCL)"
     }
   }
 }
