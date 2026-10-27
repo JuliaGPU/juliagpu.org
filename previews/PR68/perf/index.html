@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JuliaGPU Performance</title>
+    <meta name="description" content="Benchmark history of the JuliaGPU back-ends: CUDA.jl, AMDGPU.jl and Metal.jl." />
+    <link rel="icon" href="../assets/favicon.ico" />
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      try {
+        const t = localStorage.getItem("perf-theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <!-- the data formats and statistics are shared with the workflow that publishes the
+         results and comments on pull requests -->
+    <script type="importmap">
+      {
+        "imports": {
+          "benchmark-action/": "https://cdn.jsdelivr.net/gh/JuliaGPU/benchmark-action@5a6d44cf881aef52c806497634960940749994c7/lib/"
+        }
+      }
+    </script>
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body>
+    <header class="site">
+      <a class="brand" href="../">
+        <img src="../assets/logo_crop.png" alt="" width="40" height="28" />
+        <span>JuliaGPU</span>
+      </a>
+      <span class="title">Performance</span>
+      <nav id="packages" class="segmented" aria-label="Package"></nav>
+      <span class="spacer"></span>
+      <span id="updated" class="muted"></span>
+      <button id="theme" class="icon-button" type="button" title="Switch between automatic, light and dark theme" aria-label="Theme">◐</button>
+    </header>
+
+    <div class="toolbar">
+      <nav id="categories" class="segmented" aria-label="Category"></nav>
+      <nav id="views" class="segmented" aria-label="View">
+        <button type="button" data-view="history">History</button>
+        <button type="button" data-view="compare">Compare</button>
+      </nav>
+      <label class="control">
+        <span>Metric</span>
+        <select id="stat"></select>
+      </label>
+      <label class="control history-only">
+        <span>Range</span>
+        <select id="window">
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="180">Last 6 months</option>
+          <option value="365">Last year</option>
+          <option value="730">Last 2 years</option>
+          <option value="0">All time</option>
+        </select>
+      </label>
+      <button id="reset-zoom" class="history-only" type="button" hidden>Reset zoom</button>
+    </div>
+
+    <p id="category-description" class="muted description"></p>
+    <div id="message" class="message" hidden></div>
+
+    <main id="history" class="history-only" hidden>
+      <aside class="groups">
+        <div class="groups-header">
+          <span>Groups</span>
+          <button id="groups-none" type="button" class="link">clear</button>
+        </div>
+        <ul id="group-list"></ul>
+      </aside>
+      <section class="chart-area">
+        <div id="legend" class="legend"></div>
+        <div class="chart-box"><canvas id="chart" aria-label="Benchmark history"></canvas></div>
+        <p class="hint muted">
+          Drag to zoom. Click a run to compare it with the run before. Lines mark changes to
+          the setup; hover them for details.
+        </p>
+      </section>
+      <section class="table-area">
+        <div class="table-toolbar">
+          <input id="filter" type="search" placeholder="Filter benchmarks" aria-label="Filter benchmarks" />
+          <span id="table-status" class="muted"></span>
+        </div>
+        <div class="table-scroll">
+          <table id="bench-table" class="data">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <main id="compare" class="compare-only" hidden>
+      <div class="compare-pick">
+        <label class="control">
+          <span>Baseline</span>
+          <select id="from"></select>
+        </label>
+        <button id="swap" type="button" title="Swap baseline and comparison">⇄</button>
+        <label class="control">
+          <span>Compared</span>
+          <select id="to"></select>
+        </label>
+        <a id="github-compare" target="_blank" rel="noopener">Commits on GitHub</a>
+      </div>
+      <div id="compare-summary" class="summary"></div>
+      <p id="compare-env" class="muted"></p>
+      <div class="table-toolbar">
+        <input id="compare-filter" type="search" placeholder="Filter benchmarks" aria-label="Filter benchmarks" />
+        <label><input id="only-unusual" type="checkbox" /> Only unusual changes</label>
+        <button id="copy-markdown" type="button">Copy as Markdown</button>
+        <span id="compare-status" class="muted"></span>
+      </div>
+      <div class="table-scroll">
+        <table id="compare-table" class="data">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer class="muted">
+      <span id="hardware"></span>
+      <span>
+        A change is <em>unusual</em> when it exceeds three times the benchmark's typical
+        run-to-run change (a robust standard deviation over its previous 40 changes) and the
+        category's minimum. In the history it must also hold at the next run.
+      </span>
+      <a id="data-link" target="_blank" rel="noopener">Raw data</a>
+    </footer>
+
+    <div id="note-tip" class="note-tip" hidden></div>
+  </body>
+</html>
