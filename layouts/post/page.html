@@ -1,0 +1,19 @@
+{{ define "main" }}
+<article class="container prose">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{ partial "post-meta.html" . }}
+  </header>
+  {{ .Content }}
+  {{- /* posts that only link elsewhere have no page of their own to navigate to */}}
+  {{- $posts := where .CurrentSection.RegularPages "Params.externalLink" "==" nil }}
+  <nav class="post-nav" aria-label="More posts">
+    {{- with $posts.Next . }}
+    <a rel="next" href="{{ .RelPermalink }}"><span>Newer</span>{{ .Title }}</a>
+    {{- end }}
+    {{- with $posts.Prev . }}
+    <a rel="prev" href="{{ .RelPermalink }}"><span>Older</span>{{ .Title }}</a>
+    {{- end }}
+  </nav>
+</article>
+{{ end }}

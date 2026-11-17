@@ -1,0 +1,55 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="container">
+    <div class="hero-text">
+      <h1>GPU programming in {{ (resources.Get "julia-logo.svg").Content | safeHTML }}</h1>
+      {{ .Params.lead | .RenderString (dict "display" "block") }}
+      <p class="actions">
+        <a class="button" href="{{ (site.GetPage "/get-started").RelPermalink }}">Get started {{ partial "icon.html" "arrow" }}</a>
+        <a class="button secondary" href="{{ (site.GetPage "/post").RelPermalink }}">Read the blog</a>
+      </p>
+    </div>
+    <div class="hero-code">
+      {{- $variants := slice }}
+      {{- range .Params.examples }}
+        {{- $variants = $variants | append (dict "name" .name "html" (partial "julia-repl.html" .code)) }}
+      {{- end }}
+      {{ partial "backend-tabs.html" (dict "variants" $variants "rotate" 3) }}
+    </div>
+  </div>
+</section>
+
+{{ with site.GetPage "/backends" }}
+<section class="container section">
+  <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+  <p class="lead">{{ .Description }}</p>
+  <ul class="cards">
+    {{- range .Pages }}
+    <li>{{ partial "card.html" . }}</li>
+    {{- end }}
+  </ul>
+  {{ .Content }}
+</section>
+{{ end }}
+
+{{ with site.GetPage "/post" }}
+<section class="container section">
+  <h2><a href="{{ .RelPermalink }}">Latest news</a></h2>
+  <ul class="cards">
+    {{- range first 3 (where .RegularPages "Params.externalLink" "==" nil) }}
+    <li>
+      <article class="card">
+        {{ partial "post-meta.html" . }}
+        <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+        <p>{{ .Summary | plainify | truncate 180 }}</p>
+      </article>
+    </li>
+    {{- end }}
+  </ul>
+</section>
+{{ end }}
+
+<section class="container section home-content">
+  {{ .Content }}
+</section>
+{{ end }}

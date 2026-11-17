@@ -1,0 +1,27 @@
+{{- /*
+  The page-wide choice of back-end: one radio button per back-end in
+  `params.backends`. The tabs of every `backend-tabs` group on the page are
+  labels for these inputs, so picking a back-end in one group switches all of
+  them. A group without an example for the picked back-end shows its first one.
+
+  The inputs are fixed in place, so that clicking a tab focuses its input
+  without scrolling the page to it.
+*/ -}}
+<div class="backend-picker" role="radiogroup" aria-label="Back-end">
+  {{- range site.Params.backends }}
+  {{- $id := partial "backend-id.html" . }}
+  <input type="radio" name="backend" id="{{ $id }}" aria-label="{{ . }}">
+  {{- end }}
+</div>
+<style>
+  {{- range site.Params.backends }}
+  {{- $id := partial "backend-id.html" . }}
+  {{- $picked := printf "body:has(#%s:checked)" $id | safeCSS }}
+  {{- $missing := printf `%s .backends:not(:has(.backend-panel[data-backend="%s"]))` $picked $id | safeCSS }}
+  {{ $picked }} .backend-panel[data-backend="{{ $id }}"],
+  {{ $missing }} .backend-panel:first-child { visibility: visible }
+  {{ $picked }} .backend-tabs label[for="{{ $id }}"],
+  {{ $missing }} .backend-tabs label:first-child { color: var(--fg); --underline: visible }
+  body:has(#{{ $id }}:focus-visible) .backend-tabs label[for="{{ $id }}"] { outline: 2px solid var(--accent); outline-offset: -2px }
+  {{- end }}
+</style>

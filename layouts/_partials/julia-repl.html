@@ -1,0 +1,38 @@
+{{- /*
+  Highlights a Julia REPL session: input after a `julia>` prompt (plus its
+  continuation lines, indented to the prompt's width) as Julia, other prompts
+  and output as plain text. Chroma has no lexer for REPL sessions.
+*/ -}}
+{{- $indent := "       " }}
+{{- $lines := slice }}
+{{- $prompt := "" }}
+{{- $input := slice }}
+{{- range split (strings.TrimRight "\n" .) "\n" }}
+  {{- if and $input (hasPrefix . $indent) }}
+    {{- $input = $input | append (strings.TrimPrefix $indent .) }}
+    {{- continue }}
+  {{- end }}
+  {{- with $input }}
+    {{- $lines = $lines | append (partial "inline/input.html" (dict "prompt" $prompt "input" . "indent" $indent)) }}
+    {{- $input = slice }}
+  {{- end }}
+  {{- with findRESubmatch `^((?:julia|pkg|shell|help\?)> ?|\([^)]*\) pkg> ?)(.*)$` . 1 }}
+    {{- $match := index . 0 }}
+    {{- $prompt = printf `<span class="gp">%s</span>` (htmlEscape (index $match 1)) }}
+    {{- if hasPrefix (index $match 1) "julia>" }}
+      {{- $input = slice (index $match 2) }}
+    {{- else }}
+      {{- $lines = $lines | append (print $prompt (htmlEscape (index $match 2))) }}
+    {{- end }}
+  {{- else }}
+    {{- $lines = $lines | append (printf `<span class="go">%s</span>` (htmlEscape .)) }}
+  {{- end }}
+{{- end }}
+{{- with $input }}
+  {{- $lines = $lines | append (partial "inline/input.html" (dict "prompt" $prompt "input" . "indent" $indent)) }}
+{{- end -}}
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-julia-repl" data-lang="julia-repl">{{ delimit $lines "\n" | safeHTML }}</code></pre></div>
+{{- define "_partials/inline/input.html" }}
+  {{- $code := transform.Highlight (delimit .input "\n") "julia" "hl_inline=true" }}
+  {{- return print .prompt (replace $code "\n" (print "\n" .indent)) }}
+{{- end }}

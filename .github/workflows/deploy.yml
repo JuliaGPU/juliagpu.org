@@ -1,65 +1,52 @@
-name: Build and Deploy
+name: Deploy
+
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    types: [opened, reopened, synchronize, closed]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  build-and-deploy:
-    # Julia 1.9 does not start on Ubuntu 26: its glibc refuses to load the
-    # bundled libopenlibm, which requires an executable stack.
-    runs-on: ubuntu-24.04
+  deploy:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        persist-credentials: false
+      - uses: actions/checkout@v7
 
-    - name: Install Julia
-      uses: julia-actions/setup-julia@v1
-      with:
-        version: 1.9
+      - uses: ./.github/actions/setup-hugo
+        if: github.event.action != 'closed'
 
-    - name: Fix URLs for PR preview deployment (pull request previews)
-      if: github.event_name == 'pull_request'
-      run: |
-        echo "JULIA_FRANKLIN_PREPATH=juliagpu/previews/PR${{ github.event.number }}" >> $GITHUB_ENV
+      - name: Build
+        if: github.event.action != 'closed'
+        run: hugo build --minify --panicOnWarning --baseURL "$BASE_URL"
+        env:
+          BASE_URL: ${{ github.event_name == 'pull_request' && format('https://juliagpu.org/pr-preview/pr-{0}/', github.event.number) || 'https://juliagpu.org/' }}
+          # keeps previews out of search engines, see head.html
+          HUGO_PARAMS_PREVIEW: ${{ github.event_name == 'pull_request' }}
 
-    - name: Install dependencies
-      uses: julia-actions/julia-buildpkg@master
-    - run: julia --project -e '
-           using Franklin;
-           optimize(minify=false, prerender=false);'
+      # pull requests from forks get no preview, as their token cannot write
+      - name: Deploy preview
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: public
+          pages-base-url: juliagpu.org
+          qr-code: false
+          deploy-commit-message: Deploy preview for PR ${{ github.event.number }}
+          remove-commit-message: Remove preview for PR ${{ github.event.number }}
 
-    - name: Set preview prepath
-      # if this build is a PR build and the PR is NOT from a fork
-      if: github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name
-      run: sed -i '2 i prepath = "previews/PR'${{ github.event.number }}'"' config.md
-
-    - name: Build site
-      run: julia --project -e '
-           using Pkg; Pkg.instantiate();
-           using Franklin;
-           optimize(minify=false, prerender=false);'
-
-    - name: Add the performance dashboard
-      run: rsync -a --exclude README.md perf/ __site/perf/
-
-    - name: Deploy (preview)
-      # if this build is a PR build and the PR is NOT from a fork
-      if: github.event_name == 'pull_request' && github.repository == github.event.pull_request.head.repo.full_name
-      uses: JamesIves/github-pages-deploy-action@releases/v3
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: __site
-        TARGET_FOLDER: "previews/PR${{ github.event.number }}"
-    - name: Deploy (master)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-      uses: JamesIves/github-pages-deploy-action@releases/v3
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: __site
+      - name: Deploy
+        if: github.event_name == 'push'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: public
+          clean-exclude: pr-preview/
+          # previews are pushed to the same branch concurrently, don't overwrite them
+          force: false

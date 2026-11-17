@@ -1,0 +1,5 @@
+{{- with .Params.externalLink }}
+<a href="{{ . }}">{{ $.Title }}{{ partial "icon.html" "external" }}</a>
+{{- else }}
+<a href="{{ .RelPermalink }}">{{ .Title }}</a>
+{{- end }}

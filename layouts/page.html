@@ -1,0 +1,11 @@
+{{ define "main" }}
+<article class="container prose">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    {{- with .Description }}
+    <p class="lead">{{ . }}</p>
+    {{- end }}
+  </header>
+  {{ .Content }}
+</article>
+{{ end }}

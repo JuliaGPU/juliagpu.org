@@ -1,0 +1,21 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ if .IsHome }}{{ site.Title }}: {{ site.Params.description }}{{ else }}{{ .Title }} · {{ site.Title }}{{ end }}</title>
+<meta name="description" content="{{ partial "description.html" . }}">
+<link rel="canonical" href="{{ .Permalink }}">
+{{- if eq (string site.Params.preview) "true" }}
+<meta name="robots" content="noindex">
+{{- end }}
+<link rel="icon" href="{{ "favicon.ico" | relURL }}" sizes="32x32">
+<link rel="icon" href="{{ "logo.svg" | relURL }}" type="image/svg+xml">
+{{- with site.GetPage "/post" }}
+  {{- with .OutputFormats.Get "rss" }}
+<link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }} blog">
+  {{- end }}
+{{- end }}
+{{- $css := slice (resources.Get "css/syntax.css") (resources.Get "css/main.css") | resources.Concat "css/site.css" }}
+{{- if hugo.IsProduction }}
+  {{- $css = $css | minify | fingerprint }}
+{{- end }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}" {{- with $css.Data.Integrity }} integrity="{{ . }}"{{ end }}>
+{{ partial "opengraph.html" . }}

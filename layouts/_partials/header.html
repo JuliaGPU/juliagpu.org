@@ -1,0 +1,16 @@
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="{{ site.Home.RelPermalink }}">
+      <img src="{{ "logo.svg" | relURL }}" alt="" width="44" height="31">
+      <span>{{ site.Title }}</span>
+    </a>
+    <nav aria-label="Main">
+      <ul>
+        {{- range site.Menus.main }}
+        <li><a href="{{ .URL }}" {{- if or ($.IsMenuCurrent "main" .) ($.HasMenuCurrent "main" .) }} aria-current="page"{{ end }}>{{ .Name }}</a></li>
+        {{- end }}
+        <li><a href="https://github.com/JuliaGPU" aria-label="JuliaGPU on GitHub">{{ partial "icon.html" "github" }}</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>

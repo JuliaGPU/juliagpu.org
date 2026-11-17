@@ -1,0 +1,15 @@
+<article class="card">
+  <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+  <p>{{ .Description }}</p>
+  {{- with .Params.packages }}
+  <ul class="card-packages">
+    {{- range . }}
+    <li>
+      <code>{{ .name }}</code>
+      <a href="{{ .documentation }}">Docs</a>
+      <a href="{{ .repository }}" aria-label="{{ .name }} on GitHub">{{ partial "icon.html" "github" }}</a>
+    </li>
+    {{- end }}
+  </ul>
+  {{- end }}
+</article>

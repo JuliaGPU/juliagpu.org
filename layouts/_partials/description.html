@@ -1,0 +1,5 @@
+{{- if .IsHome }}
+  {{- site.Params.description }}
+{{- else }}
+  {{- .Description | default (.Summary | plainify | strings.TrimSpace) | default site.Params.description }}
+{{- end -}}

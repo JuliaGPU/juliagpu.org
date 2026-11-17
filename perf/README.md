@@ -1,8 +1,7 @@
 # JuliaGPU performance dashboard
 
 The benchmark history of the JuliaGPU back-ends, served at <https://juliagpu.org/perf/>.
-It is a static page: Franklin ignores this directory, and the deploy workflow copies it into
-the site as it is.
+It is a static page, which Hugo copies into the site as it is (see the mount in `hugo.toml`).
 
 The page only renders. The packages run their benchmarks on Buildkite, and
 [JuliaGPU/benchmark-action](https://github.com/JuliaGPU/benchmark-action) publishes the
@@ -25,12 +24,6 @@ CORS headers, as GitHub Pages does.
 
 ## Development
 
-Serve the repository root's `_assets` as `assets` next to this directory, for example:
-
-```sh
-mkdir -p /tmp/site && ln -s "$PWD/perf" /tmp/site/perf && ln -s "$PWD/_assets" /tmp/site/assets
-python3 -m http.server -d /tmp/site
-```
-
-and open <http://localhost:8000/perf/>. To try changes to the shared code, point the import
-map in `index.html` at a local checkout of benchmark-action served next to it.
+Run `hugo server` in the repository root and open <http://localhost:1313/perf/>. To try
+changes to the shared code, point the import map in `index.html` at a local checkout of
+benchmark-action served with CORS headers.
