@@ -8,7 +8,9 @@ on:
       - master
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    # Julia 1.9 does not start on Ubuntu 26: its glibc refuses to load the
+    # bundled libopenlibm, which requires an executable stack.
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout
       uses: actions/checkout@v2
