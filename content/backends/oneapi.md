@@ -4,8 +4,8 @@ description = "Support for Intel GPUs through oneAPI and Level Zero, with array 
 weight = 3
 aliases = ["/oneapi/"]
 
-[params]
-package = "oneAPI.jl"
+[[params.packages]]
+name = "oneAPI.jl"
 repository = "https://github.com/JuliaGPU/oneAPI.jl"
 documentation = "https://juliagpu.github.io/oneAPI.jl/stable/"
 +++

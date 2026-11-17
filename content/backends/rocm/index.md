@@ -4,8 +4,8 @@ description = "Array and kernel programming for AMD GPUs, with performance compa
 weight = 2
 aliases = ["/rocm/"]
 
-[params]
-package = "AMDGPU.jl"
+[[params.packages]]
+name = "AMDGPU.jl"
 repository = "https://github.com/JuliaGPU/AMDGPU.jl"
 documentation = "https://amdgpu.juliagpu.org/stable/"
 +++

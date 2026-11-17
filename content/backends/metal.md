@@ -3,8 +3,8 @@ title = "Apple Metal"
 description = "GPU programming on Apple silicon, with array operations, kernel programming and Metal Performance Shaders."
 weight = 4
 
-[params]
-package = "Metal.jl"
+[[params.packages]]
+name = "Metal.jl"
 repository = "https://github.com/JuliaGPU/Metal.jl"
 documentation = "https://metal.juliagpu.org/stable/"
 +++

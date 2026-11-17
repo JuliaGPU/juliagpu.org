@@ -4,8 +4,8 @@ description = "Vendor-neutral support for any device with an OpenCL driver, incl
 weight = 5
 aliases = ["/other/"]
 
-[params]
-package = "OpenCL.jl"
+[[params.packages]]
+name = "OpenCL.jl"
 repository = "https://github.com/JuliaGPU/OpenCL.jl"
 documentation = "https://juliagpu.github.io/OpenCL.jl/stable/"
 +++

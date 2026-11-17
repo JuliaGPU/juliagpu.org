@@ -4,10 +4,15 @@ description = "The most mature back-end, with kernel programming on par with CUD
 weight = 1
 aliases = ["/cuda/"]
 
-[params]
-package = "CUDA.jl"
+[[params.packages]]
+name = "CUDA.jl"
 repository = "https://github.com/JuliaGPU/CUDA.jl"
 documentation = "https://cuda.juliagpu.org/stable/"
+
+[[params.packages]]
+name = "cuTile.jl"
+repository = "https://github.com/JuliaGPU/cuTile.jl"
+documentation = "https://juliagpu.github.io/cuTile.jl/stable/"
 +++
 
 The programming support for NVIDIA GPUs in Julia is provided by the

@@ -4,8 +4,12 @@
     <h1>{{ .Title }}</h1>
     <p class="lead">{{ .Description }}</p>
     <p class="actions">
-      <a class="button" href="{{ .Params.documentation }}">{{ .Params.package }} documentation</a>
-      <a class="button secondary" href="{{ .Params.repository }}">{{ partial "icon.html" "github" }} GitHub</a>
+      {{- range .Params.packages }}
+      <a class="button" href="{{ .documentation }}">{{ .name }} documentation</a>
+      {{- end }}
+      {{- range .Params.packages }}
+      <a class="button secondary" href="{{ .repository }}" aria-label="{{ .name }} on GitHub">{{ partial "icon.html" "github" }} {{ .name }}</a>
+      {{- end }}
     </p>
   </header>
   {{ .Content }}
