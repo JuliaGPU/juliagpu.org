@@ -1,1 +1,4 @@
 User-agent: *
+Disallow: /pr-preview/
+
+Sitemap: https://juliagpu.org/pr-preview/pr-70/sitemap.xml
