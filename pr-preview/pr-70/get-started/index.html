@@ -1,19 +1,30 @@
-<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Get started · JuliaGPU</title><meta name=description content="Get from zero to running GPU code in Julia, then find the documentation, tutorials and talks to go further."><link rel=canonical href=https://juliagpu.org/pr-preview/pr-70/get-started/><link rel=icon href=/pr-preview/pr-70/favicon.ico sizes=32x32><link rel=icon href=/pr-preview/pr-70/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/pr-preview/pr-70/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/pr-preview/pr-70/css/site.min.cecdebd48714f3a8d813e570865f1cb2446230a270c28d3802fb84665476a7bb.css integrity="sha256-zs3r1IcU86jYE+Vwhl8cskRiMKJwwo04AvuEZlR2p7s="><meta property="og:url" content="https://juliagpu.org/pr-preview/pr-70/get-started/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="Get started"><meta property="og:description" content="Get from zero to running GPU code in Julia, then find the documentation, tutorials and talks to go further."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:image" content="https://juliagpu.org/pr-preview/pr-70/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/pr-preview/pr-70/><img src=/pr-preview/pr-70/logo.svg alt width=44 height=31>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Get started · JuliaGPU</title><meta name=description content="Get from zero to running GPU code in Julia, then find the documentation, tutorials and talks to go further."><link rel=canonical href=https://juliagpu.org/pr-preview/pr-70/get-started/><link rel=icon href=/pr-preview/pr-70/favicon.ico sizes=32x32><link rel=icon href=/pr-preview/pr-70/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/pr-preview/pr-70/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/pr-preview/pr-70/css/site.min.b27638059c0637b43e18c9a797d254c573ce4616b9b4ed3d208c82cd8fe76df9.css integrity="sha256-snY4BZwGN7Q+GMmnl9JUxXPORha5tO09IIyCzY/nbfk="><meta property="og:url" content="https://juliagpu.org/pr-preview/pr-70/get-started/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="Get started"><meta property="og:description" content="Get from zero to running GPU code in Julia, then find the documentation, tutorials and talks to go further."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="og:image" content="https://juliagpu.org/pr-preview/pr-70/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><div class=backend-picker role=radiogroup aria-label=Back-end><input type=radio name=backend id=backend-cuda aria-label=CUDA.jl>
+<input type=radio name=backend id=backend-amdgpu aria-label=AMDGPU.jl>
+<input type=radio name=backend id=backend-oneapi aria-label=oneAPI.jl>
+<input type=radio name=backend id=backend-metal aria-label=Metal.jl>
+<input type=radio name=backend id=backend-opencl aria-label=OpenCL.jl>
+<input type=radio name=backend id=backend-kernelabstractions aria-label=KernelAbstractions.jl></div><style>body:has(#backend-cuda:checked) .backend-panel[data-backend=backend-cuda],body:has(#backend-cuda:checked) .backends:not(:has(.backend-panel[data-backend=backend-cuda])) .backend-panel:first-child{visibility:visible}body:has(#backend-cuda:checked) .backend-tabs label[for=backend-cuda],body:has(#backend-cuda:checked) .backends:not(:has(.backend-panel[data-backend=backend-cuda])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-cuda:focus-visible) .backend-tabs label[for=backend-cuda]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-amdgpu:checked) .backend-panel[data-backend=backend-amdgpu],body:has(#backend-amdgpu:checked) .backends:not(:has(.backend-panel[data-backend=backend-amdgpu])) .backend-panel:first-child{visibility:visible}body:has(#backend-amdgpu:checked) .backend-tabs label[for=backend-amdgpu],body:has(#backend-amdgpu:checked) .backends:not(:has(.backend-panel[data-backend=backend-amdgpu])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-amdgpu:focus-visible) .backend-tabs label[for=backend-amdgpu]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-oneapi:checked) .backend-panel[data-backend=backend-oneapi],body:has(#backend-oneapi:checked) .backends:not(:has(.backend-panel[data-backend=backend-oneapi])) .backend-panel:first-child{visibility:visible}body:has(#backend-oneapi:checked) .backend-tabs label[for=backend-oneapi],body:has(#backend-oneapi:checked) .backends:not(:has(.backend-panel[data-backend=backend-oneapi])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-oneapi:focus-visible) .backend-tabs label[for=backend-oneapi]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-metal:checked) .backend-panel[data-backend=backend-metal],body:has(#backend-metal:checked) .backends:not(:has(.backend-panel[data-backend=backend-metal])) .backend-panel:first-child{visibility:visible}body:has(#backend-metal:checked) .backend-tabs label[for=backend-metal],body:has(#backend-metal:checked) .backends:not(:has(.backend-panel[data-backend=backend-metal])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-metal:focus-visible) .backend-tabs label[for=backend-metal]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-opencl:checked) .backend-panel[data-backend=backend-opencl],body:has(#backend-opencl:checked) .backends:not(:has(.backend-panel[data-backend=backend-opencl])) .backend-panel:first-child{visibility:visible}body:has(#backend-opencl:checked) .backend-tabs label[for=backend-opencl],body:has(#backend-opencl:checked) .backends:not(:has(.backend-panel[data-backend=backend-opencl])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-opencl:focus-visible) .backend-tabs label[for=backend-opencl]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-kernelabstractions:checked) .backend-panel[data-backend=backend-kernelabstractions],body:has(#backend-kernelabstractions:checked) .backends:not(:has(.backend-panel[data-backend=backend-kernelabstractions])) .backend-panel:first-child{visibility:visible}body:has(#backend-kernelabstractions:checked) .backend-tabs label[for=backend-kernelabstractions],body:has(#backend-kernelabstractions:checked) .backends:not(:has(.backend-panel[data-backend=backend-kernelabstractions])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-kernelabstractions:focus-visible) .backend-tabs label[for=backend-kernelabstractions]{outline:2px solid var(--accent);outline-offset:-2px}</style><header class=site-header><div class=container><a class=brand href=/pr-preview/pr-70/><img src=/pr-preview/pr-70/logo.svg alt width=44 height=31>
 <span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/pr-preview/pr-70/backends/>Back-ends</a></li><li><a href=/pr-preview/pr-70/get-started/ aria-current=page>Get started</a></li><li><a href=/pr-preview/pr-70/showcases/>Showcases</a></li><li><a href=/pr-preview/pr-70/perf/>Performance</a></li><li><a href=/pr-preview/pr-70/post/>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>Get started</h1><p class=lead>Get from zero to running GPU code in Julia, then find the documentation, tutorials and talks to go further.</p></header><p>This page takes you through installing a GPU back-end, working with GPU arrays, writing
 your first kernel, and measuring performance. It ends with pointers to more in-depth
 material and to places where you can ask for help. You need a recent version of
 <a href=https://julialang.org/downloads/>Julia</a> and a supported GPU.</p><h2 id=pick-your-back-end>Pick your back-end</h2><p>Every GPU vendor is supported by its own package. Each provides an array type and a macro to
 launch kernels written in Julia, and most also wrap the vendor&rsquo;s libraries for linear
 algebra, FFTs, random numbers and more.</p><table><thead><tr><th>Hardware</th><th>Package</th><th>Array type</th><th>Kernel launch</th></tr></thead><tbody><tr><td>NVIDIA GPUs</td><td><a href=/pr-preview/pr-70/backends/cuda/>CUDA.jl</a></td><td><code>CuArray</code></td><td><code>@cuda</code></td></tr><tr><td>AMD GPUs</td><td><a href=/pr-preview/pr-70/backends/rocm/>AMDGPU.jl</a></td><td><code>ROCArray</code></td><td><code>@roc</code></td></tr><tr><td>Intel GPUs</td><td><a href=/pr-preview/pr-70/backends/oneapi/>oneAPI.jl</a></td><td><code>oneArray</code></td><td><code>@oneapi</code></td></tr><tr><td>Apple M-series chips</td><td><a href=/pr-preview/pr-70/backends/metal/>Metal.jl</a></td><td><code>MtlArray</code></td><td><code>@metal</code></td></tr><tr><td>Other OpenCL devices, CPUs</td><td><a href=/pr-preview/pr-70/backends/opencl/>OpenCL.jl</a></td><td><code>CLArray</code></td><td><code>@opencl</code></td></tr></tbody></table><p>CUDA.jl is the most mature of these. The others implement the same array interface, so most
-of what follows applies to all of them. The examples on this page use CUDA.jl; where a name
-differs, substitute the one from the table above (<code>CUDA.rand</code> becomes <code>AMDGPU.rand</code>,
-<code>oneAPI.rand</code> or <code>Metal.rand</code>, and so on).</p><h2 id=install-and-check>Install and check</h2><p>Install the package for your hardware from the package manager (press <code>]</code> at the Julia
-prompt to enter it):</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add CUDA</code></pre></div><p>None of the back-ends require you to install a vendor toolkit yourself. What you do need:</p><ul><li><strong>CUDA.jl</strong>: an NVIDIA driver, on Linux or Windows. The CUDA toolkit is downloaded
+of what follows applies to all of them. Where the code differs, the examples on this page
+have a tab per back-end: pick yours in any of them, and the others follow.</p><h2 id=install-and-check>Install and check</h2><p>Install the package for your hardware from the package manager (press <code>]</code> at the Julia
+prompt to enter it):</p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add CUDA</code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add AMDGPU</code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add oneAPI</code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add Metal</code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add OpenCL pocl_jll</code></pre></div></div></div></div><p>None of the back-ends require you to install a vendor toolkit yourself. What you do need:</p><ul><li><strong>CUDA.jl</strong>: an NVIDIA driver, on Linux or Windows. The CUDA toolkit is downloaded
 automatically.</li><li><strong>AMDGPU.jl</strong>: the AMD GPU driver, on Linux or Windows. The ROCm runtime and libraries are
 downloaded automatically for the GPUs that are detected.</li><li><strong>oneAPI.jl</strong>: Linux (Windows through WSL2 is experimental), and Intel Gen9 graphics or
-newer.</li><li><strong>Metal.jl</strong>: a Mac with an M-series chip, running macOS 15 or later.</li><li><strong>OpenCL.jl</strong>: an OpenCL driver, or the <code>pocl_jll</code> package to run kernels on the CPU.</li></ul><p>Then load the package and call its <code>versioninfo</code> function (<code>AMDGPU.versioninfo()</code>,
-<code>oneAPI.versioninfo()</code>, …) to check that it finds your GPU. The first time, this takes a
-while to precompile and download the necessary libraries:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
+newer.</li><li><strong>Metal.jl</strong>: a Mac with an M-series chip, running macOS 15 or later.</li><li><strong>OpenCL.jl</strong>: an OpenCL driver, or the <code>pocl_jll</code> package to run kernels on the CPU.</li></ul><p>Then load the package and call its <code>versioninfo</code> function to check that it finds your GPU. The first time, this takes a
+while to precompile and download the necessary libraries:</p><p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
 <span class=go>CUDA toolchain:</span>
@@ -24,18 +35,96 @@ while to precompile and download the necessary libraries:</p><div class=highligh
 <span class=go></span>
 <span class=go>1 device:</span>
 <span class=go>  0: NVIDIA RTX 6000 Ada Generation (sm_89, 1.777 GiB / 47.988 GiB available)</span>
-<span class=go>     compiles to sm_89 / PTX 9.4 (LLVM: sm_89 / PTX 9.2)</span></code></pre></div><p>If this fails, or your GPU is not listed, see the installation section of the package&rsquo;s
+<span class=go>     compiles to sm_89 / PTX 9.4 (LLVM: sm_89 / PTX 9.2)</span></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>AMDGPU</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>AMDGPU</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>AMDGPU versioninfo</span>
+<span class=go>ROCm provider: downloaded artifacts</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=go>AMDGPU devices</span>
+<span class=go>┌────┬─────────────────────┬──────────┬───────────┬────────────┬───────────────┐</span>
+<span class=go>│ Id │                Name │ GCN arch │ Wavefront │     Memory │ Shared Memory │</span>
+<span class=go>├────┼─────────────────────┼──────────┼───────────┼────────────┼───────────────┤</span>
+<span class=go>│  1 │ AMD Radeon Graphics │  gfx1036 │        32 │ 30.179 GiB │    64.000 KiB │</span>
+<span class=go>└────┴─────────────────────┴──────────┴───────────┴────────────┴───────────────┘</span></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>oneAPI</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>oneAPI</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>Binary dependencies:</span>
+<span class=go>- NEO: 26.35.39758+2</span>
+<span class=go>- libigc: 2.41.5+5</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=go>1 device:</span>
+<span class=go>- Intel(R) Iris(R) Xe Graphics</span></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>Metal</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>Metal</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>macOS 26.7.0, Darwin 25.6.0</span>
+<span class=go></span>
+<span class=go>Toolchain:</span>
+<span class=go>- Julia: 1.13.4</span>
+<span class=go>- LLVM: 20.1.8</span>
+<span class=go>- Metal: 4.0 (MSL), 2.8 (AIR), 1.2.9 (metallib)</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=go>1 device:</span>
+<span class=go>- Apple M3 Pro (14 GPU cores, 80.000 KiB allocated; Apple9, Metal4 family)</span></code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>OpenCL</span><span class=p>,</span> <span class=n>pocl_jll</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>OpenCL</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>OpenCL.jl version 1.0.0</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=go>Available platforms: 1</span>
+<span class=go> - Portable Computing Language</span>
+<span class=go>   OpenCL 3.0, PoCL 7.2~julia-3a77808afb23  Linux, Release, RELOC, SPIR-V, LLVM 22.1.8jl, SLEEF, DISTRO, POCL_DEBUG</span>
+<span class=go>   · cpu-skylake-avx512-AMD Ryzen 9 9950X 16-Core Processor (svm:c+f, usm:h+d, bda, fp16, fp64, il, sg:shfl+blt)</span></code></pre></div></div></div></div>If this fails, or your GPU is not listed, see the installation section of the package&rsquo;s
 documentation, or <a href=/pr-preview/pr-70/get-started/#getting-help>ask for help</a>.</p><h2 id=working-with-gpu-arrays>Working with GPU arrays</h2><p>The easiest way to use a GPU is through its array type. Create one by converting a CPU
-array, or with one of the constructors the package provides:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CuArray</span><span class=p>([</span><span class=mf>1f0</span><span class=p>,</span> <span class=mf>2f0</span><span class=p>,</span> <span class=mf>3f0</span><span class=p>,</span> <span class=mf>4f0</span><span class=p>])</span></code>
+array, or with one of the constructors the package provides:</p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CuArray</span><span class=p>([</span><span class=mf>1f0</span><span class=p>,</span> <span class=mf>2f0</span><span class=p>,</span> <span class=mf>3f0</span><span class=p>,</span> <span class=mf>4f0</span><span class=p>])</span></code>
 <span class=go>4-element CuArray{Float32, 1, CUDACore.DeviceMemory}:</span>
 <span class=go> 1.0</span>
 <span class=go> 2.0</span>
 <span class=go> 3.0</span>
 <span class=go> 4.0</span>
 <span class=go></span>
-<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code></code></pre></div><p>Operations on GPU arrays run on the GPU. Broadcasting fuses an entire expression, including
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>ROCArray</span><span class=p>([</span><span class=mf>1f0</span><span class=p>,</span> <span class=mf>2f0</span><span class=p>,</span> <span class=mf>3f0</span><span class=p>,</span> <span class=mf>4f0</span><span class=p>])</span></code>
+<span class=go>4-element ROCArray{Float32, 1, AMDGPU.Runtime.Mem.HIPBuffer}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>AMDGPU</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>oneArray</span><span class=p>([</span><span class=mf>1f0</span><span class=p>,</span> <span class=mf>2f0</span><span class=p>,</span> <span class=mf>3f0</span><span class=p>,</span> <span class=mf>4f0</span><span class=p>])</span></code>
+<span class=go>4-element oneArray{Float32, 1, oneAPI.oneL0.DeviceBuffer}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>oneAPI</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>MtlArray</span><span class=p>([</span><span class=mf>1f0</span><span class=p>,</span> <span class=mf>2f0</span><span class=p>,</span> <span class=mf>3f0</span><span class=p>,</span> <span class=mf>4f0</span><span class=p>])</span></code>
+<span class=go>4-element MtlVector{Float32, Metal.SharedStorage}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>Metal</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CLArray</span><span class=p>([</span><span class=mf>1f0</span><span class=p>,</span> <span class=mf>2f0</span><span class=p>,</span> <span class=mf>3f0</span><span class=p>,</span> <span class=mf>4f0</span><span class=p>])</span></code>
+<span class=go>4-element CLArray{Float32, 1, OpenCL.cl.UnifiedDeviceMemory}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>OpenCL</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code></code></pre></div></div></div></div><p>Operations on GPU arrays run on the GPU. Broadcasting fuses an entire expression, including
 functions you defined yourself, into a single kernel; reductions, matrix multiplication and
-most other array operations work as they do on the CPU:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>b</span> <span class=o>.*</span> <span class=mi>2</span> <span class=o>.+</span> <span class=n>sin</span><span class=o>.</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+most other array operations work as they do on the CPU:</p><p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>b</span> <span class=o>.*</span> <span class=mi>2</span> <span class=o>.+</span> <span class=n>sin</span><span class=o>.</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>c</span><span class=p>)</span></code>
 <span class=go>1.529925f6</span>
@@ -48,8 +137,65 @@ most other array operations work as they do on the CPU:</p><div class=highlight>
 <span class=go>1024×1024 CuArray{Float32, 2, CUDACore.DeviceMemory}:</span>
 <span class=go> 2190.23  2096.57  2247.94  2215.04  2192.84  …  2212.13  2186.21  2268.97  2227.84</span>
 <span class=go> 2204.3   2063.32  2257.47  2190.88  2221.25     2211.86  2180.25  2208.53  2237.91</span>
-<span class=go>    ⋮                                         ⋱     ⋮</span></code></pre></div><p>To move data back to the CPU, convert to an <code>Array</code>. The <code>cu</code> function goes the other way,
-and also converts <code>Float64</code> to <code>Float32</code> (see <a href=/pr-preview/pr-70/get-started/#performance-tips>performance tips</a> for why):</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>    ⋮                                         ⋱     ⋮</span></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>b</span> <span class=o>.*</span> <span class=mi>2</span> <span class=o>.+</span> <span class=n>sin</span><span class=o>.</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>c</span><span class=p>)</span></code>
+<span class=go>1.5294382f6</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>maximum</span><span class=p>(</span><span class=n>c</span><span class=p>;</span> <span class=n>dims</span><span class=o>=</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>1×1024 ROCArray{Float32, 2, AMDGPU.Runtime.Mem.HIPBuffer}:</span>
+<span class=go> 2.83934  2.84007  2.83226  2.84068  2.83989  …  2.84071  2.83848  2.83607  2.83973</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>*</span> <span class=n>c</span></code>
+<span class=go>1024×1024 ROCArray{Float32, 2, AMDGPU.Runtime.Mem.HIPBuffer}:</span>
+<span class=go> 2248.44  2242.88  2253.15  2273.65  2257.7   …  2166.73  2292.89  2242.19  2223.36</span>
+<span class=go> 2147.65  2171.73  2180.39  2171.39  2149.49     2092.39  2180.33  2122.44  2148.91</span>
+<span class=go>    ⋮                                         ⋱     ⋮</span></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>b</span> <span class=o>.*</span> <span class=mi>2</span> <span class=o>.+</span> <span class=n>sin</span><span class=o>.</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>c</span><span class=p>)</span></code>
+<span class=go>1.5305391f6</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>maximum</span><span class=p>(</span><span class=n>c</span><span class=p>;</span> <span class=n>dims</span><span class=o>=</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>1×1024 oneArray{Float32, 2, oneAPI.oneL0.DeviceBuffer}:</span>
+<span class=go> 2.84048  2.83489  2.84122  2.84135  2.84142  …  2.84104  2.84039  2.84092  2.84101</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>*</span> <span class=n>c</span></code>
+<span class=go>1024×1024 oneArray{Float32, 2, oneAPI.oneL0.DeviceBuffer}:</span>
+<span class=go> 2135.64  2096.02  2191.67  2107.1   2194.94  …  2176.97  2145.83  2087.7   2108.49</span>
+<span class=go> 2019.22  2027.24  2126.9   2071.04  2121.8      2139.05  2099.29  2048.38  2122.17</span>
+<span class=go>    ⋮                                         ⋱     ⋮</span></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>b</span> <span class=o>.*</span> <span class=mi>2</span> <span class=o>.+</span> <span class=n>sin</span><span class=o>.</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>c</span><span class=p>)</span></code>
+<span class=go>1.5302681f6</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>maximum</span><span class=p>(</span><span class=n>c</span><span class=p>;</span> <span class=n>dims</span><span class=o>=</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>1×1024 MtlMatrix{Float32, Metal.SharedStorage}:</span>
+<span class=go> 2.83489  2.83891  2.83442  2.84131  2.83843  …  2.83832  2.83464  2.84017  2.84034</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>*</span> <span class=n>c</span></code>
+<span class=go>1024×1024 MtlMatrix{Float32, Metal.SharedStorage}:</span>
+<span class=go> 2134.45  2138.76  2111.9   2236.46  2236.54  …  2140.03  2069.82  2139.47  2101.6</span>
+<span class=go> 2172.3   2162.81  2170.82  2244.67  2290.7      2152.4   2138.99  2200.34  2190.36</span>
+<span class=go>    ⋮                                         ⋱     ⋮</span></code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>b</span> <span class=o>.*</span> <span class=mi>2</span> <span class=o>.+</span> <span class=n>sin</span><span class=o>.</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>c</span><span class=p>)</span></code>
+<span class=go>1.529619f6</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>maximum</span><span class=p>(</span><span class=n>c</span><span class=p>;</span> <span class=n>dims</span><span class=o>=</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>1×1024 CLArray{Float32, 2, OpenCL.cl.UnifiedDeviceMemory}:</span>
+<span class=go> 2.83815  2.83725  2.83952  2.83864  2.84037  …  2.8395  2.83987  2.8409  2.83727</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>*</span> <span class=n>c</span></code>
+<span class=go>1024×1024 CLArray{Float32, 2, OpenCL.cl.UnifiedDeviceMemory}:</span>
+<span class=go> 2151.4   2212.21  2248.19  2234.87  2210.34  …  2278.43  2117.32  2212.42  2169.04</span>
+<span class=go> 2175.75  2184.87  2216.57  2254.0   2176.6      2254.8   2094.5   2209.16  2228.63</span>
+<span class=go>    ⋮                                         ⋱     ⋮</span></code></pre></div></div></div></div>To move data back to the CPU, convert to an <code>Array</code>. The <code>cu</code> function of CUDA.jl goes the
+other way, and also converts <code>Float64</code> to <code>Float32</code> (see <a href=/pr-preview/pr-70/get-started/#performance-tips>performance tips</a>
+for why); AMDGPU.jl has <code>roc</code> and Metal.jl <code>mtl</code> for the same:</p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
 <span class=go>4-element Vector{Float32}:</span>
 <span class=go> 1.0</span>
 <span class=go> 2.0</span>
@@ -60,9 +206,45 @@ and also converts <code>Float64</code> to <code>Float32</code> (see <a href=/pr-
 <span class=go>3-element CuArray{Float32, 1, CUDACore.DeviceMemory}:</span>
 <span class=go> 0.21175165</span>
 <span class=go> 0.16454825</span>
-<span class=go> 0.36926574</span></code></pre></div><h3 id=scalar-indexing>Scalar indexing</h3><p>Reading or writing a single element of a GPU array from the CPU is possible, but each access
+<span class=go> 0.36926574</span></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>4-element Vector{Float32}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>roc</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=mi>3</span><span class=p>))</span></code>
+<span class=go>3-element ROCArray{Float32, 1, AMDGPU.Runtime.Mem.HIPBuffer}:</span>
+<span class=go> 0.6216327</span>
+<span class=go> 0.08246515</span>
+<span class=go> 0.82016146</span></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>4-element Vector{Float32}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>4-element Vector{Float32}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>mtl</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=mi>3</span><span class=p>))</span></code>
+<span class=go>3-element MtlVector{Float32, Metal.SharedStorage}:</span>
+<span class=go> 0.22792278</span>
+<span class=go> 0.07600338</span>
+<span class=go> 0.10890646</span></code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>4-element Vector{Float32}:</span>
+<span class=go> 1.0</span>
+<span class=go> 2.0</span>
+<span class=go> 3.0</span>
+<span class=go> 4.0</span></code></pre></div></div></div></div><h3 id=scalar-indexing>Scalar indexing</h3><p>Reading or writing a single element of a GPU array from the CPU is possible, but each access
 is a separate copy between CPU and GPU. Code that loops over the elements of a GPU array this
-way runs on the CPU, and very slowly. To catch such code, scalar indexing is disallowed:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+way runs on the CPU, and very slowly. To catch such code, scalar indexing is disallowed:</p><p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
 <span class=go>ERROR: Scalar indexing is disallowed.</span>
 <span class=go>Invocation of getindex resulted in scalar indexing of a GPU array.</span>
 <span class=go>This is typically caused by calling an iterating implementation of a method.</span>
@@ -74,7 +256,44 @@ way runs on the CPU, and very slowly. To catch such code, scalar indexing is dis
 <span class=go>⋮</span>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=nd>@allowscalar</span> <span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
-<span class=go>1.0f0</span></code></pre></div><p>If you hit this error, look for a function that does not have a GPU implementation, and
+<span class=go>1.0f0</span></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+<span class=go>ERROR: Scalar indexing is disallowed.</span>
+<span class=go>Invocation of getindex resulted in scalar indexing of a GPU array.</span>
+<span class=go>This is typically caused by calling an iterating implementation of a method.</span>
+<span class=go>Such implementations *do not* execute on the GPU, but very slowly on the CPU,</span>
+<span class=go>and therefore should be avoided.</span>
+<span class=go></span>
+<span class=go>If you want to allow scalar iteration, use `allowscalar` or `@allowscalar`</span>
+<span class=go>to enable scalar iteration globally or for the operations in question.</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>AMDGPU</span><span class=o>.</span><span class=nd>@allowscalar</span> <span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+<span class=go>1.0f0</span></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+<span class=go>ERROR: Scalar indexing is disallowed.</span>
+<span class=go>Invocation of getindex resulted in scalar indexing of a GPU array.</span>
+<span class=go>This is typically caused by calling an iterating implementation of a method.</span>
+<span class=go>Such implementations *do not* execute on the GPU, but very slowly on the CPU,</span>
+<span class=go>and therefore should be avoided.</span>
+<span class=go></span>
+<span class=go>If you want to allow scalar iteration, use `allowscalar` or `@allowscalar`</span>
+<span class=go>to enable scalar iteration globally or for the operations in question.</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>oneAPI</span><span class=o>.</span><span class=nd>@allowscalar</span> <span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+<span class=go>1.0f0</span></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span>       <span class=c># allowed: the array is in memory shared with the CPU</span></code>
+<span class=go>1.0f0</span></code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+<span class=go>ERROR: Scalar indexing is disallowed.</span>
+<span class=go>Invocation of getindex resulted in scalar indexing of a GPU array.</span>
+<span class=go>This is typically caused by calling an iterating implementation of a method.</span>
+<span class=go>Such implementations *do not* execute on the GPU, but very slowly on the CPU,</span>
+<span class=go>and therefore should be avoided.</span>
+<span class=go></span>
+<span class=go>If you want to allow scalar iteration, use `allowscalar` or `@allowscalar`</span>
+<span class=go>to enable scalar iteration globally or for the operations in question.</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>OpenCL</span><span class=o>.</span><span class=nd>@allowscalar</span> <span class=n>a</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span></code>
+<span class=go>1.0f0</span></code></pre></div></div></div></div>If you hit this error, look for a function that does not have a GPU implementation, and
 replace it with a broadcast, a reduction or another array operation. Use <code>@allowscalar</code> only
 for the occasional element you really need on the CPU. Metal.jl is an exception: by default
 its arrays live in memory shared with the CPU, which can be indexed directly.</p><h3 id=writing-code-that-runs-on-any-array>Writing code that runs on any array</h3><p>Generic Julia code that uses array operations works for CPU and GPU arrays alike:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>rms</span><span class=p>(</span><span class=n>x</span><span class=p>)</span> <span class=o>=</span> <span class=n>sqrt</span><span class=p>(</span><span class=n>sum</span><span class=p>(</span><span class=n>abs2</span><span class=p>,</span> <span class=n>x</span><span class=p>)</span> <span class=o>/</span> <span class=n>length</span><span class=p>(</span><span class=n>x</span><span class=p>))</span></code>
@@ -103,7 +322,11 @@ to the GPU as a whole. One <code>@adapt_structure</code> line teaches it about y
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>adapt</span><span class=p>(</span><span class=n>CuArray</span><span class=p>,</span> <span class=n>p</span><span class=p>)</span></code>
 <span class=go>Particles{CuArray{Float32, 1, CUDACore.DeviceMemory}}(CuArray(Float32[0.6189147, 0.40415162, 0.79802877]), CuArray(Float32[0.0, 0.0, 0.0]))</span></code></pre></div><h2 id=writing-kernels>Writing kernels</h2><p>When an operation cannot be expressed with array operations, or you need more control, you
 can write a kernel: a Julia function that is executed by many GPU threads in parallel. Each
-thread computes its own index and processes one element:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+thread computes its own index and processes one element:</p><p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label>
+<label for=backend-opencl>OpenCL.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
            <span class=n>i</span> <span class=o>=</span> <span class=p>(</span><span class=n>blockIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>-</span> <span class=mi>1</span><span class=p>)</span> <span class=o>*</span> <span class=n>blockDim</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>+</span> <span class=n>threadIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
            <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>)</span>
                <span class=nd>@inbounds</span> <span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+</span> <span class=n>b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
@@ -118,16 +341,86 @@ thread computes its own index and processes one element:</p><div class=highlight
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>);</span></code>
 <span class=go></span>
-<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>threads</span><span class=o>=</span><span class=mi>256</span> <span class=n>blocks</span><span class=o>=</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span></code>
-<span class=go>CUDACore.HostKernel for vadd!(CuDeviceVector{Float32, 1}, CuDeviceVector{Float32, 1}, CuDeviceVector{Float32, 1})</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>threads</span><span class=o>=</span><span class=mi>256</span> <span class=n>blocks</span><span class=o>=</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>);</span></code>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
-<span class=go>true</span></code></pre></div><p>The launch configuration asks for blocks of 256 threads, and enough blocks to cover the whole
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=p>(</span><span class=n>workgroupIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>-</span> <span class=mi>1</span><span class=p>)</span> <span class=o>*</span> <span class=n>workgroupDim</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>+</span> <span class=n>workitemIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>)</span>
+               <span class=nd>@inbounds</span> <span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+</span> <span class=n>b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+           <span class=k>end</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>vadd! (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>AMDGPU</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>AMDGPU</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@roc</span> <span class=n>groupsize</span><span class=o>=</span><span class=mi>256</span> <span class=n>gridsize</span><span class=o>=</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>get_global_id</span><span class=p>()</span>
+           <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>)</span>
+               <span class=nd>@inbounds</span> <span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+</span> <span class=n>b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+           <span class=k>end</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>vadd! (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>oneAPI</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>oneAPI</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@oneapi</span> <span class=n>items</span><span class=o>=</span><span class=mi>256</span> <span class=n>groups</span><span class=o>=</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>thread_position_in_grid</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>)</span>
+               <span class=nd>@inbounds</span> <span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+</span> <span class=n>b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+           <span class=k>end</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>vadd! (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>Metal</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>Metal</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@metal</span> <span class=n>threads</span><span class=o>=</span><span class=mi>256</span> <span class=n>groups</span><span class=o>=</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-opencl><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>get_global_id</span><span class=p>()</span>
+           <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>)</span>
+               <span class=nd>@inbounds</span> <span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+</span> <span class=n>b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+           <span class=k>end</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>vadd! (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>OpenCL</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>OpenCL</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@opencl</span> <span class=n>local_size</span><span class=o>=</span><span class=mi>256</span> <span class=n>global_size</span><span class=o>=</span><span class=mi>256</span><span class=o>*</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
+<span class=go>true</span></code></pre></div></div></div></div>The launch configuration asks for blocks of 256 threads, and enough blocks to cover the whole
 array; the <code>if</code> guards against the threads past the end. Kernels must return <code>nothing</code>, and
 only support a subset of Julia: they generally cannot allocate memory or perform I/O, and
-code that is not type stable does not compile.</p><p>The other back-ends work the same way, with their own names for the launch macro and the
-index functions:</p><ul><li>AMDGPU.jl: <code>@roc groupsize=256 gridsize=…</code>, with <code>workitemIdx()</code>, <code>workgroupIdx()</code> and
-<code>workgroupDim()</code>.</li><li>oneAPI.jl: <code>@oneapi items=256 groups=…</code>, with <code>get_global_id()</code>.</li><li>Metal.jl: <code>@metal threads=256 groups=…</code>, with <code>thread_position_in_grid().x</code>.</li></ul><h3 id=portable-kernels-with-kernelabstractionsjl>Portable kernels with KernelAbstractions.jl</h3><p>To write a kernel once and run it on any back-end, use
+code that is not type stable does not compile.</p><p>The other back-ends work the same way, with their own names for the launch macro, its
+arguments and the index functions.</p><h3 id=portable-kernels-with-kernelabstractionsjl>Portable kernels with KernelAbstractions.jl</h3><p>To write a kernel once and run it on any back-end, use
 <a href=https://github.com/JuliaGPU/KernelAbstractions.jl>KernelAbstractions.jl</a>. The kernel is
 marked with <code>@kernel</code>, and <code>@index</code> returns the index of the current work item:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>using</span> <span class=n>KernelAbstractions</span>
 </span></span><span class=line><span class=cl>
@@ -144,15 +437,16 @@ marked with <code>@kernel</code>, and <code>@index</code> returns the index of t
 </span></span></code></pre></div><p><code>get_backend</code> picks the back-end that matches the array, and <code>ndrange</code> sets the number of
 work items; KernelAbstractions skips the work items past the end of the range, so no bounds
 check is needed. The same code then works with a CPU <code>Array</code>, executed through
-<a href=https://portablecl.org/>PoCL</a>, and with a <code>CuArray</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span> <span class=n>b</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<a href=https://portablecl.org/>PoCL</a>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span> <span class=n>b</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>get_backend</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
 <span class=go>POCLBackend()</span>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>vadd_ka!</span><span class=p>(</span><span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>),</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
-<span class=go>true</span>
-<span class=go></span>
-<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
+<span class=go>true</span></code></pre></div><p>And, unchanged, with the arrays of any GPU back-end:</p><div class=backends><div class=backend-tabs><label for=backend-cuda>CUDA.jl</label>
+<label for=backend-amdgpu>AMDGPU.jl</label>
+<label for=backend-oneapi>oneAPI.jl</label>
+<label for=backend-metal>Metal.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a_d</span> <span class=o>=</span> <span class=n>CuArray</span><span class=p>(</span><span class=n>a</span><span class=p>);</span> <span class=n>b_d</span> <span class=o>=</span> <span class=n>CuArray</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
 <span class=go></span>
@@ -160,15 +454,31 @@ check is needed. The same code then works with a CPU <code>Array</code>, execute
 <span class=go>CUDABackend(false, false, false)</span>
 <span class=go></span>
 <span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>vadd_ka!</span><span class=p>(</span><span class=n>similar</span><span class=p>(</span><span class=n>a_d</span><span class=p>),</span> <span class=n>a_d</span><span class=p>,</span> <span class=n>b_d</span><span class=p>)</span> <span class=o>==</span> <span class=n>a_d</span> <span class=o>.+</span> <span class=n>b_d</span></code>
-<span class=go>true</span></code></pre></div><p>And, unchanged, on an Apple M3 Pro with Metal.jl:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>Metal</span></code>
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>AMDGPU</span></code>
 <span class=go></span>
-<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>MtlArray</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>));</span> <span class=n>b</span> <span class=o>=</span> <span class=n>MtlArray</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>));</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a_d</span> <span class=o>=</span> <span class=n>ROCArray</span><span class=p>(</span><span class=n>a</span><span class=p>);</span> <span class=n>b_d</span> <span class=o>=</span> <span class=n>ROCArray</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
 <span class=go></span>
-<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>get_backend</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>get_backend</span><span class=p>(</span><span class=n>a_d</span><span class=p>)</span></code>
+<span class=go>ROCBackend()</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>vadd_ka!</span><span class=p>(</span><span class=n>similar</span><span class=p>(</span><span class=n>a_d</span><span class=p>),</span> <span class=n>a_d</span><span class=p>,</span> <span class=n>b_d</span><span class=p>)</span> <span class=o>==</span> <span class=n>a_d</span> <span class=o>.+</span> <span class=n>b_d</span></code>
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>oneAPI</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a_d</span> <span class=o>=</span> <span class=n>oneArray</span><span class=p>(</span><span class=n>a</span><span class=p>);</span> <span class=n>b_d</span> <span class=o>=</span> <span class=n>oneArray</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>get_backend</span><span class=p>(</span><span class=n>a_d</span><span class=p>)</span></code>
+<span class=go>oneAPIBackend(false, false)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>vadd_ka!</span><span class=p>(</span><span class=n>similar</span><span class=p>(</span><span class=n>a_d</span><span class=p>),</span> <span class=n>a_d</span><span class=p>,</span> <span class=n>b_d</span><span class=p>)</span> <span class=o>==</span> <span class=n>a_d</span> <span class=o>.+</span> <span class=n>b_d</span></code>
+<span class=go>true</span></code></pre></div></div><div class=backend-panel data-backend=backend-metal><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>Metal</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a_d</span> <span class=o>=</span> <span class=n>MtlArray</span><span class=p>(</span><span class=n>a</span><span class=p>);</span> <span class=n>b_d</span> <span class=o>=</span> <span class=n>MtlArray</span><span class=p>(</span><span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>get_backend</span><span class=p>(</span><span class=n>a_d</span><span class=p>)</span></code>
 <span class=go>MetalBackend()</span>
 <span class=go></span>
-<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>vadd_ka!</span><span class=p>(</span><span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>),</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
-<span class=go>true</span></code></pre></div><p>Kernels are launched asynchronously: call <code>KernelAbstractions.synchronize(backend)</code> before
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>vadd_ka!</span><span class=p>(</span><span class=n>similar</span><span class=p>(</span><span class=n>a_d</span><span class=p>),</span> <span class=n>a_d</span><span class=p>,</span> <span class=n>b_d</span><span class=p>)</span> <span class=o>==</span> <span class=n>a_d</span> <span class=o>.+</span> <span class=n>b_d</span></code>
+<span class=go>true</span></code></pre></div></div></div></div><p>Kernels are launched asynchronously: call <code>KernelAbstractions.synchronize(backend)</code> before
 using the result on the CPU, unless you copy it back (as the comparisons above do), which
 waits for the kernel to finish. The <a href=https://juliagpu.github.io/KernelAbstractions.jl/stable/>KernelAbstractions.jl
 documentation</a> covers workgroups,
