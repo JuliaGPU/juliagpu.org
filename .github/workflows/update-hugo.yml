@@ -1,0 +1,38 @@
+name: Update Hugo
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Bump the Hugo version
+        id: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(gh release view --repo gohugoio/hugo --json tagName --jq '.tagName | ltrimstr("v")')
+          sed -i "s/^    default: .*/    default: ${version}/" .github/actions/setup-hugo/action.yml
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      # pull requests opened with the workflow token don't trigger CI, so check the build here
+      - uses: ./.github/actions/setup-hugo
+      - run: hugo build --minify --panicOnWarning
+
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          branch: update-hugo
+          commit-message: Update Hugo to ${{ steps.bump.outputs.version }}
+          title: Update Hugo to ${{ steps.bump.outputs.version }}
+          body: |
+            See the [release notes](https://github.com/gohugoio/hugo/releases/tag/v${{ steps.bump.outputs.version }}).
+            The site was built with this version without warnings.

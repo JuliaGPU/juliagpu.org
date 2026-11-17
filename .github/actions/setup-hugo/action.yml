@@ -1,0 +1,22 @@
+name: Set up Hugo
+description: Install the version of Hugo that the site is built with.
+
+inputs:
+  version:
+    description: Hugo version to install. Kept up to date by the update-hugo workflow.
+    default: 0.170.0
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      working-directory: ${{ runner.temp }}
+      run: |
+        tarball="hugo_${VERSION}_linux-amd64.tar.gz"
+        url="https://github.com/gohugoio/hugo/releases/download/v${VERSION}"
+        curl -fsSLO "$url/$tarball"
+        curl -fsSL "$url/hugo_${VERSION}_checksums.txt" | grep " $tarball\$" | sha256sum -c -
+        tar -xzf "$tarball" hugo
+        echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
