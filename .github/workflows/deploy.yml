@@ -7,7 +7,9 @@ on:
     types: [opened, reopened, synchronize, closed]
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  # the closed event of a merged PR reports the base branch as github.ref,
+  # so key PR runs on their number to keep them from replacing the master deploy
+  group: deploy-${{ github.event.pull_request.number && format('pr-{0}', github.event.pull_request.number) || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
