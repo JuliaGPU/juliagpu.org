@@ -35,8 +35,8 @@ pageRef = "/backends"
 weight = 1
 
 [[menus.main]]
-name = "Learn"
-pageRef = "/learn"
+name = "Get started"
+pageRef = "/get-started"
 weight = 2
 
 [[menus.main]]

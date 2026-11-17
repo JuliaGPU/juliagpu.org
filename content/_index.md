@@ -52,7 +52,7 @@ members of the community at:
 
 - Julia Discourse, with a dedicated [GPU
   section](https://discourse.julialang.org/c/domain/gpu/11)
-- Julia Slack ([register here](https://slackinvite.julialang.org/)), on the
+- Julia Slack ([register here](https://julialang.org/slack/)), on the
   [#gpu channel](https://julialang.slack.com/messages/C689Y34LE/)
 - [JuliaGPU office hours](https://meet.google.com/hmv-zqvp-tbf), every other
   week at 2PM CET \

@@ -5,7 +5,7 @@
       <h1>GPU programming in {{ (resources.Get "julia-logo.svg").Content | safeHTML }}</h1>
       {{ .Params.lead | .RenderString (dict "display" "block") }}
       <p class="actions">
-        <a class="button" href="{{ (site.GetPage "/learn").RelPermalink }}">Get started {{ partial "icon.html" "arrow" }}</a>
+        <a class="button" href="{{ (site.GetPage "/get-started").RelPermalink }}">Get started {{ partial "icon.html" "arrow" }}</a>
         <a class="button secondary" href="{{ (site.GetPage "/post").RelPermalink }}">Read the blog</a>
       </p>
     </div>
