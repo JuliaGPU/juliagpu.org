@@ -14,7 +14,7 @@ julia> using CUDA   # or AMDGPU, oneAPI, Metal
 julia> a = CUDA.rand(1024, 1024);
 
 julia> sum(a .^ 2)   # runs on the GPU
-349420.03f0
+349013.44f0
 
 julia> function add_one!(a)
            i = threadIdx().x + (blockIdx().x - 1) * blockDim().x

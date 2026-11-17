@@ -11,7 +11,6 @@
   --accent-bg: light-dark(#7a3d9e, #c9a2e4);
 
   /* the Julia logo colors */
-  --julia-red: #cb3c33;
   --julia-green: #389826;
   --julia-purple: #9558b2;
 
@@ -273,11 +272,10 @@ p, li {
   font-size: clamp(2.4rem, 6vw, 3.6rem);
 }
 
-.hero h1 span {
-  background: linear-gradient(90deg, var(--julia-purple), var(--julia-red) 50%, var(--julia-green));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.hero h1 .julia-logo {
+  height: 1.6em;
+  width: auto;
+  vertical-align: -0.3em;
 }
 
 .hero p {

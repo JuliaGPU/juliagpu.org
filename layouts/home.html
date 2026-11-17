@@ -2,7 +2,7 @@
 <section class="hero">
   <div class="container">
     <div class="hero-text">
-      <h1>GPU programming in <span>Julia</span></h1>
+      <h1>GPU programming in {{ (resources.Get "julia-logo.svg").Content | safeHTML }}</h1>
       {{ .Params.lead | .RenderString (dict "display" "block") }}
       <p class="actions">
         <a class="button" href="{{ (site.GetPage "/learn").RelPermalink }}">Get started {{ partial "icon.html" "arrow" }}</a>
