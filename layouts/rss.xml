@@ -1,5 +1,4 @@
-{{- /* The blog feed, also served at the root where the Hugo site of 2019-2021 advertised it. */ -}}
-{{- $posts := where (site.GetPage "/post").RegularPages "Params.externalLink" "==" nil -}}
+{{- $posts := where .RegularPages "Params.externalLink" "==" nil -}}
 {{- printf "<?xml version=%q encoding=%q?>" "1.0" "utf-8" | safeHTML }}
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>

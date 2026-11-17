@@ -2,7 +2,6 @@
 title = "Intel oneAPI"
 description = "Support for Intel GPUs through oneAPI and Level Zero, with array operations, kernel programming and oneMKL integration."
 weight = 3
-aliases = ["/oneapi/"]
 
 [[params.packages]]
 name = "oneAPI.jl"

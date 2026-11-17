@@ -43,7 +43,7 @@ version of Hugo is released.
 
 ## Old URLs
 
-The site moved from Hugo to Franklin.jl in 2021, and back to Hugo in 2026. Pages that moved
-list their old URLs as `aliases`, and posts published before 2021 have a `guid` so that feed
-readers recognize them. New posts need neither. Images that used to be served from `/assets/`
-are mounted there in `hugo.toml`.
+Until 2021, blog posts were served at the root of the site (`/2020-07-07-cuda_1.1/`), and the
+feed still identifies them by those URLs. Posts from before the move back to Hugo in 2026
+therefore list their root URL in `aliases` and have a `guid` in their front matter. New posts
+need neither.

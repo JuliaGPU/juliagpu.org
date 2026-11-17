@@ -2,7 +2,6 @@
 title = "AMD ROCm"
 description = "Array and kernel programming for AMD GPUs, with performance comparable to HIP C++ and integration with rocBLAS, rocFFT, rocSOLVER and rocSPARSE."
 weight = 2
-aliases = ["/rocm/"]
 
 [[params.packages]]
 name = "AMDGPU.jl"

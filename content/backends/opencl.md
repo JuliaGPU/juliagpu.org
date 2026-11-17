@@ -2,7 +2,6 @@
 title = "OpenCL"
 description = "Vendor-neutral support for any device with an OpenCL driver, including CPUs through PoCL."
 weight = 5
-aliases = ["/other/"]
 
 [[params.packages]]
 name = "OpenCL.jl"

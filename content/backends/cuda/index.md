@@ -2,7 +2,6 @@
 title = "NVIDIA CUDA"
 description = "The most mature back-end, with kernel programming on par with CUDA C and wrappers for cuBLAS, cuFFT, cuSOLVER, cuSPARSE, cuDNN, cuTENSOR and more."
 weight = 1
-aliases = ["/cuda/"]
 
 [[params.packages]]
 name = "CUDA.jl"

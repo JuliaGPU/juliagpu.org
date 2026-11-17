@@ -17,7 +17,7 @@ date = [":filename", ":default"]
 post = "/post/:contentbasename/"
 
 [outputs]
-home = ["html", "rss"]
+home = ["html"]
 section = ["html"]
 
 [markup.highlight]
@@ -66,32 +66,3 @@ target = "static"
 source = "perf"
 target = "static/perf"
 files = ["! README.md"]
-
-# images that the Franklin site served from /assets/, and that are embedded elsewhere
-[[module.mounts]]
-source = "static/logo.png"
-target = "static/assets/logo_crop.png"
-
-[[module.mounts]]
-source = "static/favicon.ico"
-target = "static/assets/favicon.ico"
-
-[[module.mounts]]
-source = "content/backends/cuda/performance.png"
-target = "static/assets/img/cuda-performance.png"
-
-[[module.mounts]]
-source = "content/backends/rocm/performance.png"
-target = "static/assets/img/amdgpu-performance.png"
-
-[[module.mounts]]
-source = "content/showcases/oceananigans-simulation.png"
-target = "static/assets/img/oceananigans-simulation.png"
-
-[[module.mounts]]
-source = "content/showcases/oceananigans-energy.png"
-target = "static/assets/img/oceananigans-energy.png"
-
-[[module.mounts]]
-source = "content/showcases/diffeqgpu-lorenz.jpg"
-target = "static/assets/img/diffeqgpu-lorenz.jpg"
