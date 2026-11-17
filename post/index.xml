@@ -19,6 +19,71 @@
 
 
 <item>
+  <title><![CDATA[AMDGPU.jl 2.8–2.12: ROCm as artifacts, a performance dashboard, and a faster core]]></title>
+  <link>https://juliagpu.org/post/2026-11-16-amdgpu-2.12/index.html</link>
+  <guid>https://juliagpu.org/2026-11-16-amdgpu-2.12/</guid>
+  <description><![CDATA[With AMDGPU.jl 2.12, ROCm is downloaded as an artifact and no longer needs to be installed. Recent releases also bring a public performance dashboard, faster kernel launches and reductions, hipTensor wrappers, device-side BLAS scalars, and better support for GPU-aware MPI.]]></description>  
+  
+  <content:encoded><![CDATA[
+<p>With AMDGPU.jl 2.12, ROCm is downloaded as an artifact and no longer needs to be installed. Recent releases also bring a public performance dashboard, faster kernel launches and reductions, hipTensor wrappers, device-side BLAS scalars, and better support for GPU-aware MPI.</p>
+<h2 id="rocm_as_artifacts">ROCm as artifacts</h2>
+<p>Until now, <a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a> needed a ROCm installation on the system. Starting with 2.12, the ROCm runtime and libraries &#40;rocBLAS, rocSOLVER, rocSPARSE, rocFFT, rocRAND, MIOpen and hipTensor&#41; are downloaded as artifacts, taken from AMD&#39;s <a href="https://github.com/ROCm/TheRock">TheRock</a> distribution &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1028">#1028</a>&#41;. Only the GPU driver has to be installed:</p>
+<pre><code class="language-julia-repl">pkg&gt; add AMDGPUjulia&gt; using AMDGPUjulia&gt; AMDGPU.versioninfo&#40;&#41;</code></pre>
+<p>The bundle is selected from the GPU architecture detected on the host. Bundles based on ROCm 10.1 are available for many Radeon GPUs and APUs, such as the RDNA3 series, and for Instinct accelerators, such as the MI250 and MI300. A local ROCm installation &#40;6.0 or later&#41; can still be used:</p>
+<pre><code class="language-julia">AMDGPU.set_rocm_version&#33;&#40;local_rocm&#61;true&#41;   # takes effect after restarting Julia</code></pre>
+<p>Windows bundles exist for most architectures, but have seen little testing so far. If you use AMDGPU.jl on Windows, please try them and <a href="https://github.com/JuliaGPU/AMDGPU.jl/issues">report</a> what you find. The <a href="https://amdgpu.juliagpu.org/stable/install_tips">installation guide</a> lists the available bundles, and explains how to select one on a machine without a GPU.</p>
+<h2 id="performance_dashboard">Performance dashboard</h2>
+<p>AMDGPU.jl benchmarks run on every commit to the main branch, on a Radeon RX 7900 XTX. Since 2.11, the results are published to the <a href="https://juliagpu.org/perf/?pkg&#61;amdgpu">JuliaGPU performance dashboard</a> &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1193">#1193</a>&#41;. The dashboard is shared with CUDA.jl, Metal.jl and KernelAbstractions.jl. It shows the history of each benchmark, and highlights changes that are larger than the usual run-to-run noise.</p>
+<p>The benchmarks are grouped in three categories: performance &#40;array operations, kernels, launches&#41;, latency &#40;precompilation, import, first kernel&#41;, and applications. The last group is new, with a tiled matrix multiplication, a 3D diffusion stencil and other small workloads &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1061">#1061</a>&#41;. Pull requests now receive a comment that compares their benchmarks with the main branch &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1194">#1194</a>&#41;, so regressions are visible before merging.</p>
+<h2 id="a_faster_core">A faster core</h2>
+<p>Several changes reduce the cost of launching kernels:</p>
+<ul>
+<li><p>launching a kernel allocates once instead of 12 times &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1009">#1009</a>, already in 2.7.1&#41;, and kernel lookups are cached &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1189">#1189</a>&#41;. The launch benchmark went from about 1.3 µs at 2.7 to about 0.9 µs;</p>
+</li>
+<li><p>kernels read their grid dimensions from hidden kernel arguments, which makes short kernels about twice as fast &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1058">#1058</a>&#41;;</p>
+</li>
+<li><p>KernelAbstractions launches, including the ones behind broadcasting, no longer go through dynamic dispatch &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1115">#1115</a>&#41;.</p>
+</li>
+</ul>
+<p>Reductions, scans and sorting now use the shared implementations of GPUArrays 12 &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1145">#1145</a>&#41;. The largest gains on our benchmark machine are for a large matrix: <code>reduce</code> and <code>mapreduce</code> along the first dimension are about 12 times faster, and <code>accumulate</code> along the second dimension about 20 times. Not every case improved at first: the two <code>accumulate</code> benchmarks on vectors were 10–30&#37; slower after the switch, but are back within a few percent of their earlier times in 2.12. The figure below shows the history of the <code>reduce</code> benchmark on the dashboard.</p>
+<figure>
+  <img src="https://juliagpu.org/post/2026-11-16-amdgpu-2.12/perf_reduce.png" alt="The JuliaGPU performance dashboard, showing the history of the AMDGPU.jl benchmark of reduce along the first dimension of a large matrix">
+</figure><p>The red entry in the list of groups is synchronization: <code>AMDGPU.device_synchronize&#40;&#41;</code> now waits on a worker thread instead of blocking the calling one &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1118">#1118</a>&#41;, which costs about 1 µs more on an idle device.</p>
+<h2 id="linear_algebra_and_tensors">Linear algebra and tensors</h2>
+<p>Version 2.8 adds wrappers for <a href="https://rocm.docs.amd.com/projects/hipTensor/en/latest/index.html">hipTensor</a>, AMD&#39;s tensor contraction library &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/890">#890</a>&#41;. hipTensor is not available on every GPU: the artifacts include it for the MI-series bundles only. The <a href="https://amdgpu.juliagpu.org/stable/libraries/tensor">documentation</a> lists the current limitations.</p>
+<p>Version 2.12 adds device-side scalars for rocBLAS &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1213">#1213</a>&#41;. A scalar such as the result of <code>dot</code> can stay on the GPU and be passed to the next call, without waiting for the host:</p>
+<pre><code class="language-julia">x, y &#61; AMDGPU.rand&#40;Float32, 1024&#41;, AMDGPU.rand&#40;Float32, 1024&#41;d &#61; ROCRef&#123;Float32&#125;&#40;&#41;
+AMDGPU.rocBLAS.dot&#40;length&#40;x&#41;, x, 1, y, 1, d&#41;   # d &#61; x ⋅ y, without synchronizing
+AMDGPU.rocBLAS.scal&#33;&#40;length&#40;x&#41;, d, x, 1&#41;       # x .*&#61; d
+d&#91;&#93;                                            # copy to the host</code></pre>
+<p>The same release adds a blocked QR factorization &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1214">#1214</a>&#41; and accepts strided views in more rocBLAS wrappers &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1218">#1218</a>&#41;.</p>
+<p><strong>The default SVD algorithm changed.</strong> The <a href="https://juliagpu.org/post/2026-07-06-amdgpu-2.7/">previous post</a> announced the Jacobi method as the default, because it is faster. It turned out that rocSOLVER&#39;s Jacobi SVD loses the small singular values &#40;below <code>sqrt&#40;eps&#41;·σ₁</code>&#41; without reporting an error, so <code>svd</code>, <code>cond</code> or <code>rank</code> could be less accurate than expected. Since 2.12, <code>svd</code> and <code>svdvals</code> use QR iteration by default, which matches LAPACK &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1221">#1221</a>&#41;. The Jacobi method remains available for well-conditioned matrices:</p>
+<pre><code class="language-julia">F &#61; svd&#40;A&#41;                            # QR iteration, accurate
+F &#61; svd&#40;A; alg &#61; JacobiAlgorithm&#40;&#41;&#41;   # faster, for well-conditioned matrices</code></pre>
+<p>The SVD and eigenvalue wrappers of rocSOLVER now also report failures, as LAPACK does on the CPU &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1220">#1220</a>&#41;.</p>
+<h2 id="streams_tasks_and_mpi">Streams, tasks and MPI</h2>
+<p>GPU-aware MPI did not work with <code>ROCArray</code>s on ROCm 7.1 and later, because the memory of the default pool could not be shared between processes. Since 2.11, memory pools on Linux are created so that their memory can be exported &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1208">#1208</a>&#41;.</p>
+<p>AMDGPU.jl waits for pending work on an array when the array is used on another stream. This is safe, but prevents kernels on different streams from working on the same array at the same time, for example to exchange halos while the interior is computed. This can now be disabled per array &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1209">#1209</a>&#41;:</p>
+<pre><code class="language-julia">s1, s2 &#61; HIPStream&#40;&#41;, HIPStream&#40;&#41;
+AMDGPU.enable_synchronization&#33;&#40;A, false&#41;
+@roc stream&#61;s1 interior&#33;&#40;A&#41;
+@roc stream&#61;s2 boundary&#33;&#40;A&#41;   # runs concurrently
+AMDGPU.synchronize&#40;s1&#41;; AMDGPU.synchronize&#40;s2&#41;
+AMDGPU.enable_synchronization&#33;&#40;A&#41;</code></pre>
+<p>Applications that spawn many short tasks also benefit from 2.9: the stream of a finished task is now reused by the next task, instead of staying alive until garbage collection &#40;<a href="https://github.com/JuliaGPU/AMDGPU.jl/pull/1120">#1120</a>&#41;.</p>
+<p>Most of these changes come from the recent releases, up to 2.12. As always, update to the latest version to pick them up, and see the <a href="https://github.com/JuliaGPU/AMDGPU.jl/releases">changelog</a> for the full list. AMDGPU.jl is a community effort, and contributions, issue reports and feedback are welcome. Thanks to Tim Besard, Katharine Hyatt, Simeon David Schaub, Gabriel Baraldi, Christian Guinard, Gregor Decristoforo, Anton Smirnov, Dohyeon Lee, Ka Wai Ho, Shreyas Hegde, Phil Tomson, Michel Schanen, Mateusz Kubica, John Eismeier, Alex Ames and Valentin Churavy for their contributions to these releases.</p>
+]]></content:encoded>
+    
+  <pubDate>Mon, 16 Nov 2026 00:00:00 +0000</pubDate>  
+  
+  
+  <atom:author>
+    <atom:name>Ludovic Räss</atom:name>
+  </atom:author>
+        
+</item>
+
+<item>
   <title><![CDATA[GSoC 2026: Portable data-parallel primitives for the Julia GPU stack]]></title>
   <link>https://juliagpu.org/post/2026-10-14-gsoc-portability/index.html</link>
   <guid>https://juliagpu.org/2026-10-14-gsoc-portability/</guid>
