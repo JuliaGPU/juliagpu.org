@@ -1,0 +1,125 @@
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>CUDA.jl 3.0 · JuliaGPU</title><meta name=description content="CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator, compiler tooling for GPU method overrides, device-side random number generation and a completely revamped cuDNN interface."><link rel=canonical href=https://juliagpu.org/pr-preview/pr-70/post/2021-04-09-cuda_3.0/><link rel=icon href=/pr-preview/pr-70/favicon.ico sizes=32x32><link rel=icon href=/pr-preview/pr-70/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/pr-preview/pr-70/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/pr-preview/pr-70/css/site.min.e697f363557868eb5f52411b0822356051ee7e22179aa56c98bac658e7d17bc1.css integrity="sha256-5pfzY1V4aOtfUkEbCCI1YFHufiIXmqVsmLrGWOfRe8E="><meta property="og:url" content="https://juliagpu.org/pr-preview/pr-70/post/2021-04-09-cuda_3.0/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="CUDA.jl 3.0"><meta property="og:description" content="CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator, compiler tooling for GPU method overrides, device-side random number generation and a completely revamped cuDNN interface."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2021-04-09T00:00:00+00:00"><meta property="article:modified_time" content="2021-04-09T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/pr-preview/pr-70/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/pr-preview/pr-70/><img src=/pr-preview/pr-70/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/pr-preview/pr-70/backends/>Back-ends</a></li><li><a href=/pr-preview/pr-70/get-started/>Get started</a></li><li><a href=/pr-preview/pr-70/showcases/>Showcases</a></li><li><a href=/pr-preview/pr-70/perf/>Performance</a></li><li><a href=/pr-preview/pr-70/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>CUDA.jl 3.0</h1><p class=post-meta><time datetime=2021-04-09>April 9, 2021</time> · Tim Besard</p></header><p>CUDA.jl 3.0 is a significant, semi-breaking release that features greatly improved
+multi-tasking and multi-threading, support for CUDA 11.2 and its new memory allocator,
+compiler tooling for GPU method overrides, device-side random number generation and a
+completely revamped cuDNN interface.</p><h2 id=improved-multi-tasking-and-multi-threading>Improved multi-tasking and multi-threading</h2><p>Before this release, CUDA operations were enqueued on a single global stream, and many of
+these operations (like copying memory, or synchronizing execution) were fully blocking. This
+posed difficulties when using multiple tasks to perform independent operations: Blocking
+operations prevent all tasks from making progress, and using the same stream introduces
+unintended dependencies on otherwise independend operations. <strong>CUDA.jl now uses <a href=https://github.com/JuliaGPU/CUDA.jl/pull/662>private
+streams for each Julia task</a>, and avoids
+blocking operations where possible, enabling task-based concurrent execution.</strong> It is also
+possible to use different devices on each task, and there is experimental support for
+executing those tasks from different threads.</p><p>A <del>picture</del> snippet of code is worth a thousand words, so let&rsquo;s demonstrate using
+a computation that uses both a library function (GEMM from CUBLAS) and a native Julia
+broadcast kernel:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>using</span> <span class=n>CUDA</span><span class=p>,</span> <span class=n>LinearAlgebra</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>function</span> <span class=n>compute</span><span class=p>(</span><span class=n>a</span><span class=p>,</span><span class=n>b</span><span class=p>,</span><span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>mul!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>broadcast!</span><span class=p>(</span><span class=n>sin</span><span class=p>,</span> <span class=n>c</span><span class=p>,</span> <span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>synchronize</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=n>c</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span></code></pre></div><p>To execute multiple invocations of this function concurrently, we can simply use Julia&rsquo;s
+task-based programming interfaces and wrap each call to <code>compute</code> in an <code>@async</code> block.
+Then, we synchronize execution again by wrapping in a <code>@sync</code> block:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>function</span> <span class=n>iteration</span><span class=p>(</span><span class=n>a</span><span class=p>,</span><span class=n>b</span><span class=p>,</span><span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>results</span> <span class=o>=</span> <span class=kt>Vector</span><span class=p>{</span><span class=kt>Any</span><span class=p>}(</span><span class=nb>undef</span><span class=p>,</span> <span class=mi>2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>NVTX</span><span class=o>.</span><span class=nd>@range</span> <span class=s>&#34;computation&#34;</span> <span class=nd>@sync</span> <span class=k>begin</span>
+</span></span><span class=line><span class=cl>        <span class=nd>@async</span> <span class=k>begin</span>
+</span></span><span class=line><span class=cl>            <span class=n>results</span><span class=p>[</span><span class=mi>1</span><span class=p>]</span> <span class=o>=</span> <span class=n>compute</span><span class=p>(</span><span class=n>a</span><span class=p>,</span><span class=n>b</span><span class=p>,</span><span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>end</span>
+</span></span><span class=line><span class=cl>        <span class=nd>@async</span> <span class=k>begin</span>
+</span></span><span class=line><span class=cl>            <span class=n>results</span><span class=p>[</span><span class=mi>2</span><span class=p>]</span> <span class=o>=</span> <span class=n>compute</span><span class=p>(</span><span class=n>a</span><span class=p>,</span><span class=n>b</span><span class=p>,</span><span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=k>end</span>
+</span></span><span class=line><span class=cl>    <span class=k>end</span>
+</span></span><span class=line><span class=cl>    <span class=n>NVTX</span><span class=o>.</span><span class=nd>@range</span> <span class=s>&#34;comparison&#34;</span> <span class=kt>Array</span><span class=p>(</span><span class=n>results</span><span class=p>[</span><span class=mi>1</span><span class=p>])</span> <span class=o>==</span> <span class=kt>Array</span><span class=p>(</span><span class=n>results</span><span class=p>[</span><span class=mi>2</span><span class=p>])</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span></code></pre></div><p>The calls to the <code>@range</code> macro from NVTX, a submodule of CUDA.jl, will visualize the
+different phases of execution when we profile our program. We now invoke our function using
+some random data:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>function</span> <span class=n>main</span><span class=p>(</span><span class=n>N</span><span class=o>=</span><span class=mi>1024</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=n>N</span><span class=p>,</span><span class=n>N</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=n>N</span><span class=p>,</span><span class=n>N</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>c</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=n>N</span><span class=p>,</span><span class=n>N</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c># make sure this data can be used by other tasks!</span>
+</span></span><span class=line><span class=cl>    <span class=n>synchronize</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=c># warm-up</span>
+</span></span><span class=line><span class=cl>    <span class=n>iteration</span><span class=p>(</span><span class=n>a</span><span class=p>,</span><span class=n>b</span><span class=p>,</span><span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>GC</span><span class=o>.</span><span class=n>gc</span><span class=p>(</span><span class=nb>true</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=n>NVTX</span><span class=o>.</span><span class=nd>@range</span> <span class=s>&#34;main&#34;</span> <span class=n>iteration</span><span class=p>(</span><span class=n>a</span><span class=p>,</span><span class=n>b</span><span class=p>,</span><span class=n>c</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span></code></pre></div><p>The snippet above illustrates one breaking aspect of this release: Because each task uses
+its own stream, <strong>you now need to synchronize when re-using data in another task.</strong> Although
+it is unlikely that any user code was relying on the old behavior, it is technically a
+breaking change, and as such we are bumping the major version of the CUDA.jl package.</p><p>If we profile these our program using NSight Systems, we can see how the execution of both
+calls to <code>compute</code> was overlapped:</p><figure><img src=/pr-preview/pr-70/post/2021-04-09-cuda_3.0/task_based_concurrency.png alt="Overlapping execution on the GPU using task-based concurrency" decoding=async height=425 loading=lazy width=1506></figure><p>The region highlighted in green was spent enqueueing operations from the CPU, which includes
+the call to <code>synchronize()</code>. This used to be a blocking operation, whereas now it only
+synchronizes the task-local stream while yielding to the Julia scheduler so that it can
+continue execution on another task. <strong>For synchronizing the entire device, use the new
+<code>device_synchronize()</code> function.</strong></p><p>The remainder of computation was then spent executing kernels. Here, execution was
+overlapped, but that obviously depends on the exact characteristics of the computations and
+your GPU. Also note that copying to and from the CPU is always going to block for some time,
+unless the memory was page-locked. CUDA.jl <a href=https://github.com/JuliaGPU/CUDA.jl/pull/760>now
+supports</a> locking memory like that using the
+<code>pin</code> function; for more details refer to <a href=https://juliagpu.github.io/CUDA.jl/dev/usage/multitasking/>the CUDA.jl documentation on tasks and
+threads</a>.</p><h2 id=cuda-112-and-stream-ordered-allocations>CUDA 11.2 and stream-ordered allocations</h2><p>CUDA.jl now also fully supports CUDA 11.2, and it will default to using that version of the
+toolkit if your driver supports it. The release came with several new features, such as <a href=https://developer.nvidia.com/blog/enhancing-memory-allocation-with-new-cuda-11-2-features/>the
+new stream-ordered memory
+allocator</a>.
+Without going into details, it is now possible to asynchonously allocate memory, obviating
+much of the need to cache those allocations in a memory pool. Initial benchmarks have shown
+nice speed-ups from using this allocator, while lowering memory pressure and thus reducing
+invocations of the Julia garbage collector.</p><p>When using CUDA 11.2, CUDA.jl will <a href=https://github.com/JuliaGPU/CUDA.jl/pull/679>default to the CUDA-backed memory
+pool</a> and disable its own caching layer. If
+you want to compare performance, you can still use the old allocator and caching memory pool
+by setting the <code>JULIA_CUDA_MEMORY_POOL</code> environment variable to, e.g. <code>binned</code>. On older
+versions of CUDA, the <code>binned</code> pool is still used by default.</p><h2 id=gpu-method-overrides>GPU method overrides</h2><p>With the new <code>AbstractInterpreter</code> functionality in Julia 1.6, it is now much easier to
+further customize the Base compiler. This has enabled us to develop <a href=https://github.com/JuliaGPU/GPUCompiler.jl/pull/151>a mechanism for
+overriding methods with GPU-specific
+counterparts</a>. It used to be required
+to explicitly pick CUDA-specific versions, e.g. <code>CUDA.sin</code>, because the Base version
+performed some GPU-incompatible operation. This was problematic as it did not compose with
+generic code, and the CUDA-specific versions often lacked support for specific combinations
+of argument types (for example, <code>CUDA.sin(::Complex)</code> was not supported).</p><p>With CUDA 3.0, it is possible to <strong>define GPU-specific methods that override an existing
+definition, without requiring a new function type</strong>. For now, this functionality is private
+to CUDA.jl, but we expect to make it available to other packages starting with Julia 1.7.</p><p>This functionality has unblocked <em>many</em> issues, as can be seen in the <a href=https://github.com/JuliaGPU/CUDA.jl/pull/750>corresponding pull
+request</a>. It is now no longer needed to prefix
+a call with the CUDA module to ensure a GPU-compatible version is used. Furthermore, it also
+protects users from accidentally calling GPU intrinsics, as doing so will now result in an
+error instead of a crash:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>saturate</span><span class=p>(</span><span class=mf>1f0</span><span class=p>)</span></code>
+<span class=go>ERROR: This function is not intended for use on the CPU</span>
+<span class=go>Stacktrace:</span>
+<span class=go> [1] error(s::String)</span>
+<span class=go>   @ Base ./error.jl:33</span>
+<span class=go> [2] saturate(x::Float32)</span>
+<span class=go>   @ CUDA ~/Julia/pkg/CUDA/src/device/intrinsics.jl:23</span>
+<span class=go> [3] top-level scope</span>
+<span class=go>   @ REPL[10]:1</span></code></pre></div><h2 id=device-side-random-number-generation>Device-side random number generation</h2><p>As an illustration of the value of GPU method overrides, CUDA.jl now provides a device-side
+random number generator that is accessible by simply calling <code>rand()</code> from a kernel:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>kernel</span><span class=p>()</span>
+         <span class=nd>@cushow</span> <span class=n>rand</span><span class=p>()</span>
+         <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>kernel (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>kernel</span><span class=p>()</span></code>
+<span class=go>rand() = 0.668274</span></code></pre></div><p>This works by overriding the <code>Random.default_rng()</code> method, and providing a GPU-compatible
+random number generator: Building on <a href=https://github.com/JuliaGPU/CUDA.jl/pull/772>exploratory
+work</a> by <a href=https://github.com/S-D-R>@S-D-R</a>,
+the <a href=https://github.com/JuliaGPU/CUDA.jl/pull/788>current generator</a> is a maximally
+equidistributed combined Tausworthe RNG that shares 32-bytes of random state across threads
+in a warp for performance. The generator performs well, but <a href=https://github.com/JuliaGPU/CUDA.jl/issues/803>does not
+pass</a> the Crush battery of tests, so PRs are
+welcome here to improve the implementation!</p><p>Note that for host-side operations, e.g. <code>rand!(::CuArray)</code>, the generator is not yet used
+by default. Instead, we use CURAND whenever possible, and fall back to the slower but more
+full-featured GPUArrays.jl-generator in other cases.</p><h2 id=revamped-cudnn-interface>Revamped cuDNN interface</h2><p>Finally, the cuDNN wrappers have been <a href=https://github.com/JuliaGPU/CUDA.jl/pull/523>completely
+revamped</a> by
+<a href=https://github.com/denizyuret>@denizyuret</a>. The goal of the redesign is to more faithfully
+map the cuDNN API to more natural Julia functions, so that packages like Knet.jl or NNlib.jl
+can more easily use advanced cuDNN features without having to resort to low-level C calls.
+For more details, refer to <a href=https://github.com/JuliaGPU/CUDA.jl/blob/da7c6eee82d6ea0eee1cb75c8589c8a92b0bc474/lib/cudnn/README.md>the design
+document</a>.
+As part of this redesign, the high-level wrappers of CUDNN <a href=https://github.com/FluxML/NNlib.jl/pull/286>have been moved
+to</a> a subpackage of NNlib.jl.</p><nav class=post-nav aria-label="More posts"><a rel=next href=/pr-preview/pr-70/post/2021-01-08-cuda_2.4_2.5/><span>Newer</span>CUDA.jl 2.4 and 2.5</a>
+<a rel=prev href=/pr-preview/pr-70/post/2021-06-10-cuda_3.3/><span>Older</span>CUDA.jl 3.3</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/pr-preview/pr-70/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>
