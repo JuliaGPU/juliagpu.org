@@ -1,0 +1,26 @@
+{{ define "main" }}
+<div class="container prose">
+  <header class="page-header">
+    <h1>{{ .Title }}</h1>
+    <p class="lead">
+      {{ .Description }}
+      {{- with .OutputFormats.Get "rss" }}
+      <a class="feed" href="{{ .RelPermalink }}">{{ partial "icon.html" "rss" }} Subscribe</a>
+      {{- end }}
+    </p>
+  </header>
+  {{- range .Pages.GroupByDate "2006" }}
+  <section class="archive">
+    <h2>{{ .Key }}</h2>
+    <ul>
+      {{- range .Pages }}
+      <li>
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2" }}</time>
+        {{ partial "post-link.html" . }}
+      </li>
+      {{- end }}
+    </ul>
+  </section>
+  {{- end }}
+</div>
+{{ end }}

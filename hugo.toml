@@ -1,0 +1,97 @@
+baseURL = "https://juliagpu.org/"
+locale = "en-US"
+title = "JuliaGPU"
+disableKinds = ["taxonomy", "term"]
+enableRobotsTXT = true
+
+[params]
+description = "High-performance GPU programming in a high-level language."
+repository = "https://github.com/JuliaGPU/juliagpu.org"
+images = ["logo.png"]
+
+[frontmatter]
+# posts are named YYYY-MM-DD-name.md, or YYYY-MM-DD-name/index.md for a bundle
+date = [":filename", ":default"]
+
+[permalinks.page]
+post = "/post/:contentbasename/"
+
+[outputs]
+home = ["html", "rss"]
+section = ["html"]
+
+[markup.highlight]
+noClasses = false
+
+[markup.goldmark.parser]
+wrapStandAloneImageWithinParagraph = false
+
+[privacy.youTube]
+privacyEnhanced = true
+
+[[menus.main]]
+name = "Back-ends"
+pageRef = "/backends"
+weight = 1
+
+[[menus.main]]
+name = "Learn"
+pageRef = "/learn"
+weight = 2
+
+[[menus.main]]
+name = "Showcases"
+pageRef = "/showcases"
+weight = 3
+
+[[menus.main]]
+name = "Performance"
+url = "/perf/"
+weight = 4
+
+[[menus.main]]
+name = "Blog"
+pageRef = "/post"
+weight = 5
+
+[module.hugoVersion]
+min = "0.158.0"
+
+[[module.mounts]]
+source = "static"
+target = "static"
+
+# the performance dashboard is a standalone app, see perf/README.md
+[[module.mounts]]
+source = "perf"
+target = "static/perf"
+files = ["! README.md"]
+
+# images that the Franklin site served from /assets/, and that are embedded elsewhere
+[[module.mounts]]
+source = "static/logo.png"
+target = "static/assets/logo_crop.png"
+
+[[module.mounts]]
+source = "static/favicon.ico"
+target = "static/assets/favicon.ico"
+
+[[module.mounts]]
+source = "content/backends/cuda/performance.png"
+target = "static/assets/img/cuda-performance.png"
+
+[[module.mounts]]
+source = "content/backends/rocm/performance.png"
+target = "static/assets/img/amdgpu-performance.png"
+
+[[module.mounts]]
+source = "content/showcases/oceananigans-simulation.png"
+target = "static/assets/img/oceananigans-simulation.png"
+
+[[module.mounts]]
+source = "content/showcases/oceananigans-energy.png"
+target = "static/assets/img/oceananigans-energy.png"
+
+[[module.mounts]]
+source = "content/showcases/diffeqgpu-lorenz.jpg"
+target = "static/assets/img/diffeqgpu-lorenz.jpg"

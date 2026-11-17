@@ -1,0 +1,21 @@
+{{- /*
+  Like Hugo's embedded link hook, resolve links to pages and resources, so that
+  they work under any base URL. Other root-relative links, like those to the
+  performance dashboard (a static mount), are made relative to the base URL.
+*/ -}}
+{{- $u := urls.Parse .Destination }}
+{{- $href := .Destination }}
+{{- if and $u.Path (not $u.IsAbs) }}
+  {{- $path := strings.TrimPrefix "./" $u.Path }}
+  {{- with or (.PageInner.GetPage $path) (.PageInner.Resources.Get $path) (resources.Get $path) }}
+    {{- $href = .RelPermalink }}
+    {{- with $u.RawQuery }}{{ $href = printf "%s?%s" $href . }}{{ end }}
+    {{- with $u.Fragment }}{{ $href = printf "%s#%s" $href . }}{{ end }}
+  {{- else }}
+    {{- if hasPrefix $u.Path "/" }}
+      {{- $href = strings.TrimPrefix "/" $.Destination | relURL }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+<a href="{{ $href }}"{{ with .Title }} title="{{ . }}"{{ end }}>{{ .Text }}</a>
+{{- /**/ -}}

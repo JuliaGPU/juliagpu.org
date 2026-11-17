@@ -1,0 +1,13 @@
+<article class="card">
+  <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+  {{- with .Params.package }}
+  <p class="card-package"><code>{{ . }}</code></p>
+  {{- end }}
+  <p>{{ .Description }}</p>
+  {{- if .Params.documentation }}
+  <p class="card-links">
+    <a href="{{ .Params.documentation }}">Documentation</a>
+    <a href="{{ .Params.repository }}">GitHub</a>
+  </p>
+  {{- end }}
+</article>

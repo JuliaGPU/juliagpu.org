@@ -1,0 +1,13 @@
+{{- /*
+  Headings link to themselves. Posts also keep the anchor Franklin.jl gave
+  them (underscores instead of hyphens), so that existing links to a section
+  still land there.
+*/ -}}
+{{- $legacy := "" }}
+{{- if eq .Page.Section "post" }}
+  {{- $legacy = .PlainText | htmlUnescape | lower | replaceRE `[^a-z0-9 _-]` "" | strings.TrimSpace | replaceRE ` +` "_" }}
+{{- end }}
+<h{{ .Level }} id="{{ .Anchor }}">
+  {{- if and $legacy (ne $legacy .Anchor) }}<span id="{{ $legacy }}"></span>{{ end -}}
+  {{ .Text }} <a class="heading-anchor" href="#{{ .Anchor }}" aria-label="Link to this section">#</a>
+</h{{ .Level }}>

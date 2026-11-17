@@ -1,0 +1,8 @@
+{{ define "main" }}
+<div class="container prose">
+  <header class="page-header">
+    <h1>Page not found</h1>
+    <p class="lead">The page you are looking for does not exist. Try the <a href="{{ site.Home.RelPermalink }}">home page</a> or the <a href="{{ (site.GetPage "/post").RelPermalink }}">blog</a>.</p>
+  </header>
+</div>
+{{ end }}

@@ -1,0 +1,13 @@
+<footer class="site-footer">
+  <div class="container">
+    <ul>
+      <li><a href="https://discourse.julialang.org/c/domain/gpu/11">Discourse</a></li>
+      <li><a href="https://julialang.slack.com/messages/C689Y34LE/">Slack</a></li>
+      <li><a href="https://github.com/JuliaGPU">GitHub</a></li>
+      {{- with site.GetPage "/post" }}{{ with .OutputFormats.Get "rss" }}
+      <li><a href="{{ .RelPermalink }}">RSS</a></li>
+      {{- end }}{{ end }}
+    </ul>
+    <p>Built with <a href="https://gohugo.io/">Hugo</a> from <a href="{{ site.Params.repository }}">{{ strings.TrimPrefix "https://" site.Params.repository }}</a>.</p>
+  </div>
+</footer>

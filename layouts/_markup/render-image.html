@@ -1,0 +1,34 @@
+{{- /*
+  Resolve images against the page bundle, so they get dimensions and work
+  under any base URL. Large raster images are scaled down, and link to the
+  original so that dense plots and screenshots can still be read.
+*/ -}}
+{{- $src := .Destination }}
+{{- $original := "" }}
+{{- $attrs := dict "alt" .PlainText "loading" "lazy" "decoding" "async" }}
+{{- with .PageInner.Resources.Get .Destination }}
+  {{- $src = .RelPermalink }}
+  {{- if reflect.IsImageResourceProcessable . }}
+    {{- $img := . }}
+    {{- if gt .Width 1600 }}
+      {{- $img = .Process "resize 1600x webp" }}
+      {{- $original = .RelPermalink }}
+    {{- end }}
+    {{- $src = $img.RelPermalink }}
+    {{- $attrs = merge $attrs (dict "width" $img.Width "height" $img.Height) }}
+  {{- end }}
+{{- end }}
+{{- $img := printf `<img src="%s"%s>` $src (partial "attributes.html" $attrs) }}
+{{- with $original }}
+  {{- $img = printf `<a href="%s">%s</a>` . $img }}
+{{- end }}
+{{- if .IsBlock }}
+<figure>
+  {{ $img | safeHTML }}
+  {{- with .Title }}
+  <figcaption>{{ . | $.PageInner.RenderString }}</figcaption>
+  {{- end }}
+</figure>
+{{- else }}
+  {{- $img | safeHTML }}
+{{- end }}
