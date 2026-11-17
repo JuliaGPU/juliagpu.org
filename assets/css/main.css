@@ -286,7 +286,121 @@ p, li {
 .hero-code pre {
   margin: 0;
   font-size: 0.8rem;
+}
+
+
+/* Per-back-end examples; the keyframes are in the backend-examples partial */
+
+.backend-examples {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-subtle);
   box-shadow: 0 1rem 3rem -1rem rgb(0 0 0 / 0.25);
+  overflow: hidden;
+}
+
+.backend-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.1rem;
+  padding-inline: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.backend-tabs label {
+  position: relative;
+  padding-block: 0.55rem;
+  color: var(--fg-muted);
+  cursor: pointer;
+  animation: backend-tab var(--cycle) step-end var(--delay) infinite;
+}
+
+.backend-tabs label:hover {
+  color: var(--fg);
+}
+
+.backend-tabs label::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: left;
+  visibility: hidden;
+  animation: backend-progress var(--cycle) linear var(--delay) infinite;
+}
+
+.backend-tabs input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.backend-tabs label:has(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* stack the examples, so that switching does not change the height */
+.backend-panels {
+  display: grid;
+}
+
+.backend-panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+/* without :has(), the tabs do nothing and every group shows its first example */
+.backend-panel:not(:first-child) {
+  visibility: hidden;
+  animation: backend-panel var(--cycle) step-end var(--delay) infinite;
+}
+
+@supports selector(:has(*)) {
+  .backend-panel:first-child {
+    visibility: hidden;
+  }
+}
+
+.backend-panel pre {
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* without the animation (or once paused), show the first or the picked back-end */
+.backend-examples:not(:has(:checked)) .backend-panel:first-child {
+  visibility: visible;
+}
+
+.backend-examples:not(:has(:checked)) .backend-tabs label:first-child,
+.backend-tabs label:has(:checked) {
+  color: var(--fg);
+}
+
+.backend-examples:not(:has(:checked)) .backend-tabs label:first-child::after,
+.backend-tabs label:has(:checked)::after {
+  visibility: visible;
+}
+
+.backend-examples:has(:checked) *,
+.backend-examples:has(:checked) *::after {
+  animation: none;
+}
+
+.backend-examples:is(:hover, :focus-within) *,
+.backend-examples:is(:hover, :focus-within) *::after {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backend-examples *,
+  .backend-examples *::after {
+    animation: none;
+  }
 }
 
 .section {

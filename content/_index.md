@@ -8,8 +8,11 @@ in Julia. With its high-level syntax and flexible compiler, Julia is well
 positioned to productively program hardware accelerators without sacrificing
 performance.
 """
-example = """
-julia> using CUDA   # or AMDGPU, oneAPI, Metal
+
+[[params.examples]]
+name = "CUDA.jl"
+code = """
+julia> using CUDA
 
 julia> a = CUDA.rand(1024, 1024);
 
@@ -22,7 +25,106 @@ julia> function add_one!(a)
            return
        end
 
+
 julia> @cuda threads=256 blocks=4096 add_one!(a)
+"""
+
+[[params.examples]]
+name = "AMDGPU.jl"
+code = """
+julia> using AMDGPU
+
+julia> a = AMDGPU.rand(1024, 1024);
+
+julia> sum(a .^ 2)   # runs on the GPU
+349398.62f0
+
+julia> function add_one!(a)
+           i = workitemIdx().x +
+               (workgroupIdx().x - 1) * workgroupDim().x
+           @inbounds a[i] += 1
+           return
+       end
+
+julia> @roc groupsize=256 gridsize=4096 add_one!(a)
+"""
+
+[[params.examples]]
+name = "oneAPI.jl"
+code = """
+julia> using oneAPI
+
+julia> a = oneAPI.rand(1024, 1024);
+
+julia> sum(a .^ 2)   # runs on the GPU
+349561.06f0
+
+julia> function add_one!(a)
+           i = get_global_id()
+           @inbounds a[i] += 1
+           return
+       end
+
+
+julia> @oneapi items=256 groups=4096 add_one!(a)
+"""
+
+[[params.examples]]
+name = "Metal.jl"
+code = """
+julia> using Metal
+
+julia> a = Metal.rand(1024, 1024);
+
+julia> sum(a .^ 2)   # runs on the GPU
+349217.3f0
+
+julia> function add_one!(a)
+           i = thread_position_in_grid().x
+           @inbounds a[i] += 1
+           return
+       end
+
+
+julia> @metal threads=256 groups=4096 add_one!(a)
+"""
+
+[[params.examples]]
+name = "OpenCL.jl"
+code = """
+julia> using OpenCL, pocl_jll
+
+julia> a = OpenCL.rand(1024, 1024);
+
+julia> sum(a .^ 2)   # runs on PoCL
+349702.84f0
+
+julia> function add_one!(a)
+           i = get_global_id()
+           @inbounds a[i] += 1
+           return
+       end
+
+
+julia> @opencl local_size=256 global_size=length(a) add_one!(a)
+"""
+
+[[params.examples]]
+name = "KernelAbstractions.jl"
+code = """
+julia> using KernelAbstractions
+julia> using CUDA # or AMDGPU, oneAPI, Metal, OpenCL
+
+julia> @kernel function add_one!(a)
+           i = @index(Global)
+           @inbounds a[i] += 1
+       end
+
+julia> a = rand(Float32, 1024, 1024);   # on the CPU
+julia> add_one!(get_backend(a))(a; ndrange=length(a))
+
+julia> b = CUDA.rand(1024, 1024);       # on the GPU
+julia> add_one!(get_backend(b))(b; ndrange=length(b))
 """
 +++
 

@@ -1,0 +1,35 @@
+{{- /*
+  Shows the same example for every back-end, with a tab per back-end. Until the
+  visitor picks one, a CSS animation cycles through the tabs, so the page needs
+  no JavaScript. The tabs are radio buttons: checking one stops the animation
+  and shows its example.
+
+  Every tab and example runs the same animation, shifted by its position. The
+  keyframes depend on the number of examples, so they are generated here.
+*/ -}}
+{{- $n := len . }}
+{{- $interval := 3 }}
+{{- $slot := printf "%.4f" (div 100.0 $n) }}
+<style>
+  @keyframes backend-panel { 0% { visibility: visible } {{ $slot }}%, 100% { visibility: hidden } }
+  @keyframes backend-tab { 0% { color: var(--fg) } {{ $slot }}%, 100% { color: var(--fg-muted) } }
+  @keyframes backend-progress {
+    0% { visibility: visible; transform: scaleX(0) }
+    {{ $slot }}%, 100% { visibility: hidden; transform: scaleX(1) }
+  }
+  {{- range $i, $_ := . }}
+  .backend-examples:has(#backend-{{ $i }}:checked) .backend-panel:nth-child({{ add $i 1 }}) { visibility: visible }
+  {{- end }}
+</style>
+<div class="backend-examples" style="--cycle: {{ mul $n $interval }}s">
+  <div class="backend-tabs" role="radiogroup" aria-label="Back-end">
+    {{- range $i, $e := . }}
+    <label style="--delay: {{ mul (sub $i $n) $interval }}s"><input type="radio" name="backend" id="backend-{{ $i }}">{{ $e.name }}</label>
+    {{- end }}
+  </div>
+  <div class="backend-panels">
+    {{- range $i, $e := . }}
+    <div class="backend-panel" style="--delay: {{ mul (sub $i $n) $interval }}s">{{ partial "julia-repl.html" $e.code }}</div>
+    {{- end }}
+  </div>
+</div>
