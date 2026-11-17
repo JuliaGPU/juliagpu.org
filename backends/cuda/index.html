@@ -1,197 +1,149 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
- 
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-  
-    <title>NVIDIA CUDA ⋅ JuliaGPU</title>
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle active" href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item active" href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-<!-- Content appended here -->
-
-<h1 id="nvidia_cuda"><a href="#nvidia_cuda" class="header-anchor">NVIDIA CUDA</a></h1>
-
-<p>
-<a href="https://cuda.juliagpu.org/stable/">
-  <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt>
-</a>
-<a href="https://github.com/JuliaGPU/CUDA.jl">
-  <img src="https://img.shields.io/github/stars/JuliaGPU/CUDA.jl?style=social" alt>
-</a>
-</p>
-
-<p>The programming support for NVIDIA GPUs in Julia is provided by the <a href="https://github.com/JuliaGPU/CUDA.jl">CUDA.jl</a> package. It is built on the CUDA toolkit, and aims to be as full-featured and offer the same performance as CUDA C. The toolchain is mature, has been under development since 2014 and can easily be installed on any current version of Julia using the integrated package manager.</p>
-<p>CUDA.jl makes it possible to program NVIDIA GPUs at different abstraction levels:</p>
-<ul>
-<li><p>by using the <code>CuArray</code> type, providing a user-friendly yet powerful abstraction that does not require any GPU programming experience;</p>
-</li>
-<li><p>by writing CUDA kernels, with the same performance as kernels written in CUDA C;</p>
-</li>
-<li><p>by interfacing with CUDA APIs and libraries directly, offering the same level of flexibility you would expect from a C-based programming environment.</p>
-</li>
-</ul>
-<p>The <a href="https://cuda.juliagpu.org/stable/">documentation</a> of CUDA.jl demonstrates each of these approaches.</p>
-<h2 id="getting_started"><a href="#getting_started" class="header-anchor">Getting started</a></h2>
-<p>CUDA.jl can be easily installed through Julia&#39;s package manager. You only need to install the NVIDIA driver; CUDA.jl will automatically download and install a compatible CUDA toolkit:</p>
-<pre><code class="language-julia">pkg&gt; add CUDA</code></pre>
-<p>Once you have the package installed, you can import it and start using it, e.g., via the <code>CuArray</code> array abstraction:</p>
-<pre><code class="language-julia">julia&gt; using CUDA
-
-julia&gt; A &#61; CuArray&#40;ones&#40;5, 5&#41;&#41;;
-
-julia&gt; A .&#43; 1
-5×5 CuMatrix&#123;Float64, CUDA.DeviceMemory&#125;:
- 2.0  2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0  2.0
- 2.0  2.0  2.0  2.0  2.0</code></pre>
-<p>Array operations like the <code>A .&#43; 1</code> above are automatically offloaded to the GPU, and allow for a very high-level programming style. If you need more control, you can write your own CUDA kernels directly in Julia:</p>
-<pre><code class="language-julia">julia&gt; function add_one&#40;A&#41;
-           i &#61; threadIdx&#40;&#41;.x
-           A&#91;i&#93; &#43;&#61; 1
-           return
-       end
-
-julia&gt; @cuda threads&#61;length&#40;A&#41; add_one&#40;A&#41;;
-
-julia&gt; A
-5×5 CuMatrix&#123;Float64, CUDA.DeviceMemory&#125;:
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0
- 3.0  3.0  3.0  3.0  3.0</code></pre>
-<p>Even though in the example above CUDA.jl takes care of low-level details like memory management or device synchronization, it is still possible to do this yourself by directly calling into the underlying CUDA APIs. For more details, refer to the <a href="https://cuda.juliagpu.org/stable/lib/driver/">CUDA.jl documentation</a>.</p>
-<h2 id="support"><a href="#support" class="header-anchor">Support</a></h2>
-<p>CUDA.jl aims to support:</p>
-<ul>
-<li><p>all current versions of Julia, starting from the latest LTS;</p>
-</li>
-<li><p>the current and previous major version of the CUDA toolkit;</p>
-</li>
-<li><p>all platforms that the CUDA toolkit supports &#40;i.e., x86 and arm64, Linux and Window&#41;, including support for embedded devices like NVIDIA Jetson.</p>
-</li>
-</ul>
-<p>In terms of API coverage, CUDA.jl aims to cover all APIs provided by the CUDA toolkkit, including its libraries like cuBLAS, cuFFT, cuSPARSE, etc. Other common libraries, like cuDNN, are also supported. For each of these, we always provide low-level bindings to the CUDA APIs &#40;making it possible to easily port existing code&#41;, while also providing high-level wrappers for most common APIs.</p>
-<h2 id="performance"><a href="#performance" class="header-anchor">Performance</a></h2>
-<p>Julia on the CPU is known for its good performance, approaching that of statically compiled languages like C. The same holds for programming NVIDIA GPUs with kernels written using CUDA.jl, where we have <a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">shown</a> the performance to approach and even sometimes exceed that of CUDA C on a selection<sup id="fnref:1"><a href="#fndef:1" class="fnref">[1]</a></sup> of applications from the Rodinia benchmark suite:</p>
-
-<div class="card mb-3">
-  <a href="/assets/img/cuda-performance.png">
-    <img src="/assets/img/cuda-performance.png" class=card-img-top alt>
-  </a>
-  <div class=card-body>
-    <p class=card-text align=center>
-      Relative performance of Rodinia benchmarks <a href=https://github.com/JuliaParallel/rodinia>implemented in Julia with CUDA.jl</a>.
-    </p>
-  </div>
-</div>
-
-<hr />
-<p><table class="fndef" id="fndef:1">
-    <tr>
-        <td class="fndef-backref"><a href="#fnref:1">[1]</a></td>
-        <td class="fndef-content">Since porting applications from one programming language to another is labour</td>
-    </tr>
-</table>
-intensive, we only ported and analyzed the 10 smallest benchmarks from the suite. More details can be found in <a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">the paper</a>.</p>
-
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-
-<!-- Languages -->
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
-
-<script>hljs.highlightAll();</script>
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>NVIDIA CUDA · JuliaGPU</title><meta name=description content="The most mature back-end, with GPU arrays, kernel programming on par with CUDA C, wrappers for NVIDIA's libraries, and tile-based kernels through cuTile.jl."><link rel=canonical href=https://juliagpu.org/backends/cuda/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/backends/cuda/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="NVIDIA CUDA"><meta property="og:description" content="The most mature back-end, with GPU arrays, kernel programming on par with CUDA C, wrappers for NVIDIA's libraries, and tile-based kernels through cuTile.jl."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="backends"><meta property="og:image" content="https://juliagpu.org/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/ aria-current=page>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>NVIDIA CUDA</h1><p class=lead>The most mature back-end, with GPU arrays, kernel programming on par with CUDA C, wrappers for NVIDIA's libraries, and tile-based kernels through cuTile.jl.</p><p class=actions><a class=button href=https://cuda.juliagpu.org/stable/>CUDA.jl documentation</a>
+<a class=button href=https://juliagpu.github.io/cuTile.jl/stable/>cuTile.jl documentation</a>
+<a class="button secondary" href=https://github.com/JuliaGPU/CUDA.jl aria-label="CUDA.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> CUDA.jl</a>
+<a class="button secondary" href=https://github.com/JuliaGPU/cuTile.jl aria-label="cuTile.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> cuTile.jl</a></p></header><p>NVIDIA GPUs are programmed from Julia with two packages:</p><ul><li><a href=https://github.com/JuliaGPU/CUDA.jl>CUDA.jl</a> is the foundation. It provides the
+<code>CuArray</code> array type, a compiler for writing CUDA kernels in Julia, wrappers for
+NVIDIA&rsquo;s libraries such as cuBLAS and cuDNN, and profiling tools. It has been developed
+since 2014 and is the most complete of the JuliaGPU back-ends.</li><li><a href=https://github.com/JuliaGPU/cuTile.jl>cuTile.jl</a> builds on CUDA.jl and adds another way
+to write kernels. Instead of describing what a single GPU thread does, a cuTile kernel
+operates on <em>tiles</em>, fixed-size blocks of an array, and NVIDIA&rsquo;s <a href=https://docs.nvidia.com/cuda/tile-ir/>Tile
+IR</a> compiler decides how to map that work onto
+threads, tensor cores and the tensor memory accelerator.</li></ul><p>Most code only needs CUDA.jl&rsquo;s arrays. Custom kernels are for the parts that array
+operations do not cover or do not run fast enough, and cuTile.jl is worth considering when
+such a kernel is a dense computation over blocks of data, like a matrix multiplication or an
+attention layer.</p><h2 id=installation>Installation <a class=heading-anchor href=#installation aria-label="Link to this section">#</a></h2><p>Install CUDA.jl with Julia&rsquo;s package manager:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add CUDA</code></pre></div><p>All you need on the system is a recent <a href=https://www.nvidia.com/en-us/drivers/>NVIDIA driver</a>.
+There is no need to install the CUDA toolkit: CUDA.jl downloads a version that is compatible
+with your driver when it is first used. CUDA.jl supports the latest Julia LTS release and
+newer, on Linux (x86-64 and ARM64, including NVIDIA Jetson boards) and Windows (x86-64), with
+GPUs from the Maxwell architecture onwards as long as the selected toolkit still supports them.</p><p><code>CUDA.versioninfo()</code> shows what was installed and which GPUs were detected, which makes it
+the first thing to run, and to include in bug reports:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>CUDA toolchain: </span>
+<span class=go>- runtime 13.4.0, artifact installation</span>
+<span class=go>- driver 615.78.8 for CUDA 13.5, forward-compatible</span>
+<span class=go>- compiler 13.5.37, artifact installation</span>
+<span class=go></span>
+<span class=go>CUDA libraries: </span>
+<span class=go>- cuBLAS: 13.8.0</span>
+<span class=go>- cuSPARSE: 12.8.6</span>
+<span class=go>- cuSOLVER: 12.3.5</span>
+<span class=go>- cuFFT: 12.4.0</span>
+<span class=go>- cuRAND: 10.4.4</span>
+<span class=go>- CUPTI: 2026.3.1 (API 13.4.1)</span>
+<span class=go>- NVML: 13.0.0+615.78.8</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=go>1 device:</span>
+<span class=go>  0: NVIDIA GeForce RTX 5080 (sm_120, 15.522 GiB / 15.921 GiB available)</span>
+<span class=go>     compiles to sm_120a / PTX 9.4 (LLVM: sm_120a / PTX 9.2)</span></code></pre></div><h2 id=array-programming>Array programming <a class=heading-anchor href=#array-programming aria-label="Link to this section">#</a></h2><p>A <code>CuArray</code> is a Julia array that lives in GPU memory. Operations on it run on the GPU, and
+most generic Julia code that works with arrays works with a <code>CuArray</code> too:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CuArray</span><span class=p>(</span><span class=kt>Float32</span><span class=p>[</span><span class=mi>1</span> <span class=mi>2</span><span class=p>;</span> <span class=mi>3</span> <span class=mi>4</span><span class=p>])</span></code>
+<span class=go>2×2 CuArray{Float32, 2, CUDACore.DeviceMemory}:</span>
+<span class=go> 1.0  2.0</span>
+<span class=go> 3.0  4.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>*</span> <span class=n>a</span><span class=o>&#39;</span></code>
+<span class=go>2×2 CuArray{Float32, 2, CUDACore.DeviceMemory}:</span>
+<span class=go>  5.0  11.0</span>
+<span class=go> 11.0  25.0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sqrt</span><span class=o>.</span><span class=p>(</span><span class=n>a</span> <span class=o>.+</span> <span class=mi>1</span><span class=p>)</span></code>
+<span class=go>2×2 CuArray{Float32, 2, CUDACore.DeviceMemory}:</span>
+<span class=go> 1.41421  1.73205</span>
+<span class=go> 2.0      2.23607</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>10.0f0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code>
+<span class=go>2×2 Matrix{Float32}:</span>
+<span class=go> 1.0  2.0</span>
+<span class=go> 3.0  4.0</span></code></pre></div><p>CUDA.jl wraps NVIDIA&rsquo;s libraries, and most of their functionality is reached through Julia&rsquo;s
+standard interfaces: the matrix multiplication above calls cuBLAS, <code>cholesky</code> and <code>\</code> call
+cuSOLVER, <code>fft</code> from <a href=https://github.com/JuliaMath/AbstractFFTs.jl>AbstractFFTs.jl</a> calls
+cuFFT, and sparse matrices like <code>CuSparseMatrixCSR</code> are backed by cuSPARSE. Libraries such as
+cuDNN and cuTENSOR are available as separate packages.</p><h2 id=kernel-programming>Kernel programming <a class=heading-anchor href=#kernel-programming aria-label="Link to this section">#</a></h2><p>When array operations are not enough, you can write a kernel as a regular Julia function and
+launch it with <code>@cuda</code>. Kernels follow CUDA&rsquo;s SIMT model: the function runs once per thread,
+and uses the thread and block indices to decide which elements to work on:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=p>(</span><span class=n>blockIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>-</span> <span class=mi>1</span><span class=p>)</span> <span class=o>*</span> <span class=n>blockDim</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>+</span> <span class=n>threadIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>)</span>
+               <span class=nd>@inbounds</span> <span class=n>c</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+</span> <span class=n>b</span><span class=p>[</span><span class=n>i</span><span class=p>]</span>
+           <span class=k>end</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>vadd! (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>10_000</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>=</span> <span class=n>similar</span><span class=p>(</span><span class=n>a</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>threads</span><span class=o>=</span><span class=mi>256</span> <span class=n>blocks</span><span class=o>=</span><span class=n>cld</span><span class=p>(</span><span class=n>length</span><span class=p>(</span><span class=n>c</span><span class=p>),</span> <span class=mi>256</span><span class=p>)</span> <span class=n>vadd!</span><span class=p>(</span><span class=n>c</span><span class=p>,</span> <span class=n>a</span><span class=p>,</span> <span class=n>b</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>c</span> <span class=o>==</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>b</span></code>
+<span class=go>true</span></code></pre></div><p>If you want kernels that also run on GPUs from other vendors, write them with
+<a href=https://github.com/JuliaGPU/KernelAbstractions.jl>KernelAbstractions.jl</a> instead, which
+CUDA.jl supports as a back-end.</p><h3 id=tile-kernels-with-cutilejl>Tile kernels with cuTile.jl <a class=heading-anchor href=#tile-kernels-with-cutilejl aria-label="Link to this section">#</a></h3><p>In a cuTile kernel there is no <code>threadIdx</code>. Each block loads tiles from its input arrays,
+computes on them with ordinary Julia operations, and stores the result. Here is a matrix
+multiplication where every block computes one 64×64 tile of <code>C</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span><span class=p>,</span> <span class=n>cuTile</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>import</span> <span class=n>cuTile</span> <span class=n>as</span> <span class=n>ct</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>matmul!</span><span class=p>(</span><span class=n>C</span><span class=p>,</span> <span class=n>A</span><span class=p>,</span> <span class=n>B</span><span class=p>)</span>
+           <span class=n>a_tiles</span> <span class=o>=</span> <span class=n>ct</span><span class=o>.</span><span class=n>eachtile</span><span class=p>(</span><span class=n>A</span><span class=p>,</span> <span class=p>(</span><span class=mi>64</span><span class=p>,</span> <span class=mi>32</span><span class=p>))</span>
+           <span class=n>b_tiles</span> <span class=o>=</span> <span class=n>ct</span><span class=o>.</span><span class=n>eachtile</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=p>(</span><span class=mi>32</span><span class=p>,</span> <span class=mi>64</span><span class=p>))</span>
+           <span class=n>c_tiles</span> <span class=o>=</span> <span class=n>ct</span><span class=o>.</span><span class=n>eachtile</span><span class=p>(</span><span class=n>C</span><span class=p>,</span> <span class=p>(</span><span class=mi>64</span><span class=p>,</span> <span class=mi>64</span><span class=p>))</span>
+           <span class=n>m</span><span class=p>,</span> <span class=n>n</span> <span class=o>=</span> <span class=n>ct</span><span class=o>.</span><span class=n>bid</span><span class=p>(</span><span class=mi>1</span><span class=p>),</span> <span class=n>ct</span><span class=o>.</span><span class=n>bid</span><span class=p>(</span><span class=mi>2</span><span class=p>)</span>
+           <span class=n>acc</span> <span class=o>=</span> <span class=n>zeros</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=p>(</span><span class=mi>64</span><span class=p>,</span> <span class=mi>64</span><span class=p>))</span>
+           <span class=k>for</span> <span class=n>k</span> <span class=k>in</span> <span class=kt>Int32</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span><span class=o>:</span><span class=kt>Int32</span><span class=p>(</span><span class=n>size</span><span class=p>(</span><span class=n>a_tiles</span><span class=p>,</span> <span class=mi>2</span><span class=p>))</span>
+               <span class=n>acc</span> <span class=o>=</span> <span class=n>muladd</span><span class=p>(</span><span class=n>a_tiles</span><span class=p>[</span><span class=n>m</span><span class=p>,</span> <span class=n>k</span><span class=p>],</span> <span class=n>b_tiles</span><span class=p>[</span><span class=n>k</span><span class=p>,</span> <span class=n>n</span><span class=p>],</span> <span class=n>acc</span><span class=p>)</span>
+           <span class=k>end</span>
+           <span class=n>c_tiles</span><span class=p>[</span><span class=n>m</span><span class=p>,</span> <span class=n>n</span><span class=p>]</span> <span class=o>=</span> <span class=n>acc</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go>matmul! (generic function with 1 method)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>A</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float16</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>512</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>B</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float16</span><span class=p>,</span> <span class=mi>512</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>C</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>zeros</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>backend</span><span class=o>=</span><span class=n>cuTile</span> <span class=n>blocks</span><span class=o>=</span><span class=p>(</span><span class=mi>16</span><span class=p>,</span> <span class=mi>16</span><span class=p>)</span> <span class=n>matmul!</span><span class=p>(</span><span class=n>C</span><span class=p>,</span> <span class=n>A</span><span class=p>,</span> <span class=n>B</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>C</span> <span class=o>≈</span> <span class=kt>Float32</span><span class=o>.</span><span class=p>(</span><span class=n>A</span><span class=p>)</span> <span class=o>*</span> <span class=kt>Float32</span><span class=o>.</span><span class=p>(</span><span class=n>B</span><span class=p>)</span></code>
+<span class=go>true</span></code></pre></div><p>The kernel does not say how the work is divided among threads or how to use tensor cores:
+the Tile IR compiler makes those decisions. cuTile.jl kernels take <code>CuArray</code>s, are launched
+with <code>@cuda</code>, and run on CUDA.jl&rsquo;s current stream, so they mix freely with array operations,
+library calls and SIMT kernels.</p><p>Choose cuTile.jl for kernels that decompose into regular blocks of work, especially when they
+should use tensor cores: matrix multiplications, attention, normalization layers, softmax.
+Choose CUDA.jl kernels when you need control over individual threads, for example for
+irregular data structures or data-dependent control flow, or when you need to support GPUs
+older than Ampere. cuTile.jl requires Julia 1.11 or newer, an NVIDIA driver that supports
+CUDA 13 (version 580 or later), and a GPU with compute capability 8.0 or newer (Ampere or
+later).</p><h2 id=learn-more>Learn more <a class=heading-anchor href=#learn-more aria-label="Link to this section">#</a></h2><ul><li>The <a href=https://cuda.juliagpu.org/stable/>CUDA.jl documentation</a> starts with an
+<a href=https://cuda.juliagpu.org/stable/tutorials/introduction/>introductory tutorial</a> that
+goes from array operations to an optimized kernel. It also covers
+<a href=https://cuda.juliagpu.org/stable/installation/overview/>installation</a> with a specific or
+local toolkit, <a href=https://cuda.juliagpu.org/stable/usage/workflow/>porting an application</a>,
+<a href=https://cuda.juliagpu.org/stable/usage/array/>array programming</a> and the vendor
+libraries, <a href=https://cuda.juliagpu.org/stable/development/kernel/>kernel programming</a>, and
+<a href=https://cuda.juliagpu.org/stable/development/profiling/>profiling</a>. The
+<a href=https://github.com/JuliaGPU/CUDA.jl#requirements>requirements</a> in the README list the
+supported combinations of Julia, toolkit and GPU.</li><li>The <a href=https://juliagpu.github.io/cuTile.jl/stable/>cuTile.jl documentation</a> explains the
+<a href=https://juliagpu.github.io/cuTile.jl/stable/man/programming_model/>programming model</a>,
+builds up a <a href=https://juliagpu.github.io/cuTile.jl/stable/tutorials/matmul/>matrix
+multiplication</a> step by
+step, lists <a href=https://juliagpu.github.io/cuTile.jl/stable/man/compatibility/>hardware and compiler
+requirements</a>, and
+<a href=https://juliagpu.github.io/cuTile.jl/stable/man/comparison/>compares</a> the API with cuTile
+Python.</li><li>The <a href=/get-started/>Get started</a> page has more tutorials and recorded workshops.</li><li>Posts on this site: <a href=/post/2026-08-19-cuda_6.3/>CUDA.jl 6.3</a> and
+<a href=/post/2026-09-14-cuda_6.4/>6.4</a>, <a href=/post/2026-08-19-cutile_1.0/>cuTile.jl 1.0</a> and
+<a href=/post/2026-05-05-cutile_0.3/>0.3</a>, and the <a href=/post/2026-08-03-gpu_ecosystem/>overview of Julia&rsquo;s GPU
+ecosystem</a>. Other release announcements are on the
+<a href=/post/>blog</a>.</li><li>CUDA.jl&rsquo;s benchmark history is on the <a href="/perf/?pkg=cuda">performance dashboard</a>.</li><li>Questions can be asked in the GPU category of the <a href=https://discourse.julialang.org/c/domain/gpu>Julia
+Discourse</a>, and bugs reported on the issue
+trackers of <a href=https://github.com/JuliaGPU/CUDA.jl/issues>CUDA.jl</a> and
+<a href=https://github.com/JuliaGPU/cuTile.jl/issues>cuTile.jl</a>.</li></ul></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

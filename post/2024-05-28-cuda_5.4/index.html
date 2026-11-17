@@ -1,309 +1,194 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
- 
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-  
-    <title>CUDA.jl 5.4: Memory management mayhem ⋅ JuliaGPU</title>
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
-      
-
-      <h1>CUDA.jl 5.4: Memory management mayhem</h1>
-      <i data-feather=calendar></i>
-<time datetime=2024-5-28>May 28, 2024</time><br>
-<i data-feather=edit-2></i>
-Tim Besard
-
-
-      <br><br>
-    
-<!-- Content appended here -->
-
-<p>CUDA.jl 5.4 comes with many memory-management related changes that should improve performance of memory-heavy applications, and make it easier to work with heterogeneous set-ups involving multiple GPUs or using both the CPU and GPU.</p>
-<p>Before anything else, let&#39;s get the breaking changes out of the way. CUDA.jl v5.4 only bumps the minor version, so it should be compatible with existing codebases. However, there are a couple of API changes that, although covered by appropriate deprecation warnings, applications should be updated to:</p>
-<ul>
-<li><p>The <code>CUDA.Mem</code> submodule has been removed. All identifiers have been moved to the parent <code>CUDA</code> submodule, with a couple being renamed in the process:</p>
-<ul>
-<li><p><code>Mem.Device</code> and <code>Mem.DeviceBuffer</code> have been renamed to <code>CUDA.DeviceMemory</code> &#40;the same applies to <code>Mem.Host</code> and <code>Mem.Unified</code>&#41;;</p>
-</li>
-<li><p>enums from the <code>Mem</code> submodule have gained a <code>MEM</code> suffix, e.g., <code>Mem.ATTACH_GLOBAL</code> has been renamed to <code>CUDA.MEM_ATTACH_GLOBAL</code>;</p>
-</li>
-<li><p><code>Mem.set&#33;</code> has been renamed to <code>CUDA.memset</code>;</p>
-</li>
-<li><p><code>Mem.info&#40;&#41;</code> has been renamed to <code>CUDA.memory_info&#40;&#41;</code>;</p>
-</li>
-</ul>
-</li>
-<li><p><code>CUDA.memory_status&#40;&#41;</code> has been renamed to <code>CUDA.pool_status&#40;&#41;</code>;</p>
-</li>
-<li><p><code>CUDA.available_memory&#40;&#41;</code> has been renamed to <code>CUDA.free_memory&#40;&#41;</code>.</p>
-</li>
-</ul>
-<p>The meat of this release is in the memory management improvements detailed below. These changes can have a significant impact of the performance of your application, so it&#39;s recommended to thoroughly test your application after upgrading&#33;</p>
-<h2 id="eager_garbage_collection"><a href="#eager_garbage_collection" class="header-anchor">Eager garbage collection</a></h2>
-<p>Julia is a garbage collected language, which means that &#40;GPU&#41; allocations can fail because garbage has piled up, necessitating a collection cycle. Previous versions of CUDA.jl handled this at the allocation site, detecting out-of-memory errors and triggering the GC. This was not ideal, as it could lead to significant pauses and a bloated memory usage.</p>
-<p>To improve this, <strong>CUDA.jl v5.4 more accurately keeps track of memory usage, and uses that information to trigger the GC early at appropriate times</strong>, e.g., when waiting for a kernel to finish. This should lead to more predictable performance, both by distributing the cost of garbage collection over time and by potentially masking it behind other operations.</p>
-<p>For example, the following toy model implemented with Flux.jl allocates a ton of memory:</p>
-<pre><code class="language-julia">using CUDA, Flux
-using MLUtils: DataLoader
-
-n_obs &#61; 300_000
-n_feature &#61; 1000
-X &#61; rand&#40;n_feature, n_obs&#41;
-y &#61; rand&#40;1, n_obs&#41;
-train_data &#61; DataLoader&#40;&#40;X, y&#41; |&gt; gpu; batchsize &#61; 2048, shuffle&#61;false&#41;
-
-model &#61; Dense&#40;n_feature, 1&#41; |&gt; gpu
-loss&#40;m, _x, _y&#41; &#61; Flux.Losses.mse&#40;m&#40;_x&#41;, _y&#41;
-opt_state &#61; Flux.setup&#40;Flux.Adam&#40;&#41;, model&#41;
-for epoch in 1:100
-  Flux.train&#33;&#40;loss, model, train_data, opt_state&#41;
-end</code></pre>
-<p>Without eager garbage collection, this leads to expensive pauses while freeing a large amount of memory at every epoch. We can simulate this by artificially limiting the memory available to the GPU, while also disabling the new eager garbage collection feature by setting the <code>JULIA_CUDA_GC_EARLY</code> environment variable to <code>false</code> &#40;this is a temporary knob that will be removed in the future, but may be useful now for evaluating the new feature&#41;:</p>
-<pre><code class="language-text">❯ JULIA_CUDA_GC_EARLY&#61;false JULIA_CUDA_HARD_MEMORY_LIMIT&#61;4GiB \
-  julia --project train.jl
-...
-&#91; Info: Epoch 90 train time 0.031s
-retry_reclaim: freed 2.865 GiB
-&#91; Info: Epoch 91 train time 0.031s
-&#91; Info: Epoch 92 train time 0.027s
-retry_reclaim: freed 2.865 GiB
-&#91; Info: Epoch 93 train time 0.03s
-retry_reclaim: freed 2.873 GiB
-&#91; Info: Epoch 94 train time 0.031s
-retry_reclaim: freed 2.873 GiB
-&#91; Info: Epoch 95 train time 0.03s
-retry_reclaim: freed 2.873 GiB
-&#91; Info: Epoch 96 train time 0.031s
-&#91; Info: Epoch 97 train time 0.027s
-retry_reclaim: freed 2.873 GiB
-&#91; Info: Epoch 98 train time 0.031s
-retry_reclaim: freed 2.865 GiB
-&#91; Info: Epoch 99 train time 0.031s
-retry_reclaim: freed 2.865 GiB
-&#91; Info: Epoch 100 train time 0.031s
-&#91; Info: Total time 4.307s</code></pre>
-<p>With eager garbage collection enabled, more frequent but less costly pauses result in significantly improved performance:</p>
-<pre><code class="language-text">❯ JULIA_CUDA_GC_EARLY&#61;true JULIA_CUDA_HARD_MEMORY_LIMIT&#61;4GiB \
-  julia --project wip.jl
-...
-&#91; Info: Epoch 90 train time 0.031s
-maybe_collect: collected 1.8 GiB
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 91 train time 0.033s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 92 train time 0.031s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 93 train time 0.031s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 94 train time 0.03s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 95 train time 0.03s
-maybe_collect: collected 1.8 GiB
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 96 train time 0.033s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 97 train time 0.03s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 98 train time 0.03s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 99 train time 0.03s
-maybe_collect: collected 1.8 GiB
-&#91; Info: Epoch 100 train time 0.03s
-&#91; Info: Total time 3.76s</code></pre>
-<p>Eager garbage collection is driven by a heuristic that considers the current memory pressure, how much memory was freed during previous collections, and how much time that took. It is possible that the current implementation is not optimal, so if you encounter performance issues, please file an issue.</p>
-<h2 id="tracked_memory_allocations"><a href="#tracked_memory_allocations" class="header-anchor">Tracked memory allocations</a></h2>
-<p>When working with multiple GPUs, it is important to differentiate between the device that memory was allocated on, and the device used to execute code. Practically, this meant that users of CUDA.jl had to manually remember that allocating and using <code>CuArray</code> objects &#40;typically&#41; needed to happen with the same device active. The same is true for streams, which are used to order operations executing on a single GPU.</p>
-<p>To improve this, <strong>CUDA.jl now keeps track of the device that owns the memory, and the stream last used to access it, enabling the package to &quot;do the right thing&quot; when using that memory</strong> in kernels or with library functionality. This does <strong>not</strong> mean that CUDA.jl will automatically switch the active device: We want to keep the user in control of that, as it often makes sense to access memory from another device, if your system supports it.</p>
-<p>Let&#39;s break down what the implications are of this change.</p>
-<p><strong>1. Using multiple GPUs</strong></p>
-<p>If you have multiple GPUs, it may be possible that direct P2P access between devices is possible &#40;e.g., using NVLink, or just over PCIe&#41;. In this case, CUDA.jl will now automatically configure the system to allow such access, making it possible to seamlessly use memory allocated on one device in kernels executing on a different device:</p>
-<pre><code class="language-julia">julia&gt; # Allocate memory on device 0
-       device&#33;&#40;0&#41;
-CuDevice&#40;0&#41;: Tesla V100-PCIE-16GB
-julia&gt; a &#61; CuArray&#40;&#91;1&#93;&#41;;
-
-julia&gt; # Use on device 1
-       device&#33;&#40;1&#41;
-CuDevice&#40;1&#41;: Tesla V100S-PCIE-32GB
-julia&gt; a .&#43; 1;</code></pre>
-<p>If P2P access between devices is not possible, CUDA.jl will now raise an error instead of throwing an illegal memory access error as it did before:</p>
-<pre><code class="language-julia">julia&gt; # Use on incompatible device 2
-       device&#33;&#40;2&#41;
-CuDevice&#40;2&#41;: NVIDIA GeForce GTX 1080 Ti
-julia&gt; a .&#43; 1
-ERROR: cannot take the GPU address of inaccessible device memory.
-
-You are trying to use memory from GPU 0 on GPU 2.
-P2P access between these devices is not possible;
-either switch to GPU 0 by calling &#96;CUDA.device&#33;&#40;0&#41;&#96;,
-or copy the data to an array allocated on device 2.</code></pre>
-<p>As the error message suggests, you can always copy memory between devices using the <code>copyto&#33;</code> function. In this case, CUDA.jl will fall back to staging the copy on the host when P2P access is not possible.</p>
-<p><strong>2. Using multiple streams</strong></p>
-<p>Streams are used to order operations executing on a single GPU. In CUDA.jl, every Julia task has its own stream, making it very easy to group independent operations together, and make it possible for the GPU to potentially overlap execution of these operations.</p>
-<p>Before CUDA.jl v5.4, users had to be careful about synchronizing data used in multiple tasks. It was recommended, for example, to end every data-producing task with an explicit call to <code>synchronize&#40;&#41;</code>, or alternatively make sure to <code>device_synchronize&#40;&#41;</code> at the start of a data-consuming task. Now that CUDA.jl keeps track of the stream used to last access memory, it can automatically synchronize streams when needed:</p>
-<pre><code class="language-julia"># Allocate some data
-a &#61; CUDA.zeros&#40;4096, 4096&#41;
-b &#61; CUDA.zeros&#40;4096, 4096&#41;
-#synchronize&#40;&#41;  # No longer needed
-
-# Perform work on a task
-t &#61; @async begin
-  a * b
-  #synchronize&#40;&#41;  # No longer needed
-end
-
-# Fetch the results
-c &#61; fetch&#40;t&#41;</code></pre>
-<p><strong>3. Using capturing APIs</strong></p>
-<p>All of the above is implemented by piggybacking on the function that converts memory objects to pointers, in the assumption that this will be the final operation before the memory is used. This is generally true, with one important exception: APIs that capture memory. For example, when recording an operation using the CUDA graph APIs, a memory address may be captured and used later without CUDA.jl being aware of it.</p>
-<p>CUDA.jl accounts for this by detecting conversions during stream capture, however, some APIs may not covered yet. If you encounter issues with capturing APIs, let us know, and keep using additional synchronization calls to ensure correctness.</p>
-<h2 id="unified_memory_iteration"><a href="#unified_memory_iteration" class="header-anchor">Unified memory iteration</a></h2>
-<p>Unified memory is a feature of CUDA that allows memory to be accessed from both the CPU and the GPU. We have now greatly <strong>improved the performance of using unified memory with CPU code that iterates over elements</strong> of a <code>CuArray</code>. Although this is typically unwanted, triggering the dreaded &quot;scalar indexing&quot; error when accessing device memory in such a way, it can be useful when incrementaly porting code to the GPU.</p>
-<p>Concretely, accessing elements of a unified <code>CuArray</code> on the CPU is much faster now:</p>
-<pre><code class="language-julia-repl">julia&gt; # Reference
-       a &#61; &#91;1&#93;;
-julia&gt; @btime &#36;a&#91;&#93;;
-  1.959 ns &#40;0 allocations: 0 bytes&#41;
-
-julia&gt; b &#61; cu&#40;a; unified&#61;true&#41;;
-
-julia&gt; # Before
-       @btime &#36;b&#91;&#93;
-  2.617 μs &#40;0 allocations: 0 bytes&#41;;
-
-julia&gt; # After
-       @btime &#36;b&#91;&#93;;
-  4.140 ns &#40;0 allocations: 0 bytes&#41;</code></pre>
-<p>Notice the different unit&#33; This has a massive impact on real-life performance, for example, as demonstrated by calling <code>foldl</code> which does not have a GPU-optimized implementation:</p>
-<pre><code class="language-julia-repl">julia&gt; a &#61; cu&#40;rand&#40;1024, 1024&#41;; unified&#61;true&#41;;
-
-julia&gt; # Before
-       @b foldl&#40;&#43;, a&#41;
-4.210 s &#40;9 allocs: 208 bytes, without a warmup&#41;
-
-julia&gt; # After
-       @b foldl&#40;&#43;, a&#41;
-3.107 ms &#40;9 allocs: 208 bytes&#41;</code></pre>
-<p>For completeness, doing this with regular device memory triggers a scalar indexing error:</p>
-<pre><code class="language-julia-repl">julia&gt; a &#61; cu&#40;rand&#40;1024, 1024&#41;&#41;;
-
-julia&gt; foldl&#40;&#43;, a&#41;
-ERROR: Scalar indexing is disallowed.</code></pre>
-<p>These changes should make it easier to port applications to the GPU by incrementally moving parts of the codebase to the GPU without having to worry about the performance of accessing memory from the CPU. The only requirement is to use unified memory, e.g., by calling <code>cu</code> with <code>unified&#61;true</code>, or setting the CUDA.jl preference <code>default_memory</code> to use unified memory by default. However, as unified memory comes with a slight cost, and results in synchronous allocation behavior, it is still recommended to switch back to regular device memory when your application has been fully ported to the GPU.</p>
-<h2 id="other_changes"><a href="#other_changes" class="header-anchor">Other changes</a></h2>
-<p>To keep this post from becoming even longer, a quick rundown of other changes:</p>
-<ul>
-<li><p><a href="https://github.com/wsmoses">@wsmoses</a> introduced initial support for automatic differentiation of heterogeneous host/device code using Enzyme.jl. Before, you would have to differentiate through host and device code separately, and manually set up rules for crossing the host/device boundary. Now, you can differentiate through entire applications with ease;</p>
-</li>
-<li><p><code>CUDA.@profile</code> now <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2339">automatically detects external profilers</a>, so it should not be required to specify <code>external&#61;true</code> anymore when running under NSight;</p>
-</li>
-<li><p><a href="https://github.com/JuliaGPU/CUDA.jl/pull/2342">Exception output has been improved</a>, only reporting a single error message instead of generating output on each thread, and better forwarding the exception type;</p>
-</li>
-<li><p>Cached handles from libraries <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2352">will now be freed</a> when under memory pressure;</p>
-</li>
-<li><p>Tegra devices <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2374">are now supported</a> by our artifacts, obviating the use of a local toolkit;</p>
-</li>
-<li><p>Support for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2392">CUDA 12.5</a> has been added, as well as <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2390">initial support for Julia 1.12</a>.</p>
-</li>
-</ul>
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-
-<!-- Languages -->
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
-
-<script>hljs.highlightAll();</script>
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>CUDA.jl 5.4: Memory management mayhem · JuliaGPU</title><meta name=description content="CUDA.jl 5.4 comes with many memory-management related changes that should improve performance of memory-heavy applications, and make it easier to work with heterogeneous set-ups involving multiple GPUs or using both the CPU and GPU."><link rel=canonical href=https://juliagpu.org/post/2024-05-28-cuda_5.4/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/post/2024-05-28-cuda_5.4/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="CUDA.jl 5.4: Memory management mayhem"><meta property="og:description" content="CUDA.jl 5.4 comes with many memory-management related changes that should improve performance of memory-heavy applications, and make it easier to work with heterogeneous set-ups involving multiple GPUs or using both the CPU and GPU."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2024-05-28T00:00:00+00:00"><meta property="article:modified_time" content="2024-05-28T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>CUDA.jl 5.4: Memory management mayhem</h1><p class=post-meta><time datetime=2024-05-28>May 28, 2024</time> · Tim Besard</p></header><p>CUDA.jl 5.4 comes with many memory-management related changes that should improve
+performance of memory-heavy applications, and make it easier to work with heterogeneous
+set-ups involving multiple GPUs or using both the CPU and GPU.</p><p>Before anything else, let&rsquo;s get the breaking changes out of the way. CUDA.jl v5.4 only
+bumps the minor version, so it should be compatible with existing codebases. However, there
+are a couple of API changes that, although covered by appropriate deprecation warnings,
+applications should be updated to:</p><ul><li>The <code>CUDA.Mem</code> submodule has been removed. All identifiers have been moved to the parent
+<code>CUDA</code> submodule, with a couple being renamed in the process:<ul><li><code>Mem.Device</code> and <code>Mem.DeviceBuffer</code> have been renamed to <code>CUDA.DeviceMemory</code> (the same
+applies to <code>Mem.Host</code> and <code>Mem.Unified</code>);</li><li>enums from the <code>Mem</code> submodule have gained a <code>MEM</code> suffix, e.g., <code>Mem.ATTACH_GLOBAL</code> has
+been renamed to <code>CUDA.MEM_ATTACH_GLOBAL</code>;</li><li><code>Mem.set!</code> has been renamed to <code>CUDA.memset</code>;</li><li><code>Mem.info()</code> has been renamed to <code>CUDA.memory_info()</code>;</li></ul></li><li><code>CUDA.memory_status()</code> has been renamed to <code>CUDA.pool_status()</code>;</li></ul><ul><li><code>CUDA.available_memory()</code> has been renamed to <code>CUDA.free_memory()</code>.</li></ul><p>The meat of this release is in the memory management improvements detailed below. These
+changes can have a significant impact of the performance of your application, so it&rsquo;s
+recommended to thoroughly test your application after upgrading!</p><h2 id=eager-garbage-collection><span id=eager_garbage_collection></span>Eager garbage collection <a class=heading-anchor href=#eager-garbage-collection aria-label="Link to this section">#</a></h2><p>Julia is a garbage collected language, which means that (GPU) allocations can fail because
+garbage has piled up, necessitating a collection cycle. Previous versions of CUDA.jl handled
+this at the allocation site, detecting out-of-memory errors and triggering the GC. This was
+not ideal, as it could lead to significant pauses and a bloated memory usage.</p><p>To improve this, <strong>CUDA.jl v5.4 more accurately keeps track of memory usage, and uses that
+information to trigger the GC early at appropriate times</strong>, e.g., when waiting for a kernel
+to finish. This should lead to more predictable performance, both by distributing the cost
+of garbage collection over time and by potentially masking it behind other operations.</p><p>For example, the following toy model implemented with Flux.jl allocates a ton of memory:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>using</span> <span class=n>CUDA</span><span class=p>,</span> <span class=n>Flux</span>
+</span></span><span class=line><span class=cl><span class=k>using</span> <span class=n>MLUtils</span><span class=o>:</span> <span class=n>DataLoader</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>n_obs</span> <span class=o>=</span> <span class=mi>300_000</span>
+</span></span><span class=line><span class=cl><span class=n>n_feature</span> <span class=o>=</span> <span class=mi>1000</span>
+</span></span><span class=line><span class=cl><span class=n>X</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=n>n_feature</span><span class=p>,</span> <span class=n>n_obs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>y</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=n>n_obs</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>train_data</span> <span class=o>=</span> <span class=n>DataLoader</span><span class=p>((</span><span class=n>X</span><span class=p>,</span> <span class=n>y</span><span class=p>)</span> <span class=o>|&gt;</span> <span class=n>gpu</span><span class=p>;</span> <span class=n>batchsize</span> <span class=o>=</span> <span class=mi>2048</span><span class=p>,</span> <span class=n>shuffle</span><span class=o>=</span><span class=nb>false</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>model</span> <span class=o>=</span> <span class=n>Dense</span><span class=p>(</span><span class=n>n_feature</span><span class=p>,</span> <span class=mi>1</span><span class=p>)</span> <span class=o>|&gt;</span> <span class=n>gpu</span>
+</span></span><span class=line><span class=cl><span class=n>loss</span><span class=p>(</span><span class=n>m</span><span class=p>,</span> <span class=n>_x</span><span class=p>,</span> <span class=n>_y</span><span class=p>)</span> <span class=o>=</span> <span class=n>Flux</span><span class=o>.</span><span class=n>Losses</span><span class=o>.</span><span class=n>mse</span><span class=p>(</span><span class=n>m</span><span class=p>(</span><span class=n>_x</span><span class=p>),</span> <span class=n>_y</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>opt_state</span> <span class=o>=</span> <span class=n>Flux</span><span class=o>.</span><span class=n>setup</span><span class=p>(</span><span class=n>Flux</span><span class=o>.</span><span class=n>Adam</span><span class=p>(),</span> <span class=n>model</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>for</span> <span class=n>epoch</span> <span class=k>in</span> <span class=mi>1</span><span class=o>:</span><span class=mi>100</span>
+</span></span><span class=line><span class=cl>  <span class=n>Flux</span><span class=o>.</span><span class=n>train!</span><span class=p>(</span><span class=n>loss</span><span class=p>,</span> <span class=n>model</span><span class=p>,</span> <span class=n>train_data</span><span class=p>,</span> <span class=n>opt_state</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span></code></pre></div><p>Without eager garbage collection, this leads to expensive pauses while freeing a large
+amount of memory at every epoch. We can simulate this by artificially limiting the memory
+available to the GPU, while also disabling the new eager garbage collection feature by
+setting the <code>JULIA_CUDA_GC_EARLY</code> environment variable to <code>false</code> (this is a temporary knob
+that will be removed in the future, but may be useful now for evaluating the new feature):</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>❯ JULIA_CUDA_GC_EARLY=false JULIA_CUDA_HARD_MEMORY_LIMIT=4GiB \
+</span></span><span class=line><span class=cl>  julia --project train.jl
+</span></span><span class=line><span class=cl>...
+</span></span><span class=line><span class=cl>[ Info: Epoch 90 train time 0.031s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.865 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 91 train time 0.031s
+</span></span><span class=line><span class=cl>[ Info: Epoch 92 train time 0.027s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.865 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 93 train time 0.03s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.873 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 94 train time 0.031s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.873 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 95 train time 0.03s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.873 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 96 train time 0.031s
+</span></span><span class=line><span class=cl>[ Info: Epoch 97 train time 0.027s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.873 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 98 train time 0.031s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.865 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 99 train time 0.031s
+</span></span><span class=line><span class=cl>retry_reclaim: freed 2.865 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 100 train time 0.031s
+</span></span><span class=line><span class=cl>[ Info: Total time 4.307s
+</span></span></code></pre></div><p>With eager garbage collection enabled, more frequent but less costly pauses result in
+significantly improved performance:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>❯ JULIA_CUDA_GC_EARLY=true JULIA_CUDA_HARD_MEMORY_LIMIT=4GiB \
+</span></span><span class=line><span class=cl>  julia --project wip.jl
+</span></span><span class=line><span class=cl>...
+</span></span><span class=line><span class=cl>[ Info: Epoch 90 train time 0.031s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 91 train time 0.033s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 92 train time 0.031s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 93 train time 0.031s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 94 train time 0.03s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 95 train time 0.03s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 96 train time 0.033s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 97 train time 0.03s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 98 train time 0.03s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 99 train time 0.03s
+</span></span><span class=line><span class=cl>maybe_collect: collected 1.8 GiB
+</span></span><span class=line><span class=cl>[ Info: Epoch 100 train time 0.03s
+</span></span><span class=line><span class=cl>[ Info: Total time 3.76s
+</span></span></code></pre></div><p>Eager garbage collection is driven by a heuristic that considers the current memory
+pressure, how much memory was freed during previous collections, and how much time that
+took. It is possible that the current implementation is not optimal, so if you encounter
+performance issues, please file an issue.</p><h2 id=tracked-memory-allocations><span id=tracked_memory_allocations></span>Tracked memory allocations <a class=heading-anchor href=#tracked-memory-allocations aria-label="Link to this section">#</a></h2><p>When working with multiple GPUs, it is important to differentiate between the device that
+memory was allocated on, and the device used to execute code. Practically, this meant that
+users of CUDA.jl had to manually remember that allocating and using <code>CuArray</code> objects
+(typically) needed to happen with the same device active. The same is true for streams,
+which are used to order operations executing on a single GPU.</p><p>To improve this, <strong>CUDA.jl now keeps track of the device that owns the memory, and the
+stream last used to access it, enabling the package to &ldquo;do the right thing&rdquo; when using that
+memory</strong> in kernels or with library functionality. This does <strong>not</strong> mean that CUDA.jl will
+automatically switch the active device: We want to keep the user in control of that, as it
+often makes sense to access memory from another device, if your system supports it.</p><p>Let&rsquo;s break down what the implications are of this change.</p><p><strong>1. Using multiple GPUs</strong></p><p>If you have multiple GPUs, it may be possible that direct P2P access between devices is
+possible (e.g., using NVLink, or just over PCIe). In this case, CUDA.jl will now
+automatically configure the system to allow such access, making it possible to seamlessly
+use memory allocated on one device in kernels executing on a different device:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># Allocate memory on device 0</span>
+       <span class=n>device!</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span></code>
+<span class=go>CuDevice(0): Tesla V100-PCIE-16GB</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CuArray</span><span class=p>([</span><span class=mi>1</span><span class=p>]);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># Use on device 1</span>
+       <span class=n>device!</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>CuDevice(1): Tesla V100S-PCIE-32GB</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>.+</span> <span class=mi>1</span><span class=p>;</span></code></code></pre></div><p>If P2P access between devices is not possible, CUDA.jl will now raise an error instead of
+throwing an illegal memory access error as it did before:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># Use on incompatible device 2</span>
+       <span class=n>device!</span><span class=p>(</span><span class=mi>2</span><span class=p>)</span></code>
+<span class=go>CuDevice(2): NVIDIA GeForce GTX 1080 Ti</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>.+</span> <span class=mi>1</span></code>
+<span class=go>ERROR: cannot take the GPU address of inaccessible device memory.</span>
+<span class=go></span>
+<span class=go>You are trying to use memory from GPU 0 on GPU 2.</span>
+<span class=go>P2P access between these devices is not possible;</span>
+<span class=go>either switch to GPU 0 by calling `CUDA.device!(0)`,</span>
+<span class=go>or copy the data to an array allocated on device 2.</span></code></pre></div><p>As the error message suggests, you can always copy memory between devices using the
+<code>copyto!</code> function. In this case, CUDA.jl will fall back to staging the copy on the host
+when P2P access is not possible.</p><p><strong>2. Using multiple streams</strong></p><p>Streams are used to order operations executing on a single GPU. In CUDA.jl, every Julia task
+has its own stream, making it very easy to group independent operations together, and make
+it possible for the GPU to potentially overlap execution of these operations.</p><p>Before CUDA.jl v5.4, users had to be careful about synchronizing data used in multiple
+tasks. It was recommended, for example, to end every data-producing task with an explicit
+call to <code>synchronize()</code>, or alternatively make sure to <code>device_synchronize()</code> at the start
+of a data-consuming task. Now that CUDA.jl keeps track of the stream used to last access
+memory, it can automatically synchronize streams when needed:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=c># Allocate some data</span>
+</span></span><span class=line><span class=cl><span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>zeros</span><span class=p>(</span><span class=mi>4096</span><span class=p>,</span> <span class=mi>4096</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>zeros</span><span class=p>(</span><span class=mi>4096</span><span class=p>,</span> <span class=mi>4096</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=c>#synchronize()  # No longer needed</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c># Perform work on a task</span>
+</span></span><span class=line><span class=cl><span class=n>t</span> <span class=o>=</span> <span class=nd>@async</span> <span class=k>begin</span>
+</span></span><span class=line><span class=cl>  <span class=n>a</span> <span class=o>*</span> <span class=n>b</span>
+</span></span><span class=line><span class=cl>  <span class=c>#synchronize()  # No longer needed</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c># Fetch the results</span>
+</span></span><span class=line><span class=cl><span class=n>c</span> <span class=o>=</span> <span class=n>fetch</span><span class=p>(</span><span class=n>t</span><span class=p>)</span>
+</span></span></code></pre></div><p><strong>3. Using capturing APIs</strong></p><p>All of the above is implemented by piggybacking on the function that converts memory objects
+to pointers, in the assumption that this will be the final operation before the memory is
+used. This is generally true, with one important exception: APIs that capture memory. For
+example, when recording an operation using the CUDA graph APIs, a memory address may be
+captured and used later without CUDA.jl being aware of it.</p><p>CUDA.jl accounts for this by detecting conversions during stream capture, however, some APIs
+may not covered yet. If you encounter issues with capturing APIs, let us know, and keep
+using additional synchronization calls to ensure correctness.</p><h2 id=unified-memory-iteration><span id=unified_memory_iteration></span>Unified memory iteration <a class=heading-anchor href=#unified-memory-iteration aria-label="Link to this section">#</a></h2><p>Unified memory is a feature of CUDA that allows memory to be accessed from both the CPU and
+the GPU. We have now greatly <strong>improved the performance of using unified memory with CPU
+code that iterates over elements</strong> of a <code>CuArray</code>. Although this is typically unwanted,
+triggering the dreaded &ldquo;scalar indexing&rdquo; error when accessing device memory in such a way,
+it can be useful when incrementaly porting code to the GPU.</p><p>Concretely, accessing elements of a unified <code>CuArray</code> on the CPU is much faster now:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># Reference</span>
+       <span class=n>a</span> <span class=o>=</span> <span class=p>[</span><span class=mi>1</span><span class=p>];</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@btime</span> <span class=o>$</span><span class=n>a</span><span class=p>[];</span></code>
+<span class=go>  1.959 ns (0 allocations: 0 bytes)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>cu</span><span class=p>(</span><span class=n>a</span><span class=p>;</span> <span class=n>unified</span><span class=o>=</span><span class=nb>true</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># Before</span>
+       <span class=nd>@btime</span> <span class=o>$</span><span class=n>b</span><span class=p>[]</span></code>
+<span class=go>  2.617 μs (0 allocations: 0 bytes);</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># After</span>
+       <span class=nd>@btime</span> <span class=o>$</span><span class=n>b</span><span class=p>[];</span></code>
+<span class=go>  4.140 ns (0 allocations: 0 bytes)</span></code></pre></div><p>Notice the different unit! This has a massive impact on real-life performance, for example,
+as demonstrated by calling <code>foldl</code> which does not have a GPU-optimized implementation:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>cu</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span> <span class=n>unified</span><span class=o>=</span><span class=nb>true</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># Before</span>
+       <span class=nd>@b</span> <span class=n>foldl</span><span class=p>(</span><span class=o>+</span><span class=p>,</span> <span class=n>a</span><span class=p>)</span></code>
+<span class=go>4.210 s (9 allocs: 208 bytes, without a warmup)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=c># After</span>
+       <span class=nd>@b</span> <span class=n>foldl</span><span class=p>(</span><span class=o>+</span><span class=p>,</span> <span class=n>a</span><span class=p>)</span></code>
+<span class=go>3.107 ms (9 allocs: 208 bytes)</span></code></pre></div><p>For completeness, doing this with regular device memory triggers a scalar indexing error:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>cu</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>));</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>foldl</span><span class=p>(</span><span class=o>+</span><span class=p>,</span> <span class=n>a</span><span class=p>)</span></code>
+<span class=go>ERROR: Scalar indexing is disallowed.</span></code></pre></div><p>These changes should make it easier to port applications to the GPU by incrementally moving
+parts of the codebase to the GPU without having to worry about the performance of accessing
+memory from the CPU. The only requirement is to use unified memory, e.g., by calling <code>cu</code>
+with <code>unified=true</code>, or setting the CUDA.jl preference <code>default_memory</code> to use unified
+memory by default. However, as unified memory comes with a slight cost, and results in
+synchronous allocation behavior, it is still recommended to switch back to regular device
+memory when your application has been fully ported to the GPU.</p><h2 id=other-changes><span id=other_changes></span>Other changes <a class=heading-anchor href=#other-changes aria-label="Link to this section">#</a></h2><p>To keep this post from becoming even longer, a quick rundown of other changes:</p><ul><li><a href=https://github.com/wsmoses>@wsmoses</a> introduced initial support for automatic
+differentiation of heterogeneous host/device code using Enzyme.jl. Before, you would have
+to differentiate through host and device code separately, and manually set up rules for
+crossing the host/device boundary. Now, you can differentiate through entire applications
+with ease;</li><li><code>CUDA.@profile</code> now <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2339>automatically detects external
+profilers</a>, so it should not be required to
+specify <code>external=true</code> anymore when running under NSight;</li><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/2342>Exception output has been improved</a>, only
+reporting a single error message instead of generating output on each thread, and better
+forwarding the exception type;</li><li>Cached handles from libraries <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2352>will now be
+freed</a> when under memory pressure;</li><li>Tegra devices <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2374>are now supported</a> by our
+artifacts, obviating the use of a local toolkit;</li><li>Support for <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2392>CUDA 12.5</a> has been added, as
+well as <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2390>initial support for Julia 1.12</a>.</li></ul><nav class=post-nav aria-label="More posts"><a rel=next href=/post/2024-09-18-cuda_5.5/><span>Newer</span>CUDA.jl 5.5: Maintenance release</a>
+<a rel=prev href=/post/2024-05-24-oneapi_1.5/><span>Older</span>oneAPI.jl 1.5: Ponte Vecchio support and oneMKL improvements</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

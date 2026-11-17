@@ -1,136 +1,77 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-  
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-  
-    <title>AMD ROCm ⋅ JuliaGPU</title>
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle active" href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item active" href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-<!-- Content appended here -->
-
-<h1 id="amd_rocm"><a href="#amd_rocm" class="header-anchor">AMD ROCm</a></h1>
-
-<p>
-  <a href="https://amdgpu.juliagpu.org/stable/">
-    <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt>
-  </a>
-  <a href="https://github.com/JuliaGPU/AMDGPU.jl">
-    <img src="https://img.shields.io/github/stars/JuliaGPU/AMDGPU.jl?style=social" alt>
-  </a>
-</p>
-
-<p>The Julia programming support for AMD GPUs based on the ROCm platform aims to provide similar capabilities as the <a href="/cuda/">NVIDIA CUDA</a> stack, with support for both low-level kernel programming as well as an array-oriented interface. <a href="https://github.com/JuliaGPU/AMDGPU.jl">AMDGPU.jl</a> offers comparable performance as HIP C&#43;&#43;. The toolchain can easily be installed on latest version of Julia  using the integrated package manager.</p>
-<p>AMDGPU.jl makes it possible to program AMD GPUs at different abstraction levels:</p>
-<ul>
-<li><p>by using the <code>ROCArray</code> type, providing a user-friendly yet powerful abstraction that does not require any GPU programming experience;</p>
-</li>
-<li><p>by writing ROC kernels, with similar performance as kernels written in HIP C&#43;&#43;;</p>
-</li>
-<li><p>by interfacing with HIP APIs and libraries directly, similar level of flexibility you would expect from a C-based programming environment.</p>
-</li>
-</ul>
-<p>The <a href="https://amdgpu.juliagpu.org/stable/">documentation</a> of AMDGPU.jl demonstrates each of these approaches.</p>
-<h1 id="performance"><a href="#performance" class="header-anchor">Performance</a></h1>
-<p>Julia on the CPU is known for its good performance, approaching that of statically compiled languages like C. The same holds for programming AMD GPUs with kernels written using AMDGPU.jl, where we show preliminary performance to approach that of HIP C&#43;&#43; on a memcopy and 2D diffusion kernel:</p>
-
-<div class="card mb-3">
-  <a href="/assets/img/amdgpu-performance.png">
-    <img src="/assets/img/amdgpu-performance.png" class=card-img-top alt>
-  </a>
-  <div class=card-body>
-    <p class=card-text>
-      Preliminary performance of a memcopy and 2D diffusion kernel implemented in
-      Julia with AMDGPU.jl and executed on a MI250x GPU.
-    </p>
-  </div>
-</div>
-
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>AMD ROCm · JuliaGPU</title><meta name=description content="Array and kernel programming for AMD Radeon and Instinct GPUs, with the ROCm libraries downloaded automatically."><link rel=canonical href=https://juliagpu.org/backends/rocm/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/backends/rocm/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="AMD ROCm"><meta property="og:description" content="Array and kernel programming for AMD Radeon and Instinct GPUs, with the ROCm libraries downloaded automatically."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="backends"><meta property="og:image" content="https://juliagpu.org/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/ aria-current=page>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>AMD ROCm</h1><p class=lead>Array and kernel programming for AMD Radeon and Instinct GPUs, with the ROCm libraries downloaded automatically.</p><p class=actions><a class=button href=https://amdgpu.juliagpu.org/stable/>AMDGPU.jl documentation</a>
+<a class="button secondary" href=https://github.com/JuliaGPU/AMDGPU.jl aria-label="AMDGPU.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> AMDGPU.jl</a></p></header><p><a href=https://github.com/JuliaGPU/AMDGPU.jl>AMDGPU.jl</a> is the Julia package for
+programming AMD GPUs. It is built on AMD&rsquo;s ROCm platform and follows the
+structure of <a href=/backends/cuda/>CUDA.jl</a>: a <code>ROCArray</code> type for array
+programming, a compiler for kernels written in Julia, and wrappers for the ROCm
+libraries. It works on 64-bit Linux and Windows, with Radeon GPUs and APUs as
+well as Instinct accelerators.</p><h2 id=installation>Installation <a class=heading-anchor href=#installation aria-label="Link to this section">#</a></h2><p>AMDGPU.jl is installed with Julia&rsquo;s package manager. Only the GPU driver needs
+to be present on the system: the <code>amdgpu</code> kernel driver on Linux, or AMD
+Software: Adrenalin Edition on Windows. The ROCm runtime and libraries are
+downloaded as artifacts, selected for the GPU detected on the host. On Linux,
+your user also needs access to <code>/dev/kfd</code>, usually by being in the <code>render</code>
+group.</p><p>AMDGPU.jl supports Julia 1.10 and later. The ROCm artifacts cover most Radeon
+GPUs and APUs from RDNA1 to RDNA4 and Instinct accelerators from the MI100 on,
+though some architectures, such as the MI300, only have bundles for Linux.</p><p><code>AMDGPU.versioninfo()</code> shows what was found:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>pkg&gt; </span>add AMDGPU
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>AMDGPU</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>AMDGPU</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>AMDGPU versioninfo</span>
+<span class=go>ROCm provider: downloaded artifacts</span>
+<span class=go>⋮</span>
+<span class=go></span>
+<span class=go>AMDGPU devices</span>
+<span class=go>┌────┬─────────────────────┬──────────┬───────────┬────────────┬───────────────┐</span>
+<span class=go>│ Id │                Name │ GCN arch │ Wavefront │     Memory │ Shared Memory │</span>
+<span class=go>├────┼─────────────────────┼──────────┼───────────┼────────────┼───────────────┤</span>
+<span class=go>│  1 │ AMD Radeon Graphics │  gfx1036 │        32 │ 30.179 GiB │    64.000 KiB │</span>
+<span class=go>└────┴─────────────────────┴──────────┴───────────┴────────────┴───────────────┘</span></code></pre></div><h2 id=array-programming>Array programming <a class=heading-anchor href=#array-programming aria-label="Link to this section">#</a></h2><p>The easiest way to use the GPU is through <code>ROCArray</code>. Operations on these
+arrays, such as broadcasting, reductions, sorting and matrix multiplication,
+run on the GPU:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>A</span> <span class=o>=</span> <span class=n>ROCArray</span><span class=p>(</span><span class=n>ones</span><span class=p>(</span><span class=mi>5</span><span class=p>,</span> <span class=mi>5</span><span class=p>));</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>A</span> <span class=o>.+</span> <span class=mi>1</span></code>
+<span class=go>5×5 ROCArray{Float64, 2, AMDGPU.Runtime.Mem.HIPBuffer}:</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span></code></pre></div><p>Since <code>ROCArray</code> implements Julia&rsquo;s array interface, a lot of generic code works
+on it unchanged, including packages like Flux.jl for machine learning. The ROCm
+libraries are mostly used through the same standard interfaces: rocBLAS and
+rocSOLVER back <code>LinearAlgebra</code> operations like <code>*</code>, <code>\</code> and <code>cholesky</code>, rocFFT
+implements the AbstractFFTs.jl interface, rocRAND generates the numbers for
+<code>AMDGPU.rand</code>, rocSPARSE provides sparse matrices, and MIOpen provides the
+convolutions and pooling used by NNlib.jl and Flux.jl.</p><h2 id=kernel-programming>Kernel programming <a class=heading-anchor href=#kernel-programming aria-label="Link to this section">#</a></h2><p>When array operations are not enough, you can write kernels in Julia and launch
+them with <code>@roc</code>. The <code>groupsize</code> and <code>gridsize</code> keywords correspond to the
+block size and number of blocks in CUDA:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>A</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>workitemIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=n>A</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@roc</span> <span class=n>groupsize</span><span class=o>=</span><span class=n>length</span><span class=p>(</span><span class=n>A</span><span class=p>)</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>A</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>A</span></code>
+<span class=go>5×5 ROCArray{Float64, 2, AMDGPU.Runtime.Mem.HIPBuffer}:</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span>
+<span class=go> 2.0  2.0  2.0  2.0  2.0</span></code></pre></div><p>For kernels that should also run on other GPUs or on the CPU, write them with
+<a href=https://github.com/JuliaGPU/KernelAbstractions.jl>KernelAbstractions.jl</a> and
+launch them on <code>ROCBackend()</code>.</p><h2 id=learn-more>Learn more <a class=heading-anchor href=#learn-more aria-label="Link to this section">#</a></h2><ul><li>The <a href=https://amdgpu.juliagpu.org/stable/>AMDGPU.jl documentation</a> starts
+with a <a href=https://amdgpu.juliagpu.org/stable/tutorials/quickstart>quick start</a>.
+It also covers <a href=https://amdgpu.juliagpu.org/stable/install_tips>installation</a>,
+including using a local ROCm installation, <a href=https://amdgpu.juliagpu.org/stable/faq>supported
+hardware</a>, <a href=https://amdgpu.juliagpu.org/stable/usage/arrays>array
+programming</a>, the libraries
+for <a href=https://amdgpu.juliagpu.org/stable/libraries/linalg>linear algebra</a>,
+<a href=https://amdgpu.juliagpu.org/stable/libraries/sparse>sparse arrays</a>,
+<a href=https://amdgpu.juliagpu.org/stable/libraries/fft>FFTs</a> and <a href=https://amdgpu.juliagpu.org/stable/libraries/dnn>deep
+learning</a>,
+<a href=https://amdgpu.juliagpu.org/stable/tutorials/profiling>profiling</a> and
+<a href=https://amdgpu.juliagpu.org/stable/tutorials/perf>performance tips</a>.</li><li>AMDGPU.jl&rsquo;s benchmark history is on the <a href="/perf/?pkg=amdgpu">performance
+dashboard</a>.</li><li><a href=/post/2026-11-16-amdgpu-2.12/>AMDGPU.jl 2.8–2.12: ROCm as artifacts, a performance dashboard, and a faster core</a></li><li><a href=/post/2026-07-06-amdgpu-2.7/>AMDGPU.jl 2.6 and 2.7: linear algebra, sparse arrays, and RDNA4 matrix cores</a></li><li><a href=/post/2026-08-03-gpu_ecosystem/>State of Julia&rsquo;s GPU ecosystem in 2026</a></li><li>Questions can be asked in the GPU category of the <a href=https://discourse.julialang.org/c/domain/gpu>Julia
+Discourse</a>, and bugs reported
+on the <a href=https://github.com/JuliaGPU/AMDGPU.jl/issues>issue tracker</a>.</li></ul></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

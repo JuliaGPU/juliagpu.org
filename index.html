@@ -1,140 +1,131 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-  
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-    <title>JuliaGPU</title>
-  
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-<!-- Content appended here -->
-
-
-<div class="p-5 mb-5">
-  <div class="container text-center">
-    <h1>
-      <img height=70 src="/assets/logo_crop.png">
-      JuliaGPU
-    </h1>
-    <p class="font-125">
-      High-performance GPU programming in a high-level language.
-    </p>
-  </div>
-</div>
-
-<p>JuliaGPU is a Github organization created to unify the many packages for programming GPUs in Julia. With its high-level syntax and flexible compiler, Julia is well positioned to <strong>productively program hardware accelerators without sacrificing performance</strong>.</p>
-<p>Many applications and libraries in the Julia ecosystem rely on GPU support, and the number is growing rapidly. Head over to the <a href="/showcases/">showcases</a> page if you want to see some examples of how Julia&#39;s GPU support is used in practice.</p>
-<h2 id="supported_platforms"><a href="#supported_platforms" class="header-anchor">Supported platforms</a></h2>
-<p>The best supported GPU platform in Julia is <a href="/backends/cuda/"><strong>NVIDIA CUDA</strong></a> through CUDA.jl. It provides <strong>kernel programming support comparable to CUDA C</strong>, along with comprehensive integration with vendor libraries including cuBLAS, cuFFT, cuSOLVER, cuSPARSE, cuDNN, cuTENSOR, and more. CUDA.jl also features seamless integration with development tools like Nsight and CUPTI, and supports a wide range of CUDA toolkit versions with automatic installation through JLLs. It works reliably on both Linux and Windows across all Julia versions and enjoys widespread adoption throughout the ecosystem.</p>
-<p>AMDGPU.jl offers similar capabilities for <a href="/backends/rocm/"><strong>AMD GPUs</strong></a> running on the ROCm stack. While somewhat less developed than CUDA.jl, it provides solid integration with key vendor libraries such as rocBLAS, rocFFT, rocSOLVER, and rocSPARSE. The package can be slightly more challenging to install and configure due to how ROCm is distributed, but it has been successfully used in various applications and libraries.</p>
-<p>For Intel hardware, oneAPI.jl delivers newer but growing support for <a href="/backends/oneapi/"><strong>Intel GPUs with oneAPI</strong></a>. The package offers robust kernel programming capabilities but currently has limited high-level array operations and only integrates partially with oneMKL. For developers working with Intel GPUs, it provides the core functionality needed while the ecosystem continues to mature.</p>
-<p>Metal.jl provides similar support for <a href="/backends/metal/"><strong>Apple Silicon GPUs</strong></a> with capabilities for both kernel programming and array operations. While offering more limited vendor library integration compared to other back-ends, Metal.jl has evolved beyond its previous experimental status to become a stable solution for Apple GPU programming in Julia.</p>
-<p>Finally, work is under way to revive the <a href="/backends/opencl/"><strong>OpenCL</strong></a> back-end for use on other platforms, as well as to support executing GPU code on CPUs. The OpenCL.jl package is currently in a pre-release state and is not yet recommended for production use.</p>
-<h2 id="publications"><a href="#publications" class="header-anchor">Publications</a></h2>
-<p>Much of Julia&#39;s GPU support was developed as part of academic research. If you would like to help support it, please star the relevant repositories as such metrics may help us secure funding in the future. If you use our software as part of your research, teaching, or other activities, we would be grateful if you could cite our work:</p>
-<ul>
-<li><p>T. Besard, C. Foket, and B. De Sutter. &quot;<a href="https://ieeexplore.ieee.org/abstract/document/8471188">Effective extensible programming: Unleashing Julia on GPUs.</a>&quot; <em>IEEE Transactions on Parallel and Distributed Systems</em> &#40;2018&#41;.</p>
-</li>
-<li><p>T. Besard, V. Churavy, Alan Edelman and B. De Sutter. &quot;<a href="https://www.sciencedirect.com/science/article/pii/S0965997818310123">Rapid software prototyping for heterogeneous and distributed platforms.</a>&quot; <em>Advances in Engineering Software</em> &#40;2019&#41;.</p>
-</li>
-<li><p>T. Faingnaert, T. Besard, and B. De Sutter. &quot;<a href="https://ieeexplore.ieee.org/document/9655458">Flexible Performant GEMM Kernels on GPUs.</a>&quot; <em>IEEE Transactions on Parallel and Distributed Systems</em> &#40;2021&#41;.</p>
-</li>
-</ul>
-<h2 id="community"><a href="#community" class="header-anchor">Community</a></h2>
-<p>If you need help, or have questions about GPU programming in Julia, you can find members of the community at:</p>
-<ul>
-<li><p>Julia Discourse, with a dedicated <a href="https://discourse.julialang.org/c/domain/gpu/11">GPU section</a></p>
-</li>
-<li><p>Julia Slack &#40;<a href="https://slackinvite.julialang.org/">register here</a>&#41;, on the <a href="https://julialang.slack.com/messages/C689Y34LE/">#gpu channel</a></p>
-</li>
-<li><p><a href="https://meet.google.com/hmv-zqvp-tbf">JuliaGPU office hours</a>, every other week at 2PM CET <br />&#40;check the <a href="https://julialang.org/community/#events">Julia community calendar</a> for more details&#41;.</p>
-</li>
-</ul>
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>JuliaGPU: High-performance GPU programming in a high-level language.</title><meta name=description content="High-performance GPU programming in a high-level language."><link rel=canonical href=https://juliagpu.org/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="JuliaGPU"><meta property="og:description" content="Publications # Much of Julia’s GPU support was developed as part of academic research. If you would like to help support it, please star the relevant repositories as such metrics may help us secure funding in the future. If you use our software as part of your research, teaching, or other activities, we would be grateful if you could cite our work:
+T. Besard, C. Foket, and B. De Sutter. “Effective extensible programming: Unleashing Julia on GPUs.” IEEE Transactions on Parallel and Distributed Systems (2018). T. Besard, V. Churavy, Alan Edelman and B. De Sutter. “Rapid software prototyping for heterogeneous and distributed platforms.” Advances in Engineering Software (2019). T. Faingnaert, T. Besard, and B. De Sutter. “Flexible Performant GEMM Kernels on GPUs.” IEEE Transactions on Parallel and Distributed Systems (2021). Community # If you need help, or have questions about GPU programming in Julia, you can find members of the community at:"><meta property="og:locale" content="en_US"><meta property="og:type" content="website"><meta property="og:image" content="https://juliagpu.org/logo.png"><meta name=generator content="Hugo 0.170.0"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><div class=backend-picker role=radiogroup aria-label=Back-end><input type=radio name=backend id=backend-cuda aria-label=CUDA.jl>
+<input type=radio name=backend id=backend-amdgpu aria-label=AMDGPU.jl>
+<input type=radio name=backend id=backend-oneapi aria-label=oneAPI.jl>
+<input type=radio name=backend id=backend-metal aria-label=Metal.jl>
+<input type=radio name=backend id=backend-opencl aria-label=OpenCL.jl>
+<input type=radio name=backend id=backend-kernelabstractions aria-label=KernelAbstractions.jl></div><style>body:has(#backend-cuda:checked) .backend-panel[data-backend=backend-cuda],body:has(#backend-cuda:checked) .backends:not(:has(.backend-panel[data-backend=backend-cuda])) .backend-panel:first-child{visibility:visible}body:has(#backend-cuda:checked) .backend-tabs label[for=backend-cuda],body:has(#backend-cuda:checked) .backends:not(:has(.backend-panel[data-backend=backend-cuda])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-cuda:focus-visible) .backend-tabs label[for=backend-cuda]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-amdgpu:checked) .backend-panel[data-backend=backend-amdgpu],body:has(#backend-amdgpu:checked) .backends:not(:has(.backend-panel[data-backend=backend-amdgpu])) .backend-panel:first-child{visibility:visible}body:has(#backend-amdgpu:checked) .backend-tabs label[for=backend-amdgpu],body:has(#backend-amdgpu:checked) .backends:not(:has(.backend-panel[data-backend=backend-amdgpu])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-amdgpu:focus-visible) .backend-tabs label[for=backend-amdgpu]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-oneapi:checked) .backend-panel[data-backend=backend-oneapi],body:has(#backend-oneapi:checked) .backends:not(:has(.backend-panel[data-backend=backend-oneapi])) .backend-panel:first-child{visibility:visible}body:has(#backend-oneapi:checked) .backend-tabs label[for=backend-oneapi],body:has(#backend-oneapi:checked) .backends:not(:has(.backend-panel[data-backend=backend-oneapi])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-oneapi:focus-visible) .backend-tabs label[for=backend-oneapi]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-metal:checked) .backend-panel[data-backend=backend-metal],body:has(#backend-metal:checked) .backends:not(:has(.backend-panel[data-backend=backend-metal])) .backend-panel:first-child{visibility:visible}body:has(#backend-metal:checked) .backend-tabs label[for=backend-metal],body:has(#backend-metal:checked) .backends:not(:has(.backend-panel[data-backend=backend-metal])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-metal:focus-visible) .backend-tabs label[for=backend-metal]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-opencl:checked) .backend-panel[data-backend=backend-opencl],body:has(#backend-opencl:checked) .backends:not(:has(.backend-panel[data-backend=backend-opencl])) .backend-panel:first-child{visibility:visible}body:has(#backend-opencl:checked) .backend-tabs label[for=backend-opencl],body:has(#backend-opencl:checked) .backends:not(:has(.backend-panel[data-backend=backend-opencl])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-opencl:focus-visible) .backend-tabs label[for=backend-opencl]{outline:2px solid var(--accent);outline-offset:-2px}body:has(#backend-kernelabstractions:checked) .backend-panel[data-backend=backend-kernelabstractions],body:has(#backend-kernelabstractions:checked) .backends:not(:has(.backend-panel[data-backend=backend-kernelabstractions])) .backend-panel:first-child{visibility:visible}body:has(#backend-kernelabstractions:checked) .backend-tabs label[for=backend-kernelabstractions],body:has(#backend-kernelabstractions:checked) .backends:not(:has(.backend-panel[data-backend=backend-kernelabstractions])) .backend-tabs label:first-child{color:var(--fg);--underline:visible}body:has(#backend-kernelabstractions:focus-visible) .backend-tabs label[for=backend-kernelabstractions]{outline:2px solid var(--accent);outline-offset:-2px}</style><section class=hero><div class=container><div class=hero-text><h1>GPU programming in <svg viewBox="0 0 320 230" class="julia-logo" role="img" aria-label="Julia"><path fill="currentColor" d="M67.871094 185.8125c0 7.535156-.847656000000001 13.621094-2.542969 18.253906-1.695313 4.636719-4.105469 8.234375-7.234375 10.796875-3.125 2.5625-6.875 4.277344-11.246094 5.144531-4.371094.863281999999998-9.234375 1.296876-14.582031 1.296876-7.238281.0-12.777344-1.128907-16.617187-3.390626-3.84375-2.261718-5.765626-4.972656-5.765626-8.140624.0-2.636719 1.070313-4.859376 3.21875-6.667969 2.148438-1.808594 5.03125-2.710938 8.648438-2.710938 2.714844.0 4.882812.734375 6.5 2.203125 1.621094 1.46875 2.960938 2.921875 4.015625 4.351563 1.203125 1.582031 2.222656 2.636719 3.050781 3.164062C36.144531 210.640625 36.898438 210.90625 37.578125 210.90625c1.429687.0 2.523437-.847656000000001 3.277344-2.542969.753906000000001-1.695312 1.128906-4.992187 1.128906-9.890625V105.550781l25.886719-7.121093zm36.867187-84.898438v59.800782C104.738281 162.375 105.058594 163.9375 105.699219 165.40625s1.527343 2.734375 2.65625 3.789062c1.132812 1.054688 2.449219 1.902344 3.957031 2.542969S115.441406 172.699219 117.175781 172.699219c1.957031.0 4.183594-1.097657 6.894531-2.996094 4.292969-3.007813 6.894532-5.074219 6.894532-7.519531V100.914062h25.773437V185.8125H130.964844v-7.914062c-3.390625 2.863281-7.007813 5.160156-10.851563 6.894531s-7.574219 2.601562-11.191406 2.601562c-4.21875.0-8.140625-.699218999999999-11.757813-2.09375-3.617187-1.394531-6.78125-3.296875-9.492187-5.707031-2.714844-2.410156-4.84375-5.238281-6.390625-8.480469-1.542969-3.238281-2.316406-6.707031-2.316406-10.398437V100.914062zM192.882812 185.8125H167.222656V66.777344l25.660156-7.121094zm10.71875-80.261719L229.375 98.429688V185.8125H203.601562zm79.625 36.398438C280.738281 143.007812 278.230469 144.230469 275.707031 145.625 273.183594 147.019531 270.882812 148.546875 268.8125 150.203125c-2.07421900000003 1.65625-3.75 3.429687-5.03125 5.3125s-1.921875 3.84375-1.921875 5.878906c0 1.582031.207030999999972 3.109375.621094000000028 4.578125.414061999999944 1.46875 1 2.730469 1.75390599999997 3.785156C264.988281 170.8125 265.816406 171.660156 266.722656 172.300781 267.625 172.941406 268.605469 173.261719 269.660156 173.261719c2.109375.0 4.23828200000003-.640625 6.38671900000003-1.921875s4.539063-2.898438 7.179687-4.859375zM309.109375 185.8125H283.226562v-6.785156C281.792969 180.234375 280.398438 181.347656 279.042969 182.363281 277.6875 183.378906 276.160156 184.265625 274.464844 185.019531 272.769531 185.773438 270.867188 186.355469 268.753906 186.773438 266.644531 187.1875 264.15625 187.394531 261.296875 187.394531c-3.921875.0-7.445313-.566406000000001-10.570313-1.695312-3.128906-1.132813-5.785156-2.675781-7.96875-4.636719-2.1875-1.957031-3.863281-4.277344-5.03125-6.953125-1.167968-2.671875-1.753906-5.59375-1.753906-8.757813.0-3.242187.621093999999999-6.179687 1.867188-8.820312 1.242187-2.636719 2.9375-5.007812 5.085937-7.121094 2.148438-2.109375 4.652344-3.992187 7.515625-5.652344 2.863282-1.65625 5.93749999999997-3.183593 9.214844-4.578124 3.27734400000003-1.394532 6.6875-2.671876 10.230469-3.839844 3.53906199999994-1.167969 7.046875-2.28125 10.511719-3.335938L283.226562 131.324219v-8.363281c0-5.425782-1.039062-9.269532-3.109374-11.53125C278.042969 109.167969 275.273438 108.039062 271.808594 108.039062 267.738281 108.039062 264.910156 109.019531 263.328125 110.976562c-1.58203099999997 1.960938-2.375 4.332032-2.375 7.121094.0 1.582032-.167969000000028 3.128906-.507812999999999 4.636719C260.109375 124.242188 259.523438 125.558594 258.695312 126.691406c-.828124000000003 1.128906-2.015624 2.035156-3.5625 2.710938-1.542968.679687000000001-3.484374 1.019531-5.820312 1.019531-3.617188.0-6.554688-1.039063-8.816406-3.109375-2.261719-2.074219-3.390625-4.691406-3.390625-7.859375.0-2.9375.996093000000002-5.667969 2.992187-8.191406 2-2.527344 4.691406-4.695313 8.085938-6.5 3.390625-1.8125 7.308594-3.242188 11.753906-4.296875 4.445312-1.054688 9.15625-1.582032 14.128906-1.582032C280.171875 98.882812 285.429688 99.429688 289.839844 100.519531c4.40625 1.09375 8.04296799999997 2.65625 10.90625 4.691407C303.609375 107.246094 305.71875 109.695312 307.074219 112.558594 308.433594 115.421875 309.109375 118.628906 309.109375 122.167969zm0 0"/><path fill="rgb(25.1%, 38.8%, 84.7%)" d="M72.953125 76.589844c0 9.667968-7.835937 17.5-17.5 17.5s-17.5-7.832032-17.5-17.5c0-9.664063 7.835937-17.5 17.5-17.5s17.5 7.835937 17.5 17.5zm0 0"/><path fill="rgb(22%, 59.6%, 14.9%)" d="M256.300781 40.171875c0 9.664063-7.83593699999997 17.5-17.5 17.5-9.667969.0-17.5-7.835937-17.5-17.5s7.832031-17.5 17.5-17.5c9.664063.0 17.5 7.835937 17.5 17.5zm0 0"/><path fill="rgb(58.4%, 34.5%, 69.8%)" d="M277.320312 76.589844c0 9.667968-7.835937 17.5-17.5 17.5-9.664062.0-17.5-7.832032-17.5-17.5.0-9.664063 7.835938-17.5 17.5-17.5 9.664063.0 17.5 7.835937 17.5 17.5zm0 0"/><path fill="rgb(79.6%, 23.5%, 20%)" d="M235.273438 76.589844c0 9.667968-7.835938 17.5-17.5 17.5-9.667969.0-17.5-7.832032-17.5-17.5.0-9.664063 7.832031-17.5 17.5-17.5 9.664062.0 17.5 7.835937 17.5 17.5zm0 0"/></svg></h1><p>JuliaGPU is a GitHub organization that unifies the packages for programming GPUs
+in Julia. With its high-level syntax and flexible compiler, Julia is well
+positioned to productively program hardware accelerators without sacrificing
+performance.</p><p class=actions><a class=button href=/get-started/>Get started <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>
+<a class="button secondary" href=/post/>Read the blog</a></p></div><div class=hero-code><style>@keyframes backend-panel-6{0%{visibility:visible}16.6667%,100%{visibility:hidden}}@keyframes backend-tab-6{0%{color:var(--fg)}16.6667%,100%{color:var(--fg-muted)}}@keyframes backend-progress-6{0%{visibility:visible;transform:scaleX(0)}16.6667%,100%{visibility:hidden;transform:scaleX(1)}}body:not(:has(.backend-picker :checked)) .backends[data-rotate="6"] .backend-panel{animation:backend-panel-6 var(--cycle)step-end var(--delay)infinite}body:not(:has(.backend-picker :checked)) .backends[data-rotate="6"] .backend-tabs label{animation:backend-tab-6 var(--cycle)step-end var(--delay)infinite}body:not(:has(.backend-picker :checked)) .backends[data-rotate="6"] .backend-tabs label::after{animation:backend-progress-6 var(--cycle)linear var(--delay)infinite}</style><div class=backends data-rotate=6 style=--cycle:18s><div class=backend-tabs><label for=backend-cuda style=--delay:-18s>CUDA.jl</label>
+<label for=backend-amdgpu style=--delay:-15s>AMDGPU.jl</label>
+<label for=backend-oneapi style=--delay:-12s>oneAPI.jl</label>
+<label for=backend-metal style=--delay:-9s>Metal.jl</label>
+<label for=backend-opencl style=--delay:-6s>OpenCL.jl</label>
+<label for=backend-kernelabstractions style=--delay:-3s>KernelAbstractions.jl</label></div><div class=backend-panels><div class=backend-panel data-backend=backend-cuda style=--delay:-18s><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>a</span> <span class=o>.^</span> <span class=mi>2</span><span class=p>)</span>   <span class=c># runs on the GPU</span></code>
+<span class=go>349013.44f0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>threadIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>+</span> <span class=p>(</span><span class=n>blockIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>-</span> <span class=mi>1</span><span class=p>)</span> <span class=o>*</span> <span class=n>blockDim</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=nd>@inbounds</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>threads</span><span class=o>=</span><span class=mi>256</span> <span class=n>blocks</span><span class=o>=</span><span class=mi>4096</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-amdgpu style=--delay:-15s><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>AMDGPU</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>AMDGPU</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>a</span> <span class=o>.^</span> <span class=mi>2</span><span class=p>)</span>   <span class=c># runs on the GPU</span></code>
+<span class=go>349398.62f0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>workitemIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>+</span>
+               <span class=p>(</span><span class=n>workgroupIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>-</span> <span class=mi>1</span><span class=p>)</span> <span class=o>*</span> <span class=n>workgroupDim</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=nd>@inbounds</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@roc</span> <span class=n>groupsize</span><span class=o>=</span><span class=mi>256</span> <span class=n>gridsize</span><span class=o>=</span><span class=mi>4096</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-oneapi style=--delay:-12s><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>oneAPI</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>oneAPI</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>a</span> <span class=o>.^</span> <span class=mi>2</span><span class=p>)</span>   <span class=c># runs on the GPU</span></code>
+<span class=go>349561.06f0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>get_global_id</span><span class=p>()</span>
+           <span class=nd>@inbounds</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@oneapi</span> <span class=n>items</span><span class=o>=</span><span class=mi>256</span> <span class=n>groups</span><span class=o>=</span><span class=mi>4096</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-metal style=--delay:-9s><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>Metal</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>Metal</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>a</span> <span class=o>.^</span> <span class=mi>2</span><span class=p>)</span>   <span class=c># runs on the GPU</span></code>
+<span class=go>349217.3f0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>thread_position_in_grid</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=nd>@inbounds</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@metal</span> <span class=n>threads</span><span class=o>=</span><span class=mi>256</span> <span class=n>groups</span><span class=o>=</span><span class=mi>4096</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-opencl style=--delay:-6s><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>OpenCL</span><span class=p>,</span> <span class=n>pocl_jll</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>OpenCL</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>sum</span><span class=p>(</span><span class=n>a</span> <span class=o>.^</span> <span class=mi>2</span><span class=p>)</span>   <span class=c># runs on PoCL</span></code>
+<span class=go>349702.84f0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=n>get_global_id</span><span class=p>()</span>
+           <span class=nd>@inbounds</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@opencl</span> <span class=n>local_size</span><span class=o>=</span><span class=mi>256</span> <span class=n>global_size</span><span class=o>=</span><span class=n>length</span><span class=p>(</span><span class=n>a</span><span class=p>)</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span></code></code></pre></div></div><div class=backend-panel data-backend=backend-kernelabstractions style=--delay:-3s><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>KernelAbstractions</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span> <span class=c># or AMDGPU, oneAPI, Metal, OpenCL</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@kernel</span> <span class=k>function</span> <span class=n>add_one!</span><span class=p>(</span><span class=n>a</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=nd>@index</span><span class=p>(</span><span class=n>Global</span><span class=p>)</span>
+           <span class=nd>@inbounds</span> <span class=n>a</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>+=</span> <span class=mi>1</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span>   <span class=c># on the CPU</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>add_one!</span><span class=p>(</span><span class=n>get_backend</span><span class=p>(</span><span class=n>a</span><span class=p>))(</span><span class=n>a</span><span class=p>;</span> <span class=n>ndrange</span><span class=o>=</span><span class=n>length</span><span class=p>(</span><span class=n>a</span><span class=p>))</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>);</span>       <span class=c># on the GPU</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>add_one!</span><span class=p>(</span><span class=n>get_backend</span><span class=p>(</span><span class=n>b</span><span class=p>))(</span><span class=n>b</span><span class=p>;</span> <span class=n>ndrange</span><span class=o>=</span><span class=n>length</span><span class=p>(</span><span class=n>b</span><span class=p>))</span></code></code></pre></div></div></div></div></div></div></section><section class="container section"><h2><a href=/backends/>Back-ends</a></h2><p class=lead>Julia supports GPUs from all major vendors, each through its own package.</p><ul class=cards><li><article class=card><h3><a href=/backends/cuda/>NVIDIA CUDA</a></h3><p>The most mature back-end, with GPU arrays, kernel programming on par with CUDA C, wrappers for NVIDIA's libraries, and tile-based kernels through cuTile.jl.</p><ul class=card-packages><li><code>CUDA.jl</code>
+<a href=https://cuda.juliagpu.org/stable/>Docs</a>
+<a href=https://github.com/JuliaGPU/CUDA.jl aria-label="CUDA.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><code>cuTile.jl</code>
+<a href=https://juliagpu.github.io/cuTile.jl/stable/>Docs</a>
+<a href=https://github.com/JuliaGPU/cuTile.jl aria-label="cuTile.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></article></li><li><article class=card><h3><a href=/backends/rocm/>AMD ROCm</a></h3><p>Array and kernel programming for AMD Radeon and Instinct GPUs, with the ROCm libraries downloaded automatically.</p><ul class=card-packages><li><code>AMDGPU.jl</code>
+<a href=https://amdgpu.juliagpu.org/stable/>Docs</a>
+<a href=https://github.com/JuliaGPU/AMDGPU.jl aria-label="AMDGPU.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></article></li><li><article class=card><h3><a href=/backends/oneapi/>Intel oneAPI</a></h3><p>Support for Intel GPUs, from integrated graphics to Arc and Data Center GPU Max, with array operations, kernel programming and oneMKL.</p><ul class=card-packages><li><code>oneAPI.jl</code>
+<a href=https://juliagpu.github.io/oneAPI.jl/stable/>Docs</a>
+<a href=https://github.com/JuliaGPU/oneAPI.jl aria-label="oneAPI.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></article></li><li><article class=card><h3><a href=/backends/metal/>Apple Metal</a></h3><p>GPU programming on Apple silicon Macs, with array operations, kernels written in Julia, and Apple's Metal Performance Shaders for linear algebra and FFTs.</p><ul class=card-packages><li><code>Metal.jl</code>
+<a href=https://metal.juliagpu.org/stable/>Docs</a>
+<a href=https://github.com/JuliaGPU/Metal.jl aria-label="Metal.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></article></li><li><article class=card><h3><a href=/backends/opencl/>OpenCL</a></h3><p>Vendor-neutral array and kernel programming for any device with an OpenCL driver, including CPUs through PoCL.</p><ul class=card-packages><li><code>OpenCL.jl</code>
+<a href=https://juliagpu.github.io/OpenCL.jl/stable/>Docs</a>
+<a href=https://github.com/JuliaGPU/OpenCL.jl aria-label="OpenCL.jl on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></article></li></ul><p>Each back-end implements the same array abstractions, so most generic Julia
+code runs unmodified on any of them. To write portable kernels, use
+<a href=https://github.com/JuliaGPU/KernelAbstractions.jl>KernelAbstractions.jl</a>;
+for portable high-performance algorithms like sorting and scans, see
+<a href=https://github.com/JuliaGPU/AcceleratedKernels.jl>AcceleratedKernels.jl</a>.</p></section><section class="container section"><h2><a href=/post/>Latest news</a></h2><ul class=cards><li><article class=card><p class=post-meta><time datetime=2026-11-16>November 16, 2026</time> · Ludovic Räss</p><h3><a href=/post/2026-11-16-amdgpu-2.12/>AMDGPU.jl 2.8–2.12: ROCm as artifacts, a performance dashboard, and a faster core</a></h3><p>With AMDGPU.jl 2.12, ROCm is downloaded as an artifact and no longer needs to be installed. Recent releases also bring a public performance dashboard, faster kernel launches and …</p></article></li><li><article class=card><p class=post-meta><time datetime=2026-10-14>October 14, 2026</time> · Shreyas Hegde</p><h3><a href=/post/2026-10-14-gsoc-portability/>GSoC 2026: Portable data-parallel primitives for the Julia GPU stack</a></h3><p>This Google Summer of Code 2026 project added the data-parallel primitives that the Julia GPU stack was missing and tuned them to serve as the shared implementation for every …</p></article></li><li><article class=card><p class=post-meta><time datetime=2026-09-14>September 14, 2026</time> · Tim Besard</p><h3><a href=/post/2026-09-14-cuda_6.4/>CUDA.jl 6.4: NVIDIA Jetson support, and compiled code caching</a></h3><p>CUDA.jl 6.4 greatly improves support for NVIDIA Jetson boards, and further enhances caching of compiled GPU code for much faster TTFX.</p></article></li></ul></section><section class="container section home-content"><h2 id=publications>Publications <a class=heading-anchor href=#publications aria-label="Link to this section">#</a></h2><p>Much of Julia&rsquo;s GPU support was developed as part of academic research. If you would like
+to help support it, please star the relevant repositories as such metrics may help us secure
+funding in the future. If you use our software as part of your research, teaching, or other
+activities, we would be grateful if you could cite our work:</p><ul><li>T. Besard, C. Foket, and B. De Sutter. &ldquo;<a href=https://ieeexplore.ieee.org/abstract/document/8471188>Effective extensible programming:
+Unleashing Julia on
+GPUs.</a>&rdquo; <em>IEEE
+Transactions on Parallel and Distributed Systems</em> (2018).</li><li>T. Besard, V. Churavy, Alan Edelman and B. De Sutter. &ldquo;<a href=https://www.sciencedirect.com/science/article/pii/S0965997818310123>Rapid software
+prototyping for heterogeneous and distributed
+platforms.</a>&rdquo;
+<em>Advances in Engineering Software</em> (2019).</li><li>T. Faingnaert, T. Besard, and B. De Sutter. &ldquo;<a href=https://ieeexplore.ieee.org/document/9655458>Flexible Performant GEMM Kernels
+on GPUs.</a>&rdquo; <em>IEEE Transactions on
+Parallel and Distributed Systems</em> (2021).</li></ul><h2 id=community>Community <a class=heading-anchor href=#community aria-label="Link to this section">#</a></h2><p>If you need help, or have questions about GPU programming in Julia, you can find
+members of the community at:</p><ul><li>Julia Discourse, with a dedicated <a href=https://discourse.julialang.org/c/domain/gpu/11>GPU
+section</a></li><li>Julia Slack (<a href=https://julialang.org/slack/>register here</a>), on the
+<a href=https://julialang.slack.com/messages/C689Y34LE/>#gpu channel</a></li><li><a href=https://meet.google.com/hmv-zqvp-tbf>JuliaGPU office hours</a>, every other
+week at 2PM CET<br>(check the <a href=https://julialang.org/community/#events>Julia community calendar</a>
+for more details).</li></ul></section></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

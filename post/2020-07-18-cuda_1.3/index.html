@@ -1,206 +1,74 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
- 
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-  
-    <title>CUDA.jl 1.3 - Multi-device programming ⋅ JuliaGPU</title>
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
-      
-
-      <h1>CUDA.jl 1.3 - Multi-device programming</h1>
-      <i data-feather=calendar></i>
-<time datetime=2020-7-18>Jul 18, 2020</time><br>
-<i data-feather=edit-2></i>
-Tim Besard
-
-
-      <br><br>
-    
-<!-- Content appended here -->
-
-<p>Today we&#39;re releasing CUDA.jl 1.3, with several new features. The most prominent change is support for multiple GPUs within a single process.</p>
-<h2 id="multi-gpu_programming"><a href="#multi-gpu_programming" class="header-anchor">Multi-GPU programming</a></h2>
-<p>With CUDA.jl 1.3, you can finally use multiple CUDA GPUs within a single process. To switch devices you can call <code>device&#33;</code>, query the current device with <code>device&#40;&#41;</code>, or reset it using <code>device_reset&#33;&#40;&#41;</code>:</p>
-<pre><code class="language-julia-repl">julia&gt; collect&#40;devices&#40;&#41;&#41;
-9-element Array&#123;CuDevice,1&#125;:
- CuDevice&#40;0&#41;: Tesla V100-PCIE-32GB
- CuDevice&#40;1&#41;: Tesla V100-PCIE-32GB
- CuDevice&#40;2&#41;: Tesla V100-PCIE-32GB
- CuDevice&#40;3&#41;: Tesla V100-PCIE-32GB
- CuDevice&#40;4&#41;: Tesla V100-PCIE-16GB
- CuDevice&#40;5&#41;: Tesla P100-PCIE-16GB
- CuDevice&#40;6&#41;: Tesla P100-PCIE-16GB
- CuDevice&#40;7&#41;: GeForce GTX 1080 Ti
- CuDevice&#40;8&#41;: GeForce GTX 1080 Ti
-
-julia&gt; device&#33;&#40;5&#41;
-
-julia&gt; device&#40;&#41;
-CuDevice&#40;5&#41;: Tesla P100-PCIE-16GB</code></pre>
-<p>Let&#39;s define a kernel to show this really works:</p>
-<pre><code class="language-julia-repl">julia&gt; function kernel&#40;&#41;
-           dev &#61; Ref&#123;Cint&#125;&#40;&#41;
-           CUDA.cudaGetDevice&#40;dev&#41;
-           @cuprintln&#40;&quot;Running on device &#36;&#40;dev&#91;&#93;&#41;&quot;&#41;
-           return
-       end
-
-julia&gt; @cuda kernel&#40;&#41;
-Running on device 5
-
-julia&gt; device&#33;&#40;0&#41;
-
-julia&gt; device&#40;&#41;
-CuDevice&#40;0&#41;: Tesla V100-PCIE-32GB
-
-julia&gt; @cuda kernel&#40;&#41;
-Running on device 0</code></pre>
-<p>Memory allocations, like <code>CuArray</code>s, are implicitly bound to the device they were allocated on. That means you should take care to only use an array when the owning device is active, or you will run into errors:</p>
-<pre><code class="language-julia-repl">julia&gt; device&#40;&#41;
-CuDevice&#40;0&#41;: Tesla V100-PCIE-32GB
-
-julia&gt; a &#61; CUDA.rand&#40;1&#41;
-1-element CuArray&#123;Float32,1&#125;:
- 0.6322775
-
-julia&gt; device&#33;&#40;1&#41;
-
-julia&gt; a
-ERROR: CUDA error: an illegal memory access was encountered</code></pre>
-<p>Future improvements might make the array type device-aware.</p>
-<h2 id="multitasking_and_multithreading"><a href="#multitasking_and_multithreading" class="header-anchor">Multitasking and multithreading</a></h2>
-<p>Dovetailing with the support for multiple GPUs, is the ability to use these GPUs on separate Julia tasks and threads:</p>
-<pre><code class="language-julia-repl">julia&gt; device&#33;&#40;0&#41;
-
-julia&gt; @sync begin
-         @async begin
-           device&#33;&#40;1&#41;
-           println&#40;&quot;Working with &#36;&#40;device&#40;&#41;&#41; on &#36;&#40;current_task&#40;&#41;&#41;&quot;&#41;
-           yield&#40;&#41;
-           println&#40;&quot;Back to device &#36;&#40;device&#40;&#41;&#41; on &#36;&#40;current_task&#40;&#41;&#41;&quot;&#41;
-         end
-         @async begin
-           device&#33;&#40;2&#41;
-           println&#40;&quot;Working with &#36;&#40;device&#40;&#41;&#41; on &#36;&#40;current_task&#40;&#41;&#41;&quot;&#41;
-         end
-       end
-Working with CuDevice&#40;1&#41; on Task @0x00007fc9e6a48010
-Working with CuDevice&#40;2&#41; on Task @0x00007fc9e6a484f0
-Back to device CuDevice&#40;1&#41; on Task @0x00007fc9e6a48010
-
-julia&gt; device&#40;&#41;
-CuDevice&#40;0&#41;: Tesla V100-PCIE-32GB</code></pre>
-<p>Each task has its own local GPU state, such as the device it was bound to, handles to libraries like CUBLAS or CUDNN &#40;which means that each task can configure libraries independently&#41;, etc.</p>
-<h2 id="minor_features"><a href="#minor_features" class="header-anchor">Minor features</a></h2>
-<p>CUDA.jl 1.3 also features some minor changes:</p>
-<ul>
-<li><p>Reinstated compatibility with Julia 1.3</p>
-</li>
-<li><p>Support for CUDA 11.0 Update 1</p>
-</li>
-<li><p>Support for CUDNN 8.0.2</p>
-</li>
-</ul>
-<h2 id="known_issues"><a href="#known_issues" class="header-anchor">Known issues</a></h2>
-<p>Several operations on sparse arrays have been broken since CUDA.jl 1.2, due to the deprecations that were part of CUDA 11. The next version of CUDA.jl will drop support for CUDA 10.0 or older, which will make it possible to use new cuSPARSE APIs and add back missing functionality.</p>
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-
-<!-- Languages -->
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
-
-<script>hljs.highlightAll();</script>
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>CUDA.jl 1.3 - Multi-device programming · JuliaGPU</title><meta name=description content="Today we&amp;rsquo;re releasing CUDA.jl 1.3, with several new features. The most prominent change is support for multiple GPUs within a single process."><link rel=canonical href=https://juliagpu.org/post/2020-07-18-cuda_1.3/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/post/2020-07-18-cuda_1.3/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="CUDA.jl 1.3 - Multi-device programming"><meta property="og:description" content="Today we’re releasing CUDA.jl 1.3, with several new features. The most prominent change is support for multiple GPUs within a single process."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2020-07-18T00:00:00+00:00"><meta property="article:modified_time" content="2020-07-18T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>CUDA.jl 1.3 - Multi-device programming</h1><p class=post-meta><time datetime=2020-07-18>July 18, 2020</time> · Tim Besard</p></header><p>Today we&rsquo;re releasing CUDA.jl 1.3, with several new features. The most prominent
+change is support for multiple GPUs within a single process.</p><h2 id=multi-gpu-programming><span id=multi-gpu_programming></span>Multi-GPU programming <a class=heading-anchor href=#multi-gpu-programming aria-label="Link to this section">#</a></h2><p>With CUDA.jl 1.3, you can finally use multiple CUDA GPUs within a single process. To switch
+devices you can call <code>device!</code>, query the current device with <code>device()</code>, or reset it using
+<code>device_reset!()</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>collect</span><span class=p>(</span><span class=n>devices</span><span class=p>())</span></code>
+<span class=go>9-element Array{CuDevice,1}:</span>
+<span class=go> CuDevice(0): Tesla V100-PCIE-32GB</span>
+<span class=go> CuDevice(1): Tesla V100-PCIE-32GB</span>
+<span class=go> CuDevice(2): Tesla V100-PCIE-32GB</span>
+<span class=go> CuDevice(3): Tesla V100-PCIE-32GB</span>
+<span class=go> CuDevice(4): Tesla V100-PCIE-16GB</span>
+<span class=go> CuDevice(5): Tesla P100-PCIE-16GB</span>
+<span class=go> CuDevice(6): Tesla P100-PCIE-16GB</span>
+<span class=go> CuDevice(7): GeForce GTX 1080 Ti</span>
+<span class=go> CuDevice(8): GeForce GTX 1080 Ti</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device!</span><span class=p>(</span><span class=mi>5</span><span class=p>)</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device</span><span class=p>()</span></code>
+<span class=go>CuDevice(5): Tesla P100-PCIE-16GB</span></code></pre></div><p>Let&rsquo;s define a kernel to show this really works:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>kernel</span><span class=p>()</span>
+           <span class=n>dev</span> <span class=o>=</span> <span class=kt>Ref</span><span class=p>{</span><span class=kt>Cint</span><span class=p>}()</span>
+           <span class=n>CUDA</span><span class=o>.</span><span class=n>cudaGetDevice</span><span class=p>(</span><span class=n>dev</span><span class=p>)</span>
+           <span class=nd>@cuprintln</span><span class=p>(</span><span class=s>&#34;Running on device </span><span class=si>$</span><span class=p>(</span><span class=n>dev</span><span class=p>[])</span><span class=s>&#34;</span><span class=p>)</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>kernel</span><span class=p>()</span></code>
+<span class=go>Running on device 5</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device!</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device</span><span class=p>()</span></code>
+<span class=go>CuDevice(0): Tesla V100-PCIE-32GB</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@cuda</span> <span class=n>kernel</span><span class=p>()</span></code>
+<span class=go>Running on device 0</span></code></pre></div><p>Memory allocations, like <code>CuArray</code>s, are implicitly bound to the device they
+were allocated on. That means you should take care to only use an array when the
+owning device is active, or you will run into errors:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device</span><span class=p>()</span></code>
+<span class=go>CuDevice(0): Tesla V100-PCIE-32GB</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>1-element CuArray{Float32,1}:</span>
+<span class=go> 0.6322775</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device!</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span></code>
+<span class=go>ERROR: CUDA error: an illegal memory access was encountered</span></code></pre></div><p>Future improvements might make the array type device-aware.</p><h2 id=multitasking-and-multithreading><span id=multitasking_and_multithreading></span>Multitasking and multithreading <a class=heading-anchor href=#multitasking-and-multithreading aria-label="Link to this section">#</a></h2><p>Dovetailing with the support for multiple GPUs, is the ability to use these GPUs
+on separate Julia tasks and threads:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device!</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@sync</span> <span class=k>begin</span>
+         <span class=nd>@async</span> <span class=k>begin</span>
+           <span class=n>device!</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span>
+           <span class=n>println</span><span class=p>(</span><span class=s>&#34;Working with </span><span class=si>$</span><span class=p>(</span><span class=n>device</span><span class=p>())</span><span class=s> on </span><span class=si>$</span><span class=p>(</span><span class=n>current_task</span><span class=p>())</span><span class=s>&#34;</span><span class=p>)</span>
+           <span class=n>yield</span><span class=p>()</span>
+           <span class=n>println</span><span class=p>(</span><span class=s>&#34;Back to device </span><span class=si>$</span><span class=p>(</span><span class=n>device</span><span class=p>())</span><span class=s> on </span><span class=si>$</span><span class=p>(</span><span class=n>current_task</span><span class=p>())</span><span class=s>&#34;</span><span class=p>)</span>
+         <span class=k>end</span>
+         <span class=nd>@async</span> <span class=k>begin</span>
+           <span class=n>device!</span><span class=p>(</span><span class=mi>2</span><span class=p>)</span>
+           <span class=n>println</span><span class=p>(</span><span class=s>&#34;Working with </span><span class=si>$</span><span class=p>(</span><span class=n>device</span><span class=p>())</span><span class=s> on </span><span class=si>$</span><span class=p>(</span><span class=n>current_task</span><span class=p>())</span><span class=s>&#34;</span><span class=p>)</span>
+         <span class=k>end</span>
+       <span class=k>end</span></code>
+<span class=go>Working with CuDevice(1) on Task @0x00007fc9e6a48010</span>
+<span class=go>Working with CuDevice(2) on Task @0x00007fc9e6a484f0</span>
+<span class=go>Back to device CuDevice(1) on Task @0x00007fc9e6a48010</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device</span><span class=p>()</span></code>
+<span class=go>CuDevice(0): Tesla V100-PCIE-32GB</span></code></pre></div><p>Each task has its own local GPU state, such as the device it was bound to,
+handles to libraries like CUBLAS or CUDNN (which means that each task can
+configure libraries independently), etc.</p><h2 id=minor-features><span id=minor_features></span>Minor features <a class=heading-anchor href=#minor-features aria-label="Link to this section">#</a></h2><p>CUDA.jl 1.3 also features some minor changes:</p><ul><li>Reinstated compatibility with Julia 1.3</li><li>Support for CUDA 11.0 Update 1</li><li>Support for CUDNN 8.0.2</li></ul><h2 id=known-issues><span id=known_issues></span>Known issues <a class=heading-anchor href=#known-issues aria-label="Link to this section">#</a></h2><p>Several operations on sparse arrays have been broken since CUDA.jl 1.2, due to
+the deprecations that were part of CUDA 11. The next version of CUDA.jl will
+drop support for CUDA 10.0 or older, which will make it possible to use new
+cuSPARSE APIs and add back missing functionality.</p><nav class=post-nav aria-label="More posts"><a rel=next href=/post/2020-09-28-gemmkernels/><span>Newer</span>Paper: Flexible Performant GEMM Kernels on GPUs</a>
+<a rel=prev href=/post/2020-07-07-cuda_1.1/><span>Older</span>CUDA.jl 1.1</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

@@ -1,126 +1,17 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-  
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-  
-    <title>CUDA.jl 5.5: Maintenance release ⋅ JuliaGPU</title>
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
-      
-
-      <h1>CUDA.jl 5.5: Maintenance release</h1>
-      <i data-feather=calendar></i>
-<time datetime=2024-9-18>Sep 18, 2024</time><br>
-<i data-feather=edit-2></i>
-Tim Besard
-
-
-      <br><br>
-    
-<!-- Content appended here -->
-
-<p>CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features.</p>
-<p>The only important change is that the minimal required Julia version has been bumped to 1.10, in anticipation of it becoming the next LTS release.</p>
-<h2 id="new_features"><a href="#new_features" class="header-anchor">New features</a></h2>
-<ul>
-<li><p>Support for the upcoming Julia 1.11 release has been added, as well as for <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2461">CUDA 12.6 &#40;Update 1&#41;</a>.</p>
-</li>
-<li><p>Launch overhead has been reduced by <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2472">avoiding double argument conversions</a>. Note that this does not apply to kernels that are obtained using <code>@cuda launch&#61;false</code>.</p>
-</li>
-<li><p>CUSOLVER&#39;s dense wrappers have been improved by <a href="https://github.com/bjarthur">Ben Arthur</a>, <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2465">now caching workspace buffers</a>. This should greatly reduce the number of allocations needed for repeated calls.</p>
-</li>
-<li><p><a href="https://github.com/amontoison">Alexis Montoison</a> has improved the CUSPARSE wrappers, adding <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2489">conversions between sparse vectors and sparse matrices</a> that enable <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2488">a version of <code>gemv</code></a> which preserves sparsity of the inputs.</p>
-</li>
-<li><p>CUDA.jl&#39;s CUFFT wrappers <a href="https://github.com/JuliaGPU/CUDA.jl/pull/2430">now support <code>Float16</code></a>, thanks to <a href="https://github.com/eschnett">Erik Schnetter</a>.</p>
-</li>
-</ul>
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>CUDA.jl 5.5: Maintenance release · JuliaGPU</title><meta name=description content="CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features."><link rel=canonical href=https://juliagpu.org/post/2024-09-18-cuda_5.5/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/post/2024-09-18-cuda_5.5/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="CUDA.jl 5.5: Maintenance release"><meta property="og:description" content="CUDA.jl 5.5 is a minor release that comes with a couple of small improvements and new features."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2024-09-18T00:00:00+00:00"><meta property="article:modified_time" content="2024-09-18T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>CUDA.jl 5.5: Maintenance release</h1><p class=post-meta><time datetime=2024-09-18>September 18, 2024</time> · Tim Besard</p></header><p>CUDA.jl 5.5 is a minor release that comes with a couple of small improvements
+and new features.</p><p>The only important change is that the minimal required Julia version has been
+bumped to 1.10, in anticipation of it becoming the next LTS release.</p><h2 id=new-features><span id=new_features></span>New features <a class=heading-anchor href=#new-features aria-label="Link to this section">#</a></h2><ul><li>Support for the upcoming Julia 1.11 release has been added, as well as for
+<a href=https://github.com/JuliaGPU/CUDA.jl/pull/2461>CUDA 12.6 (Update 1)</a>.</li><li>Launch overhead has been reduced by <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2472>avoiding double argument
+conversions</a>. Note that this
+does not apply to kernels that are obtained using <code>@cuda launch=false</code>.</li><li>CUSOLVER&rsquo;s dense wrappers have been improved by <a href=https://github.com/bjarthur>Ben
+Arthur</a>, <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2465>now caching workspace
+buffers</a>. This should greatly
+reduce the number of allocations needed for repeated calls.</li><li><a href=https://github.com/amontoison>Alexis Montoison</a> has improved the CUSPARSE
+wrappers, adding <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2489>conversions between sparse vectors and sparse
+matrices</a> that enable <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2488>a
+version of <code>gemv</code></a> which
+preserves sparsity of the inputs.</li><li>CUDA.jl&rsquo;s CUFFT wrappers <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2430>now support
+<code>Float16</code></a>, thanks to <a href=https://github.com/eschnett>Erik
+Schnetter</a>.</li></ul><nav class=post-nav aria-label="More posts"><a rel=next href=/post/2024-10-07-metal-1.4/><span>Newer</span>Metal.jl 1.4: Improved random numbers</a>
+<a rel=prev href=/post/2024-05-28-cuda_5.4/><span>Older</span>CUDA.jl 5.4: Memory management mayhem</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

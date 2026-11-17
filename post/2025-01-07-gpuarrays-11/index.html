@@ -1,156 +1,48 @@
-<!doctype html>
-<html lang="en" class=h-100>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-  <meta content="index, follow" name=robots>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="alternate" type="application/rss+xml" href="/post/index.xml" title="RSS Feed for JuliaGPU">
-
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/default.min.css">
- 
-
-  <link rel="stylesheet" href="/css/style.css">
-
-  
-  
-    <title>GPUArrays v11: Port to KernelAbstractions.jl ⋅ JuliaGPU</title>
-  
-</head>
-<body class="d-flex flex-column h-100">
-  <div id=nav-border class=container>
-    <nav class="navbar navbar-expand-sm navbar-light">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle
-navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-            <ul class=navbar-nav>
-                <li class="nav-item">
-                    <a class="nav-link " href="/"><i data-feather=home></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="/post/"><i data-feather=file-text></i> News</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/showcases/"><i data-feather=star></i> Showcases</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link " href="/learn/"><i data-feather=book-open></i> Learn</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/perf/"><i data-feather=activity></i> Performance</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle " href="#" id="backendDropdown"
-                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i data-feather=cpu></i> Backends
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="backendDropdown">
-                        <a class="dropdown-item " href="/backends/cuda/">CUDA</a>
-                        <a class="dropdown-item " href="/backends/rocm/">ROCm</a>
-                        <a class="dropdown-item " href="/backends/oneapi/">oneAPI</a>
-                        <a class="dropdown-item " href="/backends/metal/">Metal</a>
-                        <a class="dropdown-item " href="/backends/opencl/">OpenCL</a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</div>
-
-
-  <div class="container">
-    <main id=main>
-
-    
-      <!-- make sure to generate a Hugo-era URI at the root, redirecting to /post/.... -->
-      
-
-      <h1>GPUArrays v11: Port to KernelAbstractions.jl</h1>
-      <i data-feather=calendar></i>
-<time datetime=2025-1-7>Jan 7, 2025</time><br>
-<i data-feather=edit-2></i>
-Tim Besard
-
-
-      <br><br>
-    
-<!-- Content appended here -->
-
-<p>The latest version of GPUArrays.jl involved a port of all vendor-neutral kernels to KernelAbstractions.jl. This should make it easier to add new functionality and improve the performance of existing kernels.</p>
-<h2 id="vendor-neutral_kernel_dsl"><a href="#vendor-neutral_kernel_dsl" class="header-anchor">Vendor-neutral kernel DSL</a></h2>
-<p>Back in the day, we created GPUArrays.jl to avoid having to write separate kernels for each GPU back-end, by relying on a very simple vendor-neutral domain-specific language &#40;DSL&#41; that could be translated very easily to the back-end&#39;s native kernel language. As a simple example, the following kernel was used to compute the adjoint of a vector:</p>
-<pre><code class="language-julia">function LinearAlgebra.adjoint&#33;&#40;B::AbstractGPUMatrix, A::AbstractGPUVector&#41;
-    gpu_call&#40;B, A&#41; do ctx, B, A
-        idx &#61; @linearidx A
-        @inbounds B&#91;1, idx&#93; &#61; adjoint&#40;A&#91;idx&#93;&#41;
-        return
-    end
-    return B
-end</code></pre>
-<p>This DSL was designed almost a decade ago, by <a href="https://github.com/SimonDanisch">Simon Danisch</a>, and has served us well&#33; Since then, KernelAbstractions.jl has been developed by <a href="https://github.com/vchuravy/">Valentin Churavy</a>, providing a more principled and powerful DSL. With many application developers switching to KernelAbstractions.jl, it was time to port GPUArrays.jl to this new DSL as well.</p>
-<p>Thanks to the tireless work by <a href="https://github.com/leios">James Schloss</a>, <strong>GPUArrays.jl v11 now uses KernelAbstractions.jl for all vendor-neutral kernels</strong>. The aforementioned <code>adjoint&#33;</code> kernel now looks like this:</p>
-<pre><code class="language-julia">function LinearAlgebra.adjoint&#33;&#40;B::AbstractGPUMatrix, A::AbstractGPUVector&#41;
-    @kernel function adjoint_kernel&#33;&#40;B, A&#41;
-        idx &#61; @index&#40;Global, Linear&#41;
-        @inbounds B&#91;1, idx&#93; &#61; adjoint&#40;A&#91;idx&#93;&#41;
-    end
-    adjoint_kernel&#33;&#40;get_backend&#40;A&#41;&#41;&#40;B, A; ndrange&#61;size&#40;A&#41;&#41;
-    return B
-end</code></pre>
-<p>As shown above, the KernelAbstractions.jl DSL is very similar to the old DSL, but it provides more flexibility and power &#40;e.g., support for atomics through Atomix.jl&#41;. In addition, many more users are familiar with KernelAbstractions.jl, making it easier for them to contribute to GPUArrays.jl. A good first step here would be to port some of the vendor-specific kernels from CUDA.jl to GPUArrays.jl, making them available to all GPU back-ends. If you are interested in contributing, please reach out&#33;</p>
-<p>That said, the change is not without its challenges. The added flexibility offered by KernelAbstractions.jl with respect to indexing currently results in <strong>certain kernels being slower than before</strong>, specifically when there is not much computational complexity to amortise the cost of indexing &#40;e.g., when doing very simple broadcasts&#41;. <a href="https://github.com/JuliaGPU/GPUArrays.jl/issues/565">We are working on improving this</a>, but it will take some time. Not to hold back the rest of the JuliaGPU ecosystem, we are releasing despite these performance issues. It&#39;s recommended to carefully benchmark your application after upgrading to v11, and to report any performance regressions</p>
-<h2 id="back-end_package_versions"><a href="#back-end_package_versions" class="header-anchor">Back-end package versions</a></h2>
-<p>As GPUArrays.jl is not a direct dependency of most applications, the update will be pulled in by the following back-end package versions &#40;some of which may not be released yet&#41;:</p>
-<ul>
-<li><p>CUDA.jl v5.6</p>
-</li>
-<li><p>Metal.jl v1.5</p>
-</li>
-<li><p>oneAPI.jl v2.0</p>
-</li>
-<li><p>AMDGPU.jl v1.1</p>
-</li>
-</ul>
-<!-- CONTENT ENDS HERE -->
-      </main>
-    </div> <!-- class="container" -->
-
-    
-        <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-
-<!-- Languages -->
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/julia-repl.min.js"></script>
-
-<script>hljs.highlightAll();</script>
-
-    
-
-    <footer id=footer class="mt-auto text-center text-muted">
-        <div class=container>Made with <a href=https://franklinjl.org>Franklin.jl</a> and <a href=https://julialang.org>the Julia programming language</a>.</div>
-    </footer>
-
-    <!-- FEATHER -->
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
-    <script>feather.replace()</script>
-
-    <!-- BOOTSTRAP -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- GOOGLE ANALYTICS -->
-    <script>
-    window.ga = window.ga || function() {
-        (ga.q = ga.q || []).push(arguments)
-    };
-    ga.l = +new Date;
-    ga('create', 'UA-154489943-1', 'auto');
-    ga('send', 'pageview');
-    </script>
-    <script async src=https://www.google-analytics.com/analytics.js></script>
-
-  </body>
-</html>
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>GPUArrays v11: Port to KernelAbstractions.jl · JuliaGPU</title><meta name=description content="The latest version of GPUArrays.jl involved a port of all vendor-neutral kernels to KernelAbstractions.jl. This should make it easier to add new functionality and improve the performance of existing kernels."><link rel=canonical href=https://juliagpu.org/post/2025-01-07-gpuarrays-11/><link rel=icon href=/favicon.ico sizes=32x32><link rel=icon href=/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/post/2025-01-07-gpuarrays-11/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="GPUArrays v11: Port to KernelAbstractions.jl"><meta property="og:description" content="The latest version of GPUArrays.jl involved a port of all vendor-neutral kernels to KernelAbstractions.jl. This should make it easier to add new functionality and improve the performance of existing kernels."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2025-01-07T00:00:00+00:00"><meta property="article:modified_time" content="2025-01-07T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/><img src=/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/backends/>Back-ends</a></li><li><a href=/get-started/>Get started</a></li><li><a href=/showcases/>Showcases</a></li><li><a href=/perf/>Performance</a></li><li><a href=/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>GPUArrays v11: Port to KernelAbstractions.jl</h1><p class=post-meta><time datetime=2025-01-07>January 7, 2025</time> · Tim Besard</p></header><p>The latest version of GPUArrays.jl involved a port of all vendor-neutral
+kernels to KernelAbstractions.jl. This should make it easier to add new
+functionality and improve the performance of existing kernels.</p><h2 id=vendor-neutral-kernel-dsl><span id=vendor-neutral_kernel_dsl></span>Vendor-neutral kernel DSL <a class=heading-anchor href=#vendor-neutral-kernel-dsl aria-label="Link to this section">#</a></h2><p>Back in the day, we created GPUArrays.jl to avoid having to write separate
+kernels for each GPU back-end, by relying on a very simple vendor-neutral
+domain-specific language (DSL) that could be translated very easily to the
+back-end&rsquo;s native kernel language. As a simple example, the following kernel was
+used to compute the adjoint of a vector:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>function</span> <span class=n>LinearAlgebra</span><span class=o>.</span><span class=n>adjoint!</span><span class=p>(</span><span class=n>B</span><span class=o>::</span><span class=kt>AbstractGPUMatrix</span><span class=p>,</span> <span class=n>A</span><span class=o>::</span><span class=kt>AbstractGPUVector</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=n>gpu_call</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=n>A</span><span class=p>)</span> <span class=k>do</span> <span class=n>ctx</span><span class=p>,</span> <span class=n>B</span><span class=p>,</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl>        <span class=n>idx</span> <span class=o>=</span> <span class=nd>@linearidx</span> <span class=n>A</span>
+</span></span><span class=line><span class=cl>        <span class=nd>@inbounds</span> <span class=n>B</span><span class=p>[</span><span class=mi>1</span><span class=p>,</span> <span class=n>idx</span><span class=p>]</span> <span class=o>=</span> <span class=n>adjoint</span><span class=p>(</span><span class=n>A</span><span class=p>[</span><span class=n>idx</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span>
+</span></span><span class=line><span class=cl>    <span class=k>end</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>B</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span></code></pre></div><p>This DSL was designed almost a decade ago, by <a href=https://github.com/SimonDanisch>Simon
+Danisch</a>, and has served us well! Since then,
+KernelAbstractions.jl has been developed by <a href=https://github.com/vchuravy/>Valentin
+Churavy</a>, providing a more principled and powerful
+DSL. With many application developers switching to KernelAbstractions.jl, it was
+time to port GPUArrays.jl to this new DSL as well.</p><p>Thanks to the tireless work by <a href=https://github.com/leios>James Schloss</a>,
+<strong>GPUArrays.jl v11 now uses KernelAbstractions.jl for all vendor-neutral
+kernels</strong>. The aforementioned <code>adjoint!</code> kernel now looks like this:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=k>function</span> <span class=n>LinearAlgebra</span><span class=o>.</span><span class=n>adjoint!</span><span class=p>(</span><span class=n>B</span><span class=o>::</span><span class=kt>AbstractGPUMatrix</span><span class=p>,</span> <span class=n>A</span><span class=o>::</span><span class=kt>AbstractGPUVector</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nd>@kernel</span> <span class=k>function</span> <span class=n>adjoint_kernel!</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=n>A</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>idx</span> <span class=o>=</span> <span class=nd>@index</span><span class=p>(</span><span class=n>Global</span><span class=p>,</span> <span class=n>Linear</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=nd>@inbounds</span> <span class=n>B</span><span class=p>[</span><span class=mi>1</span><span class=p>,</span> <span class=n>idx</span><span class=p>]</span> <span class=o>=</span> <span class=n>adjoint</span><span class=p>(</span><span class=n>A</span><span class=p>[</span><span class=n>idx</span><span class=p>])</span>
+</span></span><span class=line><span class=cl>    <span class=k>end</span>
+</span></span><span class=line><span class=cl>    <span class=n>adjoint_kernel!</span><span class=p>(</span><span class=n>get_backend</span><span class=p>(</span><span class=n>A</span><span class=p>))(</span><span class=n>B</span><span class=p>,</span> <span class=n>A</span><span class=p>;</span> <span class=n>ndrange</span><span class=o>=</span><span class=n>size</span><span class=p>(</span><span class=n>A</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>    <span class=k>return</span> <span class=n>B</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span></code></pre></div><p>As shown above, the KernelAbstractions.jl DSL is very similar to the old DSL,
+but it provides more flexibility and power (e.g., support for atomics through
+Atomix.jl). In addition, many more users are familiar with
+KernelAbstractions.jl, making it easier for them to contribute to GPUArrays.jl.
+A good first step here would be to port some of the vendor-specific kernels from
+CUDA.jl to GPUArrays.jl, making them available to all GPU back-ends. If you are
+interested in contributing, please reach out!</p><p>That said, the change is not without its challenges. The added flexibility
+offered by KernelAbstractions.jl with respect to indexing currently results in
+<strong>certain kernels being slower than before</strong>, specifically when there is not
+much computational complexity to amortise the cost of indexing (e.g., when doing
+very simple broadcasts). <a href=https://github.com/JuliaGPU/GPUArrays.jl/issues/565>We are working on improving
+this</a>, but it will take
+some time. Not to hold back the rest of the JuliaGPU ecosystem, we are releasing
+despite these performance issues. It&rsquo;s recommended to carefully benchmark your
+application after upgrading to v11, and to report any performance regressions</p><h2 id=back-end-package-versions><span id=back-end_package_versions></span>Back-end package versions <a class=heading-anchor href=#back-end-package-versions aria-label="Link to this section">#</a></h2><p>As GPUArrays.jl is not a direct dependency of most applications, the update
+will be pulled in by the following back-end package versions (some of which
+may not be released yet):</p><ul><li>CUDA.jl v5.6</li><li>Metal.jl v1.5</li><li>oneAPI.jl v2.0</li><li>AMDGPU.jl v1.1</li></ul><nav class=post-nav aria-label="More posts"><a rel=next href=/post/2025-01-13-opencl_0.10/><span>Newer</span>OpenCL.jl 0.10: Now with native Julia kernels</a>
+<a rel=prev href=/post/2024-10-07-metal-1.4/><span>Older</span>Metal.jl 1.4: Improved random numbers</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>
