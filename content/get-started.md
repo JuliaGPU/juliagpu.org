@@ -6,14 +6,14 @@ description = "Get from zero to running GPU code in Julia, then find the documen
 
 This page takes you through installing a GPU back-end, working with GPU arrays, writing
 your first kernel, and measuring performance. It ends with pointers to more in-depth
-material and to places where you can ask for help. You need a recent version of
+material and to places where you can ask for help. You will need a recent version of
 [Julia](https://julialang.org/downloads/) and a supported GPU.
 
 ## Pick your back-end
 
-Every GPU vendor is supported by its own package. Each provides an array type and a macro to
-launch kernels written in Julia, and most also wrap the vendor's libraries for linear
-algebra, FFTs, random numbers and more.
+Every GPU vendor is supported by its own package. Each provides GPU array types and a macro
+to launch kernels written in Julia, and most also wrap the vendor's libraries for linear
+algebra, FFTs, random numbers and more. The table lists their main array type.
 
 | Hardware                 | Package                            | Array type | Kernel launch |
 |--------------------------|------------------------------------|------------|---------------|
@@ -23,9 +23,10 @@ algebra, FFTs, random numbers and more.
 | Apple M-series chips     | [Metal.jl](/backends/metal/)       | `MtlArray` | `@metal`      |
 | Other OpenCL devices, CPUs | [OpenCL.jl](/backends/opencl/)   | `CLArray`  | `@opencl`     |
 
-CUDA.jl is the most mature of these. The others implement the same array interface, so most
-of what follows applies to all of them. Where the code differs, the examples on this page
-have a tab per back-end: pick yours in any of them, and the others follow.
+CUDA.jl is the oldest of these, and wraps the most vendor libraries. The others implement
+the same array interface, so most of what follows applies to all of them. Where the code
+differs, the examples on this page have a tab per back-end: pick yours in any of them, and
+the others follow.
 
 ## Install and check
 
@@ -62,17 +63,19 @@ pkg> add OpenCL pocl_jll
 
 None of the back-ends require you to install a vendor toolkit yourself. What you do need:
 
-- **CUDA.jl**: an NVIDIA driver, on Linux or Windows. The CUDA toolkit is downloaded
-  automatically.
-- **AMDGPU.jl**: the AMD GPU driver, on Linux or Windows. The ROCm runtime and libraries are
-  downloaded automatically for the GPUs that are detected.
+- **CUDA.jl**: an [NVIDIA driver](https://www.nvidia.com/en-us/drivers/), on Linux or
+  Windows. The CUDA toolkit is downloaded automatically.
+- **AMDGPU.jl**: the [AMD GPU driver](https://www.amd.com/en/support/download/drivers.html),
+  on Linux or Windows. The ROCm runtime and libraries are downloaded automatically for the
+  GPUs that are detected.
 - **oneAPI.jl**: Linux (Windows through WSL2 is experimental), and Intel Gen9 graphics or
   newer.
 - **Metal.jl**: a Mac with an M-series chip, running macOS 15 or later.
 - **OpenCL.jl**: an OpenCL driver, or the `pocl_jll` package to run kernels on the CPU.
 
-Then load the package and call its `versioninfo` function to check that it finds your GPU. The first time, this takes a
-while to precompile and download the necessary libraries:
+Then load the package and call its `versioninfo` function to check that it finds your GPU.
+The first time takes a while, as the package is precompiled and its libraries are
+downloaded:
 
 {{< backends >}}
 {{< backend "CUDA.jl" >}}
@@ -154,13 +157,16 @@ Available platforms: 1
 ```
 {{< /backend >}}
 {{< /backends >}}
+
 If this fails, or your GPU is not listed, see the installation section of the package's
-documentation, or [ask for help](#getting-help).
+documentation or [ask for help](#getting-help).
 
 ## Working with GPU arrays
 
-The easiest way to use a GPU is through its array type. Create one by converting a CPU
-array, or with one of the constructors the package provides:
+The easiest way to use a GPU is through your back-end's array type, such as `CuArray` for
+CUDA.jl. It works like a regular Julia array, but its elements are stored in the memory of
+the GPU. Create one by converting a CPU array, or with one of the constructors the package
+provides:
 
 {{< backends >}}
 {{< backend "CUDA.jl" >}}
@@ -225,9 +231,10 @@ julia> b = OpenCL.rand(Float32, 1024, 1024);
 {{< /backend >}}
 {{< /backends >}}
 
-Operations on GPU arrays run on the GPU. Broadcasting fuses an entire expression, including
-functions you defined yourself, into a single kernel; reductions, matrix multiplication and
-most other array operations work as they do on the CPU:
+Operations on GPU arrays are executed by the GPU: they are compiled into kernels, programs
+that run on the GPU and process many elements in parallel. Broadcasting fuses an entire
+expression, including functions you defined yourself, into a single kernel; reductions,
+matrix multiplication and most other array operations work as they do on the CPU:
 
 {{< backends >}}
 {{< backend "CUDA.jl" >}}
@@ -321,6 +328,7 @@ julia> c * c
 ```
 {{< /backend >}}
 {{< /backends >}}
+
 To move data back to the CPU, convert to an `Array`. The `cu` function of CUDA.jl goes the
 other way, and also converts `Float64` to `Float32` (see [performance tips](#performance-tips)
 for why); AMDGPU.jl has `roc` and Metal.jl `mtl` for the same:
@@ -395,6 +403,7 @@ julia> Array(a)
 ```
 {{< /backend >}}
 {{< /backends >}}
+
 ### Scalar indexing
 
 Reading or writing a single element of a GPU array from the CPU is possible, but each access
@@ -477,6 +486,7 @@ julia> OpenCL.@allowscalar a[1]
 ```
 {{< /backend >}}
 {{< /backends >}}
+
 If you hit this error, look for a function that does not have a GPU implementation, and
 replace it with a broadcast, a reduction or another array operation. Use `@allowscalar` only
 for the occasional element you really need on the CPU. Metal.jl is an exception: by default
@@ -527,8 +537,10 @@ Particles{CuArray{Float32, 1, CUDACore.DeviceMemory}}(CuArray(Float32[0.6189147,
 ## Writing kernels
 
 When an operation cannot be expressed with array operations, or you need more control, you
-can write a kernel: a Julia function that is executed by many GPU threads in parallel. Each
-thread computes its own index and processes one element:
+can write a kernel yourself: a Julia function that is executed by many GPU threads in
+parallel. Kernels are compiled separately for the GPU and only run there. They support only
+a subset of Julia: they generally cannot allocate memory or perform I/O, and code that is not
+type stable does not compile. Each thread computes its own index and processes one element:
 
 {{< backends >}}
 {{< backend "CUDA.jl" >}}
@@ -647,10 +659,9 @@ true
 ```
 {{< /backend >}}
 {{< /backends >}}
+
 The launch configuration asks for blocks of 256 threads, and enough blocks to cover the whole
-array; the `if` guards against the threads past the end. Kernels must return `nothing`, and
-only support a subset of Julia: they generally cannot allocate memory or perform I/O, and
-code that is not type stable does not compile.
+array; the `if` guards against the threads past the end. Kernels must return `nothing`.
 
 The other back-ends work the same way, with their own names for the launch macro, its
 arguments and the index functions.
