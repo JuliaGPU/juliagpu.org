@@ -24,18 +24,41 @@ algebra, FFTs, random numbers and more.
 | Other OpenCL devices, CPUs | [OpenCL.jl](/backends/opencl/)   | `CLArray`  | `@opencl`     |
 
 CUDA.jl is the most mature of these. The others implement the same array interface, so most
-of what follows applies to all of them. The examples on this page use CUDA.jl; where a name
-differs, substitute the one from the table above (`CUDA.rand` becomes `AMDGPU.rand`,
-`oneAPI.rand` or `Metal.rand`, and so on).
+of what follows applies to all of them. Where the code differs, the examples on this page
+have a tab per back-end: pick yours in any of them, and the others follow.
 
 ## Install and check
 
 Install the package for your hardware from the package manager (press `]` at the Julia
 prompt to enter it):
 
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 pkg> add CUDA
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+pkg> add AMDGPU
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+pkg> add oneAPI
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+pkg> add Metal
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+pkg> add OpenCL pocl_jll
+```
+{{< /backend >}}
+{{< /backends >}}
 
 None of the back-ends require you to install a vendor toolkit yourself. What you do need:
 
@@ -48,10 +71,11 @@ None of the back-ends require you to install a vendor toolkit yourself. What you
 - **Metal.jl**: a Mac with an M-series chip, running macOS 15 or later.
 - **OpenCL.jl**: an OpenCL driver, or the `pocl_jll` package to run kernels on the CPU.
 
-Then load the package and call its `versioninfo` function (`AMDGPU.versioninfo()`,
-`oneAPI.versioninfo()`, …) to check that it finds your GPU. The first time, this takes a
+Then load the package and call its `versioninfo` function to check that it finds your GPU. The first time, this takes a
 while to precompile and download the necessary libraries:
 
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 julia> using CUDA
 
@@ -66,7 +90,70 @@ CUDA toolchain:
   0: NVIDIA RTX 6000 Ada Generation (sm_89, 1.777 GiB / 47.988 GiB available)
      compiles to sm_89 / PTX 9.4 (LLVM: sm_89 / PTX 9.2)
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> using AMDGPU
 
+julia> AMDGPU.versioninfo()
+AMDGPU versioninfo
+ROCm provider: downloaded artifacts
+⋮
+
+AMDGPU devices
+┌────┬─────────────────────┬──────────┬───────────┬────────────┬───────────────┐
+│ Id │                Name │ GCN arch │ Wavefront │     Memory │ Shared Memory │
+├────┼─────────────────────┼──────────┼───────────┼────────────┼───────────────┤
+│  1 │ AMD Radeon Graphics │  gfx1036 │        32 │ 30.179 GiB │    64.000 KiB │
+└────┴─────────────────────┴──────────┴───────────┴────────────┴───────────────┘
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> using oneAPI
+
+julia> oneAPI.versioninfo()
+Binary dependencies:
+- NEO: 26.35.39758+2
+- libigc: 2.41.5+5
+⋮
+
+1 device:
+- Intel(R) Iris(R) Xe Graphics
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+julia> using Metal
+
+julia> Metal.versioninfo()
+macOS 26.7.0, Darwin 25.6.0
+
+Toolchain:
+- Julia: 1.13.4
+- LLVM: 20.1.8
+- Metal: 4.0 (MSL), 2.8 (AIR), 1.2.9 (metallib)
+⋮
+
+1 device:
+- Apple M3 Pro (14 GPU cores, 80.000 KiB allocated; Apple9, Metal4 family)
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+julia> using OpenCL, pocl_jll
+
+julia> OpenCL.versioninfo()
+OpenCL.jl version 1.0.0
+⋮
+
+Available platforms: 1
+ - Portable Computing Language
+   OpenCL 3.0, PoCL 7.2~julia-3a77808afb23  Linux, Release, RELOC, SPIR-V, LLVM 22.1.8jl, SLEEF, DISTRO, POCL_DEBUG
+   · cpu-skylake-avx512-AMD Ryzen 9 9950X 16-Core Processor (svm:c+f, usm:h+d, bda, fp16, fp64, il, sg:shfl+blt)
+```
+{{< /backend >}}
+{{< /backends >}}
 If this fails, or your GPU is not listed, see the installation section of the package's
 documentation, or [ask for help](#getting-help).
 
@@ -75,6 +162,8 @@ documentation, or [ask for help](#getting-help).
 The easiest way to use a GPU is through its array type. Create one by converting a CPU
 array, or with one of the constructors the package provides:
 
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 julia> a = CuArray([1f0, 2f0, 3f0, 4f0])
 4-element CuArray{Float32, 1, CUDACore.DeviceMemory}:
@@ -85,11 +174,63 @@ julia> a = CuArray([1f0, 2f0, 3f0, 4f0])
 
 julia> b = CUDA.rand(Float32, 1024, 1024);
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> a = ROCArray([1f0, 2f0, 3f0, 4f0])
+4-element ROCArray{Float32, 1, AMDGPU.Runtime.Mem.HIPBuffer}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+
+julia> b = AMDGPU.rand(Float32, 1024, 1024);
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> a = oneArray([1f0, 2f0, 3f0, 4f0])
+4-element oneArray{Float32, 1, oneAPI.oneL0.DeviceBuffer}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+
+julia> b = oneAPI.rand(Float32, 1024, 1024);
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+julia> a = MtlArray([1f0, 2f0, 3f0, 4f0])
+4-element MtlVector{Float32, Metal.SharedStorage}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+
+julia> b = Metal.rand(Float32, 1024, 1024);
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+julia> a = CLArray([1f0, 2f0, 3f0, 4f0])
+4-element CLArray{Float32, 1, OpenCL.cl.UnifiedDeviceMemory}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+
+julia> b = OpenCL.rand(Float32, 1024, 1024);
+```
+{{< /backend >}}
+{{< /backends >}}
 
 Operations on GPU arrays run on the GPU. Broadcasting fuses an entire expression, including
 functions you defined yourself, into a single kernel; reductions, matrix multiplication and
 most other array operations work as they do on the CPU:
 
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 julia> c = b .* 2 .+ sin.(b);
 
@@ -106,10 +247,86 @@ julia> c * c
  2204.3   2063.32  2257.47  2190.88  2221.25     2211.86  2180.25  2208.53  2237.91
     ⋮                                         ⋱     ⋮
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> c = b .* 2 .+ sin.(b);
 
-To move data back to the CPU, convert to an `Array`. The `cu` function goes the other way,
-and also converts `Float64` to `Float32` (see [performance tips](#performance-tips) for why):
+julia> sum(c)
+1.5294382f6
 
+julia> maximum(c; dims=1)
+1×1024 ROCArray{Float32, 2, AMDGPU.Runtime.Mem.HIPBuffer}:
+ 2.83934  2.84007  2.83226  2.84068  2.83989  …  2.84071  2.83848  2.83607  2.83973
+
+julia> c * c
+1024×1024 ROCArray{Float32, 2, AMDGPU.Runtime.Mem.HIPBuffer}:
+ 2248.44  2242.88  2253.15  2273.65  2257.7   …  2166.73  2292.89  2242.19  2223.36
+ 2147.65  2171.73  2180.39  2171.39  2149.49     2092.39  2180.33  2122.44  2148.91
+    ⋮                                         ⋱     ⋮
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> c = b .* 2 .+ sin.(b);
+
+julia> sum(c)
+1.5305391f6
+
+julia> maximum(c; dims=1)
+1×1024 oneArray{Float32, 2, oneAPI.oneL0.DeviceBuffer}:
+ 2.84048  2.83489  2.84122  2.84135  2.84142  …  2.84104  2.84039  2.84092  2.84101
+
+julia> c * c
+1024×1024 oneArray{Float32, 2, oneAPI.oneL0.DeviceBuffer}:
+ 2135.64  2096.02  2191.67  2107.1   2194.94  …  2176.97  2145.83  2087.7   2108.49
+ 2019.22  2027.24  2126.9   2071.04  2121.8      2139.05  2099.29  2048.38  2122.17
+    ⋮                                         ⋱     ⋮
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+julia> c = b .* 2 .+ sin.(b);
+
+julia> sum(c)
+1.5302681f6
+
+julia> maximum(c; dims=1)
+1×1024 MtlMatrix{Float32, Metal.SharedStorage}:
+ 2.83489  2.83891  2.83442  2.84131  2.83843  …  2.83832  2.83464  2.84017  2.84034
+
+julia> c * c
+1024×1024 MtlMatrix{Float32, Metal.SharedStorage}:
+ 2134.45  2138.76  2111.9   2236.46  2236.54  …  2140.03  2069.82  2139.47  2101.6
+ 2172.3   2162.81  2170.82  2244.67  2290.7      2152.4   2138.99  2200.34  2190.36
+    ⋮                                         ⋱     ⋮
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+julia> c = b .* 2 .+ sin.(b);
+
+julia> sum(c)
+1.529619f6
+
+julia> maximum(c; dims=1)
+1×1024 CLArray{Float32, 2, OpenCL.cl.UnifiedDeviceMemory}:
+ 2.83815  2.83725  2.83952  2.83864  2.84037  …  2.8395  2.83987  2.8409  2.83727
+
+julia> c * c
+1024×1024 CLArray{Float32, 2, OpenCL.cl.UnifiedDeviceMemory}:
+ 2151.4   2212.21  2248.19  2234.87  2210.34  …  2278.43  2117.32  2212.42  2169.04
+ 2175.75  2184.87  2216.57  2254.0   2176.6      2254.8   2094.5   2209.16  2228.63
+    ⋮                                         ⋱     ⋮
+```
+{{< /backend >}}
+{{< /backends >}}
+To move data back to the CPU, convert to an `Array`. The `cu` function of CUDA.jl goes the
+other way, and also converts `Float64` to `Float32` (see [performance tips](#performance-tips)
+for why); AMDGPU.jl has `roc` and Metal.jl `mtl` for the same:
+
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 julia> Array(a)
 4-element Vector{Float32}:
@@ -124,13 +341,68 @@ julia> cu(rand(3))
  0.16454825
  0.36926574
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> Array(a)
+4-element Vector{Float32}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
 
+julia> roc(rand(3))
+3-element ROCArray{Float32, 1, AMDGPU.Runtime.Mem.HIPBuffer}:
+ 0.6216327
+ 0.08246515
+ 0.82016146
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> Array(a)
+4-element Vector{Float32}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+julia> Array(a)
+4-element Vector{Float32}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+
+julia> mtl(rand(3))
+3-element MtlVector{Float32, Metal.SharedStorage}:
+ 0.22792278
+ 0.07600338
+ 0.10890646
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+julia> Array(a)
+4-element Vector{Float32}:
+ 1.0
+ 2.0
+ 3.0
+ 4.0
+```
+{{< /backend >}}
+{{< /backends >}}
 ### Scalar indexing
 
 Reading or writing a single element of a GPU array from the CPU is possible, but each access
 is a separate copy between CPU and GPU. Code that loops over the elements of a GPU array this
 way runs on the CPU, and very slowly. To catch such code, scalar indexing is disallowed:
 
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 julia> a[1]
 ERROR: Scalar indexing is disallowed.
@@ -146,7 +418,65 @@ to enable scalar iteration globally or for the operations in question.
 julia> CUDA.@allowscalar a[1]
 1.0f0
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> a[1]
+ERROR: Scalar indexing is disallowed.
+Invocation of getindex resulted in scalar indexing of a GPU array.
+This is typically caused by calling an iterating implementation of a method.
+Such implementations *do not* execute on the GPU, but very slowly on the CPU,
+and therefore should be avoided.
 
+If you want to allow scalar iteration, use `allowscalar` or `@allowscalar`
+to enable scalar iteration globally or for the operations in question.
+⋮
+
+julia> AMDGPU.@allowscalar a[1]
+1.0f0
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> a[1]
+ERROR: Scalar indexing is disallowed.
+Invocation of getindex resulted in scalar indexing of a GPU array.
+This is typically caused by calling an iterating implementation of a method.
+Such implementations *do not* execute on the GPU, but very slowly on the CPU,
+and therefore should be avoided.
+
+If you want to allow scalar iteration, use `allowscalar` or `@allowscalar`
+to enable scalar iteration globally or for the operations in question.
+⋮
+
+julia> oneAPI.@allowscalar a[1]
+1.0f0
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+julia> a[1]       # allowed: the array is in memory shared with the CPU
+1.0f0
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+julia> a[1]
+ERROR: Scalar indexing is disallowed.
+Invocation of getindex resulted in scalar indexing of a GPU array.
+This is typically caused by calling an iterating implementation of a method.
+Such implementations *do not* execute on the GPU, but very slowly on the CPU,
+and therefore should be avoided.
+
+If you want to allow scalar iteration, use `allowscalar` or `@allowscalar`
+to enable scalar iteration globally or for the operations in question.
+⋮
+
+julia> OpenCL.@allowscalar a[1]
+1.0f0
+```
+{{< /backend >}}
+{{< /backends >}}
 If you hit this error, look for a function that does not have a GPU implementation, and
 replace it with a broadcast, a reduction or another array operation. Use `@allowscalar` only
 for the occasional element you really need on the CPU. Metal.jl is an exception: by default
@@ -200,6 +530,8 @@ When an operation cannot be expressed with array operations, or you need more co
 can write a kernel: a Julia function that is executed by many GPU threads in parallel. Each
 thread computes its own index and processes one element:
 
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
 ```julia-repl
 julia> function vadd!(c, a, b)
            i = (blockIdx().x - 1) * blockDim().x + threadIdx().x
@@ -216,25 +548,112 @@ julia> b = CUDA.rand(Float32, 10_000);
 
 julia> c = similar(a);
 
-julia> @cuda threads=256 blocks=cld(length(c), 256) vadd!(c, a, b)
-CUDACore.HostKernel for vadd!(CuDeviceVector{Float32, 1}, CuDeviceVector{Float32, 1}, CuDeviceVector{Float32, 1})
+julia> @cuda threads=256 blocks=cld(length(c), 256) vadd!(c, a, b);
 
 julia> c == a .+ b
 true
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> function vadd!(c, a, b)
+           i = (workgroupIdx().x - 1) * workgroupDim().x + workitemIdx().x
+           if i <= length(c)
+               @inbounds c[i] = a[i] + b[i]
+           end
+           return
+       end
+vadd! (generic function with 1 method)
 
+julia> a = AMDGPU.rand(Float32, 10_000);
+
+julia> b = AMDGPU.rand(Float32, 10_000);
+
+julia> c = similar(a);
+
+julia> @roc groupsize=256 gridsize=cld(length(c), 256) vadd!(c, a, b);
+
+julia> c == a .+ b
+true
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> function vadd!(c, a, b)
+           i = get_global_id()
+           if i <= length(c)
+               @inbounds c[i] = a[i] + b[i]
+           end
+           return
+       end
+vadd! (generic function with 1 method)
+
+julia> a = oneAPI.rand(Float32, 10_000);
+
+julia> b = oneAPI.rand(Float32, 10_000);
+
+julia> c = similar(a);
+
+julia> @oneapi items=256 groups=cld(length(c), 256) vadd!(c, a, b);
+
+julia> c == a .+ b
+true
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
+```julia-repl
+julia> function vadd!(c, a, b)
+           i = thread_position_in_grid().x
+           if i <= length(c)
+               @inbounds c[i] = a[i] + b[i]
+           end
+           return
+       end
+vadd! (generic function with 1 method)
+
+julia> a = Metal.rand(Float32, 10_000);
+
+julia> b = Metal.rand(Float32, 10_000);
+
+julia> c = similar(a);
+
+julia> @metal threads=256 groups=cld(length(c), 256) vadd!(c, a, b);
+
+julia> c == a .+ b
+true
+```
+{{< /backend >}}
+{{< backend "OpenCL.jl" >}}
+```julia-repl
+julia> function vadd!(c, a, b)
+           i = get_global_id()
+           if i <= length(c)
+               @inbounds c[i] = a[i] + b[i]
+           end
+           return
+       end
+vadd! (generic function with 1 method)
+
+julia> a = OpenCL.rand(Float32, 10_000);
+
+julia> b = OpenCL.rand(Float32, 10_000);
+
+julia> c = similar(a);
+
+julia> @opencl local_size=256 global_size=256*cld(length(c), 256) vadd!(c, a, b);
+
+julia> c == a .+ b
+true
+```
+{{< /backend >}}
+{{< /backends >}}
 The launch configuration asks for blocks of 256 threads, and enough blocks to cover the whole
 array; the `if` guards against the threads past the end. Kernels must return `nothing`, and
 only support a subset of Julia: they generally cannot allocate memory or perform I/O, and
 code that is not type stable does not compile.
 
-The other back-ends work the same way, with their own names for the launch macro and the
-index functions:
-
-- AMDGPU.jl: `@roc groupsize=256 gridsize=…`, with `workitemIdx()`, `workgroupIdx()` and
-  `workgroupDim()`.
-- oneAPI.jl: `@oneapi items=256 groups=…`, with `get_global_id()`.
-- Metal.jl: `@metal threads=256 groups=…`, with `thread_position_in_grid().x`.
+The other back-ends work the same way, with their own names for the launch macro, its
+arguments and the index functions.
 
 ### Portable kernels with KernelAbstractions.jl
 
@@ -260,7 +679,7 @@ end
 `get_backend` picks the back-end that matches the array, and `ndrange` sets the number of
 work items; KernelAbstractions skips the work items past the end of the range, so no bounds
 check is needed. The same code then works with a CPU `Array`, executed through
-[PoCL](https://portablecl.org/), and with a `CuArray`:
+[PoCL](https://portablecl.org/):
 
 ```julia-repl
 julia> a = rand(Float32, 10_000); b = rand(Float32, 10_000);
@@ -270,7 +689,13 @@ POCLBackend()
 
 julia> vadd_ka!(similar(a), a, b) == a .+ b
 true
+```
 
+And, unchanged, with the arrays of any GPU back-end:
+
+{{< backends >}}
+{{< backend "CUDA.jl" >}}
+```julia-repl
 julia> using CUDA
 
 julia> a_d = CuArray(a); b_d = CuArray(b);
@@ -281,20 +706,47 @@ CUDABackend(false, false, false)
 julia> vadd_ka!(similar(a_d), a_d, b_d) == a_d .+ b_d
 true
 ```
+{{< /backend >}}
+{{< backend "AMDGPU.jl" >}}
+```julia-repl
+julia> using AMDGPU
 
-And, unchanged, on an Apple M3 Pro with Metal.jl:
+julia> a_d = ROCArray(a); b_d = ROCArray(b);
 
+julia> get_backend(a_d)
+ROCBackend()
+
+julia> vadd_ka!(similar(a_d), a_d, b_d) == a_d .+ b_d
+true
+```
+{{< /backend >}}
+{{< backend "oneAPI.jl" >}}
+```julia-repl
+julia> using oneAPI
+
+julia> a_d = oneArray(a); b_d = oneArray(b);
+
+julia> get_backend(a_d)
+oneAPIBackend(false, false)
+
+julia> vadd_ka!(similar(a_d), a_d, b_d) == a_d .+ b_d
+true
+```
+{{< /backend >}}
+{{< backend "Metal.jl" >}}
 ```julia-repl
 julia> using Metal
 
-julia> a = MtlArray(rand(Float32, 10_000)); b = MtlArray(rand(Float32, 10_000));
+julia> a_d = MtlArray(a); b_d = MtlArray(b);
 
-julia> get_backend(a)
+julia> get_backend(a_d)
 MetalBackend()
 
-julia> vadd_ka!(similar(a), a, b) == a .+ b
+julia> vadd_ka!(similar(a_d), a_d, b_d) == a_d .+ b_d
 true
 ```
+{{< /backend >}}
+{{< /backends >}}
 
 Kernels are launched asynchronously: call `KernelAbstractions.synchronize(backend)` before
 using the result on the CPU, unless you copy it back (as the comparisons above do), which

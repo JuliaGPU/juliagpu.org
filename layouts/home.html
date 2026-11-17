@@ -10,7 +10,11 @@
       </p>
     </div>
     <div class="hero-code">
-      {{ partial "backend-examples.html" .Params.examples }}
+      {{- $variants := slice }}
+      {{- range .Params.examples }}
+        {{- $variants = $variants | append (dict "name" .name "html" (partial "julia-repl.html" .code)) }}
+      {{- end }}
+      {{ partial "backend-tabs.html" (dict "variants" $variants "rotate" 3) }}
     </div>
   </div>
 </section>

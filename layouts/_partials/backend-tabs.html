@@ -1,0 +1,48 @@
+{{- /*
+  A group of examples, one per back-end, with a tab for each. Which one is
+  shown is decided page-wide by the radio buttons of the backend-picker
+  partial; until the visitor picks one, the group shows its first example.
+
+  Takes a dict with:
+  - variants: a list of dicts with the back-end `name` (from `params.backends`)
+    and the rendered `html`;
+  - rotate: optionally, the number of seconds after which to move on to the
+    next example until the visitor picks one. Every tab and example
+    then runs the same CSS animation, shifted by its position; its keyframes
+    depend on the number of examples, so they are generated here.
+*/ -}}
+{{- $variants := .variants }}
+{{- $n := len $variants }}
+{{- $rotate := .rotate | default 0 }}
+{{- range $variants }}
+  {{- if not (in site.Params.backends .name) }}
+    {{- errorf "unknown back-end %q; add it to params.backends in hugo.toml" .name }}
+  {{- end }}
+{{- end }}
+{{- if $rotate }}
+{{- $slot := printf "%.4f" (div 100.0 $n) }}
+<style>
+  @keyframes backend-panel-{{ $n }} { 0% { visibility: visible } {{ $slot }}%, 100% { visibility: hidden } }
+  @keyframes backend-tab-{{ $n }} { 0% { color: var(--fg) } {{ $slot }}%, 100% { color: var(--fg-muted) } }
+  @keyframes backend-progress-{{ $n }} {
+    0% { visibility: visible; transform: scaleX(0) }
+    {{ $slot }}%, 100% { visibility: hidden; transform: scaleX(1) }
+  }
+  {{- $group := printf `body:not(:has(.backend-picker :checked)) .backends[data-rotate="%d"]` $n | safeCSS }}
+  {{ $group }} .backend-panel { animation: backend-panel-{{ $n }} var(--cycle) step-end var(--delay) infinite }
+  {{ $group }} .backend-tabs label { animation: backend-tab-{{ $n }} var(--cycle) step-end var(--delay) infinite }
+  {{ $group }} .backend-tabs label::after { animation: backend-progress-{{ $n }} var(--cycle) linear var(--delay) infinite }
+</style>
+{{- end }}
+<div class="backends"{{ with $rotate }} data-rotate="{{ $n }}" style="--cycle: {{ mul $n . }}s"{{ end }}>
+  <div class="backend-tabs">
+    {{- range $i, $v := $variants }}
+    <label for="{{ partial "backend-id.html" $v.name }}"{{ with $rotate }} style="--delay: {{ mul (sub $i $n) . }}s"{{ end }}>{{ $v.name }}</label>
+    {{- end }}
+  </div>
+  <div class="backend-panels">
+    {{- range $i, $v := $variants }}
+    <div class="backend-panel" data-backend="{{ partial "backend-id.html" $v.name }}"{{ with $rotate }} style="--delay: {{ mul (sub $i $n) . }}s"{{ end }}>{{ $v.html }}</div>
+    {{- end }}
+  </div>
+</div>

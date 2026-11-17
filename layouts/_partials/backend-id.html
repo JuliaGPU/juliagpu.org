@@ -1,0 +1,2 @@
+{{- /* The id of the picker input for a back-end name: "AMDGPU.jl" -> "backend-amdgpu". */ -}}
+{{- return print "backend-" (. | strings.TrimSuffix ".jl" | lower) -}}

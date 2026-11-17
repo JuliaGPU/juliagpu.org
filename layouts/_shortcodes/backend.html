@@ -1,0 +1,6 @@
+{{- /* One back-end's example in a `backends` group; see that shortcode. */ -}}
+{{- with .Parent }}
+  {{- .Store.Add "variants" (slice (dict "name" ($.Get 0) "html" ($.Inner | $.Page.RenderString (dict "display" "block")))) }}
+{{- else }}
+  {{- errorf "%s: backend shortcode outside of a backends group" .Position }}
+{{- end }}

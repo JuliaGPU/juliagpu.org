@@ -1,0 +1,24 @@
+{{- /*
+  Shows an example for several back-ends, with a tab per back-end:
+
+    {{< backends >}}
+    {{< backend "CUDA.jl" >}}
+    ```julia-repl
+    julia> a = CUDA.rand(2)
+    ```
+    {{< /backend >}}
+    {{< backend "AMDGPU.jl" >}}
+    ...
+    {{< /backend >}}
+    {{< /backends >}}
+
+  Back-end names come from `params.backends` in hugo.toml. The first example is
+  shown until the visitor picks a back-end, and whenever this group has no
+  example for the picked one.
+*/ -}}
+{{- $_ := .Inner }}
+{{- with .Store.Get "variants" }}
+  {{- partial "backend-tabs.html" (dict "variants" .) }}
+{{- else }}
+  {{- errorf "%s: backends shortcode without any backend in it" $.Position }}
+{{- end }}

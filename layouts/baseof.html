@@ -7,6 +7,10 @@
   <a class="skip-link" href="#main">Skip to content</a>
   {{ partial "header.html" . }}
   <main id="main">
+    {{- /* after the navigation in tab order, and first thing after the skip link */}}
+    {{- if or .IsHome (.HasShortcode "backends") }}
+    {{ partial "backend-picker.html" . }}
+    {{- end }}
     {{- block "main" . }}{{ end }}
   </main>
   {{ partial "footer.html" . }}

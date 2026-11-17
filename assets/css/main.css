@@ -289,14 +289,27 @@ p, li {
 }
 
 
-/* Per-back-end examples; the keyframes are in the backend-examples partial */
+/* Per-back-end examples, see the backend-tabs and backend-picker partials */
 
-.backend-examples {
+.backend-picker input {
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.backends {
+  margin-block: 1.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-subtle);
-  box-shadow: 0 1rem 3rem -1rem rgb(0 0 0 / 0.25);
   overflow: hidden;
+}
+
+.hero-code .backends {
+  margin: 0;
+  box-shadow: 0 1rem 3rem -1rem rgb(0 0 0 / 0.25);
 }
 
 .backend-tabs {
@@ -314,13 +327,13 @@ p, li {
   padding-block: 0.55rem;
   color: var(--fg-muted);
   cursor: pointer;
-  animation: backend-tab var(--cycle) step-end var(--delay) infinite;
 }
 
 .backend-tabs label:hover {
   color: var(--fg);
 }
 
+/* the underline of the shown tab; while rotating, it fills up until the next one */
 .backend-tabs label::after {
   content: "";
   position: absolute;
@@ -328,19 +341,7 @@ p, li {
   height: 2px;
   background: var(--accent);
   transform-origin: left;
-  visibility: hidden;
-  animation: backend-progress var(--cycle) linear var(--delay) infinite;
-}
-
-.backend-tabs input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.backend-tabs label:has(:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  visibility: var(--underline, hidden);
 }
 
 /* stack the examples, so that switching does not change the height */
@@ -356,7 +357,6 @@ p, li {
 /* without :has(), the tabs do nothing and every group shows its first example */
 .backend-panel:not(:first-child) {
   visibility: hidden;
-  animation: backend-panel var(--cycle) step-end var(--delay) infinite;
 }
 
 @supports selector(:has(*)) {
@@ -366,39 +366,32 @@ p, li {
 }
 
 .backend-panel pre {
+  margin: 0;
   border: 0;
   border-radius: 0;
   background: none;
 }
 
-/* without the animation (or once paused), show the first or the picked back-end */
-.backend-examples:not(:has(:checked)) .backend-panel:first-child {
+/* until the visitor picks a back-end, show the first one of every group */
+body:not(:has(.backend-picker :checked)) .backend-panel:first-child {
   visibility: visible;
 }
 
-.backend-examples:not(:has(:checked)) .backend-tabs label:first-child,
-.backend-tabs label:has(:checked) {
+body:not(:has(.backend-picker :checked)) .backend-tabs label:first-child {
   color: var(--fg);
+  --underline: visible;
 }
 
-.backend-examples:not(:has(:checked)) .backend-tabs label:first-child::after,
-.backend-tabs label:has(:checked)::after {
-  visibility: visible;
-}
-
-.backend-examples:has(:checked) *,
-.backend-examples:has(:checked) *::after {
-  animation: none;
-}
-
-.backend-examples:is(:hover, :focus-within) *,
-.backend-examples:is(:hover, :focus-within) *::after {
+.backends:is(:hover, :focus-within) *,
+.backends:is(:hover, :focus-within) *::after,
+body:has(.backend-picker :focus-visible) .backends *,
+body:has(.backend-picker :focus-visible) .backends *::after {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .backend-examples *,
-  .backend-examples *::after {
+  .backends *,
+  .backends *::after {
     animation: none;
   }
 }

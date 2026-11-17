@@ -8,6 +8,8 @@ enableRobotsTXT = true
 description = "High-performance GPU programming in a high-level language."
 repository = "https://github.com/JuliaGPU/juliagpu.org"
 images = ["logo.png"]
+# the back-ends that examples can be shown for, see the backends shortcode
+backends = ["CUDA.jl", "AMDGPU.jl", "oneAPI.jl", "Metal.jl", "OpenCL.jl", "KernelAbstractions.jl"]
 
 [frontmatter]
 # posts are named YYYY-MM-DD-name.md, or YYYY-MM-DD-name/index.md for a bundle
