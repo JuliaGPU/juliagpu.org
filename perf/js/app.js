@@ -30,6 +30,7 @@ let registry;
 let ds; // the dataset of the current package
 let annots = [];
 let chart;
+let chartRuns; // the dataset and runs the chart shows, for keeping its zoom
 const slots = new Map(); // series key -> colour slot, kept while the series is selected
 const datasets = new Map(); // package key -> dataset promise
 
@@ -601,8 +602,15 @@ function renderChart(from, to, chains, overall) {
     plugins: [crosshair],
   };
 
+  // Showing or hiding a series draws the chart again; keep the zoom while it shows the
+  // same runs.
+  const same = chartRuns && chartRuns.ds === ds && chartRuns.from === from && chartRuns.to === to;
+  const zoomed = same && chart?.isZoomedOrPanned?.() ? { min: chart.scales.x.min, max: chart.scales.x.max } : null;
   if (chart) chart.destroy();
   chart = new Chart($("chart"), config);
+  chartRuns = { ds, from, to };
+  if (zoomed) chart.zoomScale("x", zoomed, "none");
+  $("reset-zoom").hidden = !zoomed;
 }
 
 // The first run any series has a value for.
