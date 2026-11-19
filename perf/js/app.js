@@ -623,17 +623,31 @@ function firstShown(series, from) {
   return isFinite(first) ? first : from;
 }
 
-// The y range of the 1st to the 99th percentile of the values shown, with some room, so a
-// single outlying run does not flatten everything else; it runs off the chart instead.
+// The y range of the values shown, leaving out single outlying runs, so that one of those
+// does not flatten everything else; it runs off the chart instead. A run is outlying when
+// it is not between the runs before and after it: every value counts as the median of
+// itself and its neighbours. A change that lasts stays in range, and so does the latest
+// run, which has no run after it to tell.
 function robustRange(series) {
-  const ys = series.flatMap((s) => s.data.map((p) => p.y)).filter((y) => y != null).sort((a, b) => a - b);
-  if (ys.length < 20) return {};
-  const lo = ys[Math.floor(ys.length * 0.01)];
-  const hi = ys[Math.ceil(ys.length * 0.99) - 1];
+  let lo = Infinity;
+  let hi = -Infinity;
+  let min = Infinity;
+  let max = -Infinity;
+  for (const s of series) {
+    const ys = s.data.map((p) => p.y).filter((y) => y != null);
+    ys.forEach((y, k) => {
+      min = Math.min(min, y);
+      max = Math.max(max, y);
+      const m = k === 0 || k === ys.length - 1 ? y : [ys[k - 1], y, ys[k + 1]].sort((a, b) => a - b)[1];
+      lo = Math.min(lo, m);
+      hi = Math.max(hi, m);
+    });
+  }
+  if (!isFinite(lo)) return {};
   const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.05 || 1;
   return {
-    min: ys[0] < lo - pad ? lo - pad : undefined,
-    max: ys[ys.length - 1] > hi + pad ? hi + pad : undefined,
+    min: min < lo - pad ? lo - pad : undefined,
+    max: max > hi + pad ? hi + pad : undefined,
   };
 }
 
