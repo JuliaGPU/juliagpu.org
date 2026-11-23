@@ -1,0 +1,174 @@
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Technical preview: Programming Apple M1 GPUs in Julia with Metal.jl · JuliaGPU</title><meta name=description content="Julia has gained a new GPU back-end: Metal.jl, for working with Apple&amp;rsquo;s M1 GPUs. The back-end is built on the same foundations that make up existing GPU packages like CUDA.jl and AMDGPU.jl, so it should be familiar to anybody who&amp;rsquo;s already programmed GPUs in Julia. In the following post I&amp;rsquo;ll demonstrate some of that functionality and explain how it works."><link rel=canonical href=https://juliagpu.org/pr-preview/pr-72/post/2022-06-24-metal/><meta name=robots content="noindex"><link rel=icon href=/pr-preview/pr-72/favicon.ico sizes=32x32><link rel=icon href=/pr-preview/pr-72/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/pr-preview/pr-72/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/pr-preview/pr-72/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/pr-preview/pr-72/post/2022-06-24-metal/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="Technical preview: Programming Apple M1 GPUs in Julia with Metal.jl"><meta property="og:description" content="Julia has gained a new GPU back-end: Metal.jl, for working with Apple’s M1 GPUs. The back-end is built on the same foundations that make up existing GPU packages like CUDA.jl and AMDGPU.jl, so it should be familiar to anybody who’s already programmed GPUs in Julia. In the following post I’ll demonstrate some of that functionality and explain how it works."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-06-24T00:00:00+00:00"><meta property="article:modified_time" content="2022-06-24T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/pr-preview/pr-72/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/pr-preview/pr-72/><img src=/pr-preview/pr-72/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/pr-preview/pr-72/backends/>Back-ends</a></li><li><a href=/pr-preview/pr-72/get-started/>Get started</a></li><li><a href=/pr-preview/pr-72/showcases/>Showcases</a></li><li><a href=/pr-preview/pr-72/perf/>Performance</a></li><li><a href=/pr-preview/pr-72/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>Technical preview: Programming Apple M1 GPUs in Julia with Metal.jl</h1><p class=post-meta><time datetime=2022-06-24>June 24, 2022</time> · Tim Besard</p></header><p>Julia has gained a new GPU back-end: Metal.jl, for working with Apple&rsquo;s M1
+GPUs. The back-end is built on the same foundations that make up existing
+GPU packages like CUDA.jl and AMDGPU.jl, so it should be familiar to anybody
+who&rsquo;s already programmed GPUs in Julia. In the following post I&rsquo;ll demonstrate
+some of that functionality and explain how it works.</p><p>But first, note that <strong><a href=https://github.com/JuliaGPU/Metal.jl>Metal.jl</a> is under
+heavy development</strong>: The package is considered experimental for now, as we&rsquo;re
+still working on squashing bugs and adding essential functionality. We also
+haven&rsquo;t optimized for performance yet. If you&rsquo;re interesting in using Metal.jl,
+please consider contributing to its development! Most of the package is written
+in Julia, and checking-out the source code is a single <code>Pkg.develop</code> away :-)</p><h2 id=quick-start><span id=quick_start></span>Quick start <a class=heading-anchor href=#quick-start aria-label="Link to this section">#</a></h2><p>Start by getting a hold of the upcoming <a href=https://julialang.org/downloads/#upcoming_release>Julia
+1.8</a>, launch it, and enter
+the package manager by pressing <code>]</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=p>]</span></code>
+<span class=go></span>
+<span class=gp>pkg&gt; </span>add Metal
+<span class=go>  Installed Metal</span></code></pre></div><p>Installation is as easy as that, and we&rsquo;ll automatically download the necessary
+binary artifacts (a C wrapper for the Metal APIs, and an LLVM back-end). Then,
+leave the package manager by pressing backspace, import the Metal package, and
+e.g. call the <code>versioninfo()</code> method for some details on the toolchain:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>Metal</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>Metal</span><span class=o>.</span><span class=n>versioninfo</span><span class=p>()</span></code>
+<span class=go>macOS 13.0.0, Darwin 21.3.0</span>
+<span class=go></span>
+<span class=go>Toolchain:</span>
+<span class=go>- Julia: 1.8.0-rc1</span>
+<span class=go>- LLVM: 13.0.1</span>
+<span class=go></span>
+<span class=go>1 device:</span>
+<span class=go>- Apple M1 Pro (64.000 KiB allocated)</span></code></pre></div><p>And there we go! You&rsquo;ll note here that I&rsquo;m using the upcoming macOS 13
+(Ventura); this is currently the only supported operating system. We also only
+support M-series GPUs, even though Metal does support other GPUs. These choices
+were made to simplify development, and aren&rsquo;t technical limitations. In fact,
+Metal.jl <em>does</em> work on e.g. macOS Monterey with an Intel GPU, but it&rsquo;s an
+untested combination that may suffer from bugs.</p><h2 id=array-programming><span id=array_programming></span>Array programming <a class=heading-anchor href=#array-programming aria-label="Link to this section">#</a></h2><p>Just like our other GPU back-ends, Metal.jl offers an array abstraction that
+greatly simplifies GPU programming. The abstraction centers around the
+<code>MtlArray</code> type that can be used to manage memory and perform GPU computations:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=go># allocate + initialize</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>MtlArray</span><span class=p>(</span><span class=n>rand</span><span class=p>(</span><span class=kt>Float32</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=mi>2</span><span class=p>))</span></code>
+<span class=go>2×2 MtlArray{Float32, 2}:</span>
+<span class=go> 0.158752  0.836366</span>
+<span class=go> 0.535798  0.153554</span>
+<span class=go></span>
+<span class=go># perform some GPU-accelerated operations</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>a</span> <span class=o>*</span> <span class=n>a</span></code>
+<span class=go>2×2 MtlArray{Float32, 2}:</span>
+<span class=go> 0.473325  0.261202</span>
+<span class=go> 0.167333  0.471702</span>
+<span class=go></span>
+<span class=go># back to the CPU</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=kt>Array</span><span class=p>(</span><span class=n>b</span><span class=p>)</span></code>
+<span class=go>2×2 Matrix{Float32}:</span>
+<span class=go> 0.473325  0.261202</span>
+<span class=go> 0.167333  0.471702</span></code></pre></div><p>Beyond these simple operations, Julia&rsquo;s higher-order array abstractions can be
+used to express more complex operations without ever having to write a kernel:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>mapreduce</span><span class=p>(</span><span class=n>sin</span><span class=p>,</span> <span class=o>+</span><span class=p>,</span> <span class=n>a</span><span class=p>;</span> <span class=n>dims</span><span class=o>=</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>1×2 MtlArray{Float32, 2}:</span>
+<span class=go> 1.15276  0.584146</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>cos</span><span class=o>.</span><span class=p>(</span><span class=n>a</span> <span class=o>.+</span> <span class=mi>2</span><span class=p>)</span> <span class=o>.*</span> <span class=mi>3</span></code>
+<span class=go>2×2 MtlArray{Float32, 2}:</span>
+<span class=go> -2.0472   -1.25332</span>
+<span class=go> -2.96594  -2.60351</span></code></pre></div><p>Much of this functionality comes from the
+<a href=https://github.com/JuliaGPU/GPUArrays.jl/>GPUArrays.jl</a> package, which
+provides vendor-neutral implementations of common array operations. As a result,
+<code>MtlArray</code> is already pretty capable, and should be usable with realistic
+array-based applications.</p><h2 id=kernel-programming><span id=kernel_programming></span>Kernel programming <a class=heading-anchor href=#kernel-programming aria-label="Link to this section">#</a></h2><p>Metal.jl&rsquo;s array operations are implemented in Julia, using our native kernel
+programming capabilities and accompanying JIT-compiler. A small demonstration:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia data-lang=julia><span class=line><span class=cl><span class=c># a simple kernel that sets elements of an array to a value</span>
+</span></span><span class=line><span class=cl><span class=k>function</span> <span class=n>memset_kernel</span><span class=p>(</span><span class=n>array</span><span class=p>,</span> <span class=n>value</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  <span class=n>i</span> <span class=o>=</span> <span class=n>thread_position_in_grid_1d</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>  <span class=k>if</span> <span class=n>i</span> <span class=o>&lt;=</span> <span class=n>length</span><span class=p>(</span><span class=n>array</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>    <span class=nd>@inbounds</span> <span class=n>array</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>value</span>
+</span></span><span class=line><span class=cl>  <span class=k>end</span>
+</span></span><span class=line><span class=cl>  <span class=k>return</span>
+</span></span><span class=line><span class=cl><span class=k>end</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=n>a</span> <span class=o>=</span> <span class=kt>MtlArray</span><span class=p>{</span><span class=kt>Float32</span><span class=p>}(</span><span class=nb>undef</span><span class=p>,</span> <span class=mi>512</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nd>@metal</span> <span class=n>threads</span><span class=o>=</span><span class=mi>512</span> <span class=n>grid</span><span class=o>=</span><span class=mi>2</span> <span class=n>memset_kernel</span><span class=p>(</span><span class=n>a</span><span class=p>,</span> <span class=mi>42</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c># verify</span>
+</span></span><span class=line><span class=cl><span class=nd>@assert</span> <span class=n>all</span><span class=p>(</span><span class=n>isequal</span><span class=p>(</span><span class=mi>42</span><span class=p>),</span> <span class=kt>Array</span><span class=p>(</span><span class=n>a</span><span class=p>))</span>
+</span></span></code></pre></div><p>As can be seen here, we&rsquo;ve opted to deviate slightly from the Metal Shading
+Language, instead providing a programming experience that&rsquo;s similar to Julia&rsquo;s
+existing back-ends. Some key differences:</p><ul><li>we use intrinsic functions instead of special kernel function arguments to
+access properties like the thread position, grid size, &mldr;;</li><li>all types of arguments (buffers, indirect buffers, value-typed inputs) are
+transparently converted to a GPU-compatible structure<sup id=fnref:1><a href=#fn:1 class=footnote-ref role=doc-noteref>1</a></sup>;</li><li>global (task-bound) state is used to keep track of the active device and a
+queue;</li><li>compute pipeline set-up and command encoding is hidden behind a single macro.</li></ul><p>Behind the scenes, we compile Julia to LLVM IR and use a <a href=https://github.com/JuliaGPU/llvm-metal>tiny LLVM
+back-end</a> (based on
+<a href=https://github.com/a2flo>@a2flo</a>&rsquo;s <a href=https://github.com/a2flo/floor>libfloor</a>)
+that (re)writes the bitcode to a Metal-compatible library containing LLVM 5
+bitcode. You can inspect the generated IR using <code>@device_code_metal</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=nd>@device_code_metal</span> <span class=nd>@metal</span> <span class=n>threads</span><span class=o>=</span><span class=mi>512</span> <span class=n>grid</span><span class=o>=</span><span class=mi>2</span> <span class=n>memset_kernel</span><span class=p>(</span><span class=n>a</span><span class=p>,</span> <span class=mi>42</span><span class=p>)</span></code></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>[header]
+</span></span><span class=line><span class=cl>program_count: 1
+</span></span><span class=line><span class=cl>...
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>[program]
+</span></span><span class=line><span class=cl>name: julia_memset_kernel
+</span></span><span class=line><span class=cl>type: kernel
+</span></span><span class=line><span class=cl>...
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 class=chroma><code class=language-llvm data-lang=llvm><span class=line><span class=cl><span class=k>target</span> <span class=k>datalayout</span> <span class=p>=</span> <span class=s>&#34;...&#34;</span>
+</span></span><span class=line><span class=cl><span class=k>target</span> <span class=k>triple</span> <span class=p>=</span> <span class=s>&#34;air64-apple-macosx13.0.0&#34;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c>; the (rewritten) kernel function:
+</span></span></span><span class=line><span class=cl><span class=c>;  - %value argument passed by reference
+</span></span></span><span class=line><span class=cl><span class=c>;  - %thread_position_in_grid argument added
+</span></span></span><span class=line><span class=cl><span class=c>;  - sitofp rewritten to AIR-specific intrinsic
+</span></span></span><span class=line><span class=cl><span class=k>define</span> <span class=kt>void</span> <span class=vg>@julia_memset_kernel</span><span class=p>(</span>
+</span></span><span class=line><span class=cl>    <span class=p>{</span> <span class=k>i8</span> <span class=k>addrspace</span><span class=p>(</span><span class=m>1</span><span class=p>)*,</span> <span class=p>[</span><span class=m>1</span> <span class=k>x</span> <span class=k>i64</span><span class=p>]</span> <span class=p>}</span> <span class=k>addrspace</span><span class=p>(</span><span class=m>1</span><span class=p>)*</span> <span class=nv>%array</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=k>i64</span> <span class=k>addrspace</span><span class=p>(</span><span class=m>1</span><span class=p>)*</span> <span class=nv>%value</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>    <span class=k>i32</span> <span class=nv>%thread_position_in_grid</span><span class=p>)</span> <span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=p>...</span>
+</span></span><span class=line><span class=cl>  <span class=nv>%9</span> <span class=p>=</span> <span class=k>tail</span> <span class=k>call</span> <span class=kt>float</span> <span class=vg>@air.convert.f.f32.s.i64</span><span class=p>(</span><span class=k>i64</span> <span class=nv>%7</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>  <span class=p>...</span>
+</span></span><span class=line><span class=cl>  <span class=k>ret</span> <span class=kt>void</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c>; minimal required argument metadata
+</span></span></span><span class=line><span class=cl><span class=nv>!air.kernel</span> <span class=p>=</span> <span class=p>!{</span><span class=nv>!10</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nv>!10</span> <span class=p>=</span> <span class=p>!{</span><span class=kt>void</span> <span class=p>({</span> <span class=k>i8</span> <span class=k>addrspace</span><span class=p>(</span><span class=m>1</span><span class=p>)*,</span> <span class=p>[</span><span class=m>1</span> <span class=k>x</span> <span class=k>i64</span><span class=p>]</span> <span class=p>}</span> <span class=k>addrspace</span><span class=p>(</span><span class=m>1</span><span class=p>)*,</span>
+</span></span><span class=line><span class=cl>              <span class=k>i64</span> <span class=k>addrspace</span><span class=p>(</span><span class=m>1</span><span class=p>)*,</span> <span class=k>i32</span><span class=p>)*</span> <span class=vg>@julia_memset_kernel</span><span class=p>,</span> <span class=nv>!11</span><span class=p>,</span> <span class=nv>!12</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nv>!12</span> <span class=p>=</span> <span class=p>!{</span><span class=nv>!13</span><span class=p>,</span> <span class=nv>!14</span><span class=p>,</span> <span class=nv>!15</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nv>!13</span> <span class=p>=</span> <span class=p>!{</span><span class=k>i32</span> <span class=m>0</span><span class=p>,</span> <span class=nv>!&#34;air.buffer&#34;</span><span class=p>,</span> <span class=nv>!&#34;air.location_index&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>0</span><span class=p>,</span> <span class=k>i32</span> <span class=m>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>       <span class=nv>!&#34;air.read_write&#34;</span><span class=p>,</span> <span class=nv>!&#34;air.address_space&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>       <span class=nv>!&#34;air.arg_type_size&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>16</span><span class=p>,</span> <span class=nv>!&#34;air.arg_type_align_size&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>8</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nv>!14</span> <span class=p>=</span> <span class=p>!{</span><span class=k>i32</span> <span class=m>1</span><span class=p>,</span> <span class=nv>!&#34;air.buffer&#34;</span><span class=p>,</span> <span class=nv>!&#34;air.location_index&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>1</span><span class=p>,</span> <span class=k>i32</span> <span class=m>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>       <span class=nv>!&#34;air.read_write&#34;</span><span class=p>,</span> <span class=nv>!&#34;air.address_space&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>1</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>       <span class=nv>!&#34;air.arg_type_size&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>8</span><span class=p>,</span> <span class=nv>!&#34;air.arg_type_align_size&#34;</span><span class=p>,</span> <span class=k>i32</span> <span class=m>8</span><span class=p>}</span>
+</span></span><span class=line><span class=cl><span class=nv>!15</span> <span class=p>=</span> <span class=p>!{</span><span class=k>i32</span> <span class=m>0</span><span class=p>,</span> <span class=nv>!&#34;air.thread_position_in_grid&#34;</span><span class=p>}</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c>; other metadata not shown, for brevity
+</span></span></span></code></pre></div><p>Shout-out to <a href=https://github.com/max-Hawkins>@max-Hawkins</a> for exploring Metal
+code generation during his internship at Julia Computing!</p><h2 id=metal-apis-in-julia><span id=metal_apis_in_julia></span>Metal APIs in Julia <a class=heading-anchor href=#metal-apis-in-julia aria-label="Link to this section">#</a></h2><p>Lacking an Objective C or C++ FFI, we interface with the Metal libraries using
+<a href=https://github.com/recp/cmt>a shim C library</a>. Most users won&rsquo;t have to
+interface with Metal directly &ndash; the array abstraction is sufficient for many &ndash;
+but more experienced developers can make use of the high-level wrappers that
+we&rsquo;ve designed for the Metal APIs:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>dev</span> <span class=o>=</span> <span class=n>MtlDevice</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>MtlDevice:</span>
+<span class=go>  name:             Apple M1 Pro</span>
+<span class=go>  lowpower:         false</span>
+<span class=go>  headless:         false</span>
+<span class=go>  removable:        false</span>
+<span class=go>  unified memory:   true</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>desc</span> <span class=o>=</span> <span class=n>MtlHeapDescriptor</span><span class=p>()</span></code>
+<span class=go>MtlHeapDescriptor:</span>
+<span class=go>  type:             MtHeapTypeAutomatic</span>
+<span class=go>  storageMode:      MtStorageModePrivate</span>
+<span class=go>  size:             0</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>desc</span><span class=o>.</span><span class=n>size</span> <span class=o>=</span> <span class=mi>16384</span></code>
+<span class=go>16384</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>heap</span> <span class=o>=</span> <span class=n>MtlHeap</span><span class=p>(</span><span class=n>dev</span><span class=p>,</span> <span class=n>desc</span><span class=p>)</span></code>
+<span class=go>MtlHeap:</span>
+<span class=go>  type:                 MtHeapTypeAutomatic</span>
+<span class=go>  size:                 16384</span>
+<span class=go>  usedSize:             0</span>
+<span class=go>  currentAllocatedSize: 16384</span>
+<span class=go></span>
+<span class=go># etc</span></code></pre></div><p>These wrappers are based on <a href=https://github.com/PhilipVinc>@PhilipVinc</a>&rsquo;s
+excellent work on MetalCore.jl, which formed the basis for (and has been folded
+into) Metal.jl.</p><h2 id=whats-next><span id=whats_next></span>What&rsquo;s next? <a class=heading-anchor href=#whats-next aria-label="Link to this section">#</a></h2><p>The current release of Metal.jl focusses on code generation capabilities, and is
+meant as a preview for users and developers to try out on their system or with
+their specific GPU application. It is not production-ready yet, and is lacking
+some crucial features:</p><ul><li>performance optimization</li><li>integration with Metal Performance Shaders</li><li>integration / documentation for use with Xcode tools</li><li>fleshing out the array abstraction based on user feedback</li></ul><p><strong>Please consider helping out with any of these!</strong> Since Metal.jl and its
+dependencies are almost entirely implemented in Julia, any experience with the
+language is sufficient to contribute. If you&rsquo;re not certain, or have any
+questions, please drop by the <code>#gpu</code> channel on <a href=https://julialang.org/slack/>the JuliaLang
+Slack</a>, ask questions on our
+<a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a>, or chat to us
+during the <a href=https://julialang.org/community/#events>GPU office hours</a> every
+other Monday.</p><p>If you encounter any bugs, feel free to let us know on the <a href=https://github.com/JuliaGPU/Metal.jl/issues>Metal.jl issue
+tracker</a>. For information on
+upcoming releases, <a href=https://juliagpu.org/post/>subscribe</a> to this website&rsquo;s
+blog where we post about significant developments in Julia&rsquo;s GPU ecosystem.</p><hr><div class=footnotes role=doc-endnotes><hr><ol><li id=fn:1><p>This relies on Metal 3 from macOS 13, which introduced bindless argument
+buffers, as we didn&rsquo;t fully figure out how to reliably encode
+arbitrarily-nested indirect buffers in argument encoder metadata.&#160;<a href=#fnref:1 class=footnote-backref role=doc-backlink>&#8617;&#xfe0e;</a></p></li></ol></div><nav class=post-nav aria-label="More posts"><a rel=next href=/pr-preview/pr-72/post/2023-02-01-cuda_4.0/><span>Newer</span>CUDA.jl 4.0</a>
+<a rel=prev href=/pr-preview/pr-72/post/2022-04-06-oneapi_update/><span>Older</span>oneAPI.jl status update</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/pr-preview/pr-72/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

@@ -1,0 +1,157 @@
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>CUDA.jl 3.5-3.8 · JuliaGPU</title><meta name=description content="CUDA.jl versions 3.5 to 3.8 have brought several new features to improve performance and productivity. This blog post will highlight a couple: direct copies between devices, better performance by preserving array index types and changing the memory pool, and a much-improved interface to the compute sanitizer utility."><link rel=canonical href=https://juliagpu.org/pr-preview/pr-72/post/2022-01-28-cuda_3.5_3.8/><meta name=robots content="noindex"><link rel=icon href=/pr-preview/pr-72/favicon.ico sizes=32x32><link rel=icon href=/pr-preview/pr-72/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/pr-preview/pr-72/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/pr-preview/pr-72/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/pr-preview/pr-72/post/2022-01-28-cuda_3.5_3.8/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="CUDA.jl 3.5-3.8"><meta property="og:description" content="CUDA.jl versions 3.5 to 3.8 have brought several new features to improve performance and productivity. This blog post will highlight a couple: direct copies between devices, better performance by preserving array index types and changing the memory pool, and a much-improved interface to the compute sanitizer utility."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2022-01-28T00:00:00+00:00"><meta property="article:modified_time" content="2022-01-28T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/pr-preview/pr-72/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/pr-preview/pr-72/><img src=/pr-preview/pr-72/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/pr-preview/pr-72/backends/>Back-ends</a></li><li><a href=/pr-preview/pr-72/get-started/>Get started</a></li><li><a href=/pr-preview/pr-72/showcases/>Showcases</a></li><li><a href=/pr-preview/pr-72/perf/>Performance</a></li><li><a href=/pr-preview/pr-72/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>CUDA.jl 3.5-3.8</h1><p class=post-meta><time datetime=2022-01-28>January 28, 2022</time> · Tim Besard</p></header><p>CUDA.jl versions 3.5 to 3.8 have brought several new features to improve performance and productivity. This blog post will highlight a couple: direct copies between devices, better performance by preserving array index types and changing the memory pool, and a much-improved interface to the compute sanitizer utility.</p><h2 id=copies-between-devices><span id=copies_between_devices></span>Copies between devices <a class=heading-anchor href=#copies-between-devices aria-label="Link to this section">#</a></h2><p>Typically, when sending data between devices you need to stage through the CPU. CUDA.jl <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1284>now
+does this automatically</a>, making it possible
+to directly copy between <code>CuArray</code>s on different devices:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device!</span><span class=p>(</span><span class=mi>0</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>2</span><span class=p>,</span><span class=mi>2</span><span class=p>)</span></code>
+<span class=go>2×2 CuArray{Float32, 2, CUDA.Mem.DeviceBuffer}:</span>
+<span class=go> 0.440147  0.986939</span>
+<span class=go> 0.622901  0.698119</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>device!</span><span class=p>(</span><span class=mi>1</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>b</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>zeros</span><span class=p>(</span><span class=mi>2</span><span class=p>,</span><span class=mi>2</span><span class=p>);</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>copyto!</span><span class=p>(</span><span class=n>b</span><span class=p>,</span> <span class=n>a</span><span class=p>)</span></code>
+<span class=go>2×2 CuArray{Float32, 2, CUDA.Mem.DeviceBuffer}:</span>
+<span class=go> 0.440147  0.986939</span>
+<span class=go> 0.622901  0.698119</span></code></pre></div><p>When your hardware supports it, CUDA.jl will automatically enable so-called peer-to-peer
+mode, making it possible to copy data directly without going through the CPU. This can
+result in significant bandwidth and latency reductions. You can check if this mode of
+communication is possible:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>src</span> <span class=o>=</span> <span class=n>CuDevice</span><span class=p>(</span><span class=mi>0</span><span class=p>)</span></code>
+<span class=go>CuDevice(0): NVIDIA A100-PCIE-40GB</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>dst</span> <span class=o>=</span> <span class=n>CuDevice</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>CuDevice(1): Tesla V100-PCIE-32GB</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>can_access_peer</span><span class=p>(</span><span class=n>src</span><span class=p>,</span> <span class=n>dst</span><span class=p>)</span></code>
+<span class=go>false</span></code></pre></div><p>In this case, peer-to-peer communication is not possible because the devices have a
+different compute capability major revision number. With a compatible device, the function
+reports <code>true</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>src</span> <span class=o>=</span> <span class=n>CuDevice</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span></code>
+<span class=go>CuDevice(1): Tesla V100-PCIE-32GB</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>dst</span> <span class=o>=</span> <span class=n>CuDevice</span><span class=p>(</span><span class=mi>2</span><span class=p>)</span></code>
+<span class=go>CuDevice(2): Tesla V100-PCIE-16GB</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>can_access_peer</span><span class=p>(</span><span class=n>src</span><span class=p>,</span> <span class=n>dst</span><span class=p>)</span></code>
+<span class=go>true</span></code></pre></div><p>Thanks to <a href=https://github.com/kshyatt>@kshyatt</a> for help with this change!</p><h2 id=helper-function-to-use-compute-sanitizer><span id=helper_function_to_use_compute-sanitizer></span>Helper function to use <code>compute-sanitizer</code> <a class=heading-anchor href=#helper-function-to-use-compute-sanitizer aria-label="Link to this section">#</a></h2><p>The CUDA toolkit comes with a powerful tool to check GPU kernels for common issues like
+memory errors and race conditions: the <a href=https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html>compute
+sanitizer</a>. To make
+it easier to use this tool, CUDA.jl now ships the binary as part of its artifacts, and
+<a href=https://github.com/JuliaGPU/CUDA.jl/pull/1340>provides a helper function</a> to restart
+Julia under the <code>compute-sanitizer</code>. Let&rsquo;s demonstrate, and trigger a memory error to show
+what the compute sanitizer can detect:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>run_compute_sanitizer</span><span class=p>()</span></code>
+<span class=go>Re-starting your active Julia session...</span>
+<span class=go></span>
+<span class=go>========= COMPUTE-SANITIZER</span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>using</span> <span class=n>CUDA</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>unsafe_wrap</span><span class=p>(</span><span class=n>CuArray</span><span class=p>,</span> <span class=n>pointer</span><span class=p>(</span><span class=n>CuArray</span><span class=p>([</span><span class=mi>1</span><span class=p>])),</span> <span class=mi>2</span><span class=p>)</span> <span class=o>.=</span> <span class=mi>1</span></code>
+<span class=go>========= Invalid __global__ write of size 8 bytes</span>
+<span class=go>=========     at 0x2a0 in LLVM/src/interop/base.jl:45:julia_broadcast_kernel_1892(CuKernelContext, CuDeviceArray&lt;Int64, (int)1, (int)1&gt;, Broadcasted&lt;void, Tuple&lt;OneTo&lt;Int64&gt;&gt;, _identity, Broadcasted&lt;Int64&gt;&gt;, Int64)</span>
+<span class=go>=========     by thread (1,0,0) in block (0,0,0)</span>
+<span class=go>=========     Address 0xa64000008 is out of bounds</span>
+<span class=go>=========     and is 1 bytes after the nearest allocation at 0xa64000000 of size 8 bytes</span></code></pre></div><p>Other tools are available too, e.g. <code>racecheck</code> for detecting races or <code>synccheck</code> for
+finding synchronization issues. These tools can be selected using the <code>tool</code> keyword
+argument to <code>run_compute_sanitizer</code>.</p><h2 id=updated-binary-dependencies><span id=updated_binary_dependencies></span>Updated binary dependencies <a class=heading-anchor href=#updated-binary-dependencies aria-label="Link to this section">#</a></h2><p>As is common with every release, CUDA.jl now supports newer versions of NVIDIA&rsquo;s tools and
+libraries:</p><ul><li>CUDA toolkit <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1256>11.5</a> and
+<a href=https://github.com/JuliaGPU/CUDA.jl/pull/1326>11.6</a></li><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/1328>CUDNN 8.3.2</a></li><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/1327>CUTENSOR 1.4.0</a></li></ul><p>The update to CUDA toolkit 11.6 comes with improved debug info compatibility. If you need to
+debug Julia GPU code with tools like <code>compute-sanitizer</code> or <code>cuda-gdb</code>, and you need debug
+info (the equivalent of <code>nvcc -G</code>), ensure CUDA.jl can use the latest version of the CUDA
+toolkit.</p><p>To make it easier to use the latest supported toolkit, CUDA.jl <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1182>now
+implements</a> CUDA&rsquo;s so-called <strong>Forward
+Compatibility mode</strong>: When your driver is outdated, CUDA.jl will attempt to load a newer
+version of the CUDA driver library, enabling use of a newer CUDA toolkit and libraries. Note
+that this is only supported on select hardware, refer to <a href=https://docs.nvidia.com/deploy/cuda-compatibility/#forward-compatibility-title>the NVIDIA
+documentation</a>
+for more details.</p><h2 id=preserving-array-indices><span id=preserving_array_indices></span>Preserving array indices <a class=heading-anchor href=#preserving-array-indices aria-label="Link to this section">#</a></h2><p>Julia&rsquo;s integers are typically 64-bits wide, which can be wasteful when dealing with GPU
+indexing intrinsics that are typically only 32-bits wide. CUDA.jl&rsquo;s device array type <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1153>now
+carefully preserves the type of indices</a> so
+that 32-bits indices aren&rsquo;t unnecessarily promoted to 64-bits. With some careful kernel
+programming (note the use of <code>0x1</code> instead of <code>1</code> below), this makes it possible to
+significantly reduce the register pressure surrounding indexing operations, which may be
+useful in register-constrained situations:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=k>function</span> <span class=n>memset</span><span class=p>(</span><span class=n>arr</span><span class=p>,</span> <span class=n>val</span><span class=p>)</span>
+           <span class=n>i</span> <span class=o>=</span> <span class=p>(</span><span class=n>blockIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span><span class=o>-</span><span class=mh>0x1</span><span class=p>)</span> <span class=o>*</span> <span class=n>blockDim</span><span class=p>()</span><span class=o>.</span><span class=n>x</span> <span class=o>+</span> <span class=n>threadIdx</span><span class=p>()</span><span class=o>.</span><span class=n>x</span>
+           <span class=nd>@inbounds</span> <span class=n>arr</span><span class=p>[</span><span class=n>i</span><span class=p>]</span> <span class=o>=</span> <span class=n>val</span>
+           <span class=k>return</span>
+       <span class=k>end</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>code_ptx</span><span class=p>(</span><span class=n>memset</span><span class=p>,</span> <span class=kt>Tuple</span><span class=p>{</span><span class=kt>CuDeviceArray</span><span class=p>{</span><span class=kt>Float32</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=kt>AS</span><span class=o>.</span><span class=kt>Global</span><span class=p>},</span><span class=kt>Float32</span><span class=p>})</span></code>
+<span class=go>.func julia_memset(.param .b64 arr, .param .b32 val) {</span>
+<span class=go>        .reg .f32       %f&lt;2&gt;;</span>
+<span class=go>        .reg .b32       %r&lt;5&gt;;</span>
+<span class=go>        .reg .b64       %rd&lt;5&gt;;</span>
+<span class=go></span>
+<span class=go>        ld.param.u64    %rd1, [arr];</span>
+<span class=go>        ld.param.f32    %f1, [val];</span>
+<span class=go>        mov.u32         %r1, %ctaid.x;</span>
+<span class=go>        mov.u32         %r2, %ntid.x;</span>
+<span class=go>        mov.u32         %r3, %tid.x;</span>
+<span class=go>        mad.lo.s32      %r4, %r2, %r1, %r3;</span>
+<span class=go>        ld.u64          %rd2, [%rd1];</span>
+<span class=go>        mul.wide.s32    %rd3, %r4, 4;</span>
+<span class=go>        add.s64         %rd4, %rd2, %rd3;</span>
+<span class=go>        st.global.f32   [%rd4], %f1;</span>
+<span class=go>        ret;</span>
+<span class=go>}</span></code></pre></div><p>On CUDA.jl 3.4, this simple function used 3 more 64-bit registers:</p><pre tabindex=0><code>.func julia_memset(.param .b64 arr, .param .b32 val) {
+        .reg .f32       %f&lt;2&gt;;
+        .reg .b32       %r&lt;5&gt;;
+        .reg .b64       %rd&lt;8&gt;;
+
+        ld.param.u64    %rd1, [arr];
+        ld.param.f32    %f1, [val];
+        mov.u32         %r1, %ctaid.x;
+        mov.u32         %r2, %ntid.x;
+        mul.wide.u32    %rd2, %r2, %r1;
+        mov.u32         %r3, %tid.x;
+        add.s32         %r4, %r3, 1;
+        cvt.u64.u32     %rd3, %r4;
+        ld.u64          %rd4, [%rd1];
+        add.s64         %rd5, %rd2, %rd3;
+        shl.b64         %rd6, %rd5, 2;
+        add.s64         %rd7, %rd4, %rd6;
+        st.global.f32   [%rd7+-4], %f1;
+        ret;
+}
+</code></pre><h2 id=more-aggressive-memory-management><span id=more_aggressive_memory_management></span>More aggressive memory management <a class=heading-anchor href=#more-aggressive-memory-management aria-label="Link to this section">#</a></h2><p>Starting with CUDA 3.8, the memory pool used to allocate <code>CuArray</code>s will be configured
+differently: The pool will now be <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1344>allowed to use all available GPU
+memory</a>, whereas previously all cached memory
+was released at each synchronization point. This can significantly improve performance, and
+makes synchronization much cheaper.</p><p>This behavior can be observed by calling the <code>memory_status()</code> function:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>memory_status</span><span class=p>()</span></code>
+<span class=go>Effective GPU memory usage: 13.57% (2.001 GiB/14.751 GiB)</span>
+<span class=go>Memory pool usage: 0 bytes (0 bytes reserved)</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=kt>CuArray</span><span class=p>{</span><span class=kt>Float32</span><span class=p>}(</span><span class=nb>undef</span><span class=p>,</span> <span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>));</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>Base</span><span class=o>.</span><span class=n>format_bytes</span><span class=p>(</span><span class=n>sizeof</span><span class=p>(</span><span class=n>a</span><span class=p>))</span></code>
+<span class=go>&#34;4.000 GiB&#34;</span>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=nb>nothing</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>GC</span><span class=o>.</span><span class=n>gc</span><span class=p>()</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>memory_status</span><span class=p>()</span></code>
+<span class=go>Effective GPU memory usage: 40.59% (5.988 GiB/14.751 GiB)</span>
+<span class=go>Memory pool usage: 0 bytes (4.000 GiB reserved)</span></code></pre></div><p>So far nothing new. On previous versions of CUDA.jl however, any subsequent synchronization
+of the GPU (e.g., by copying memory to the CPU) would have resulted in a release of this
+reserved memory. This is not the case anymore:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>synchronize</span><span class=p>()</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>memory_status</span><span class=p>()</span></code>
+<span class=go>Effective GPU memory usage: 40.59% (5.988 GiB/14.751 GiB)</span>
+<span class=go>Memory pool usage: 0 bytes (4.000 GiB reserved)</span></code></pre></div><p>If you still want to release this memory, you can call the <code>reclaim()</code> function:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>reclaim</span><span class=p>()</span></code>
+<span class=go></span>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=n>memory_status</span><span class=p>()</span></code>
+<span class=go>Effective GPU memory usage: 13.48% (1.988 GiB/14.751 GiB)</span>
+<span class=go>Memory pool usage: 0 bytes (0 bytes reserved)</span></code></pre></div><p>With interactive Julia sessions, this function is called periodically so that the GPU&rsquo;s
+memory isn&rsquo;t held on to unnecessarily. Otherwise it shouldn&rsquo;t be necessary to call this
+function, as memory is freed automatically when it is needed.</p><h2 id=minor-changes-and-improvements><span id=minor_changes_and_improvements></span>Minor changes and improvements <a class=heading-anchor href=#minor-changes-and-improvements aria-label="Link to this section">#</a></h2><ul><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/1217>Bitonic sort</a> is now used instead of
+quicksort (by <a href=https://github.com/xaellison>@xaellison</a>).</li><li><code>CuDeviceArray</code> <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1303>now stores the length of the
+array</a>, greatly speeding up indexing with
+high-dimensional arrays.</li><li>Device intrinsics <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1305>cannot be called on the CPU
+anymore</a>, protecting against segfaults when
+something isn&rsquo;t dispatching correctly.</li><li>Support for Multi-GPU instances <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1199>has been
+improved</a>, providing the <code>parent_uuid</code>
+function to look up the UUID of the parent device.</li><li><code>randn</code> and <code>randexp</code> <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1236>are now supported in kernel
+code</a>, which should help with initial
+support of Distributions.jl-based operations.</li></ul><nav class=post-nav aria-label="More posts"><a rel=next href=/pr-preview/pr-72/post/2022-04-06-oneapi_update/><span>Newer</span>oneAPI.jl status update</a>
+<a rel=prev href=/pr-preview/pr-72/post/2021-08-13-cuda_3.4/><span>Older</span>CUDA.jl 3.4</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/pr-preview/pr-72/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

@@ -1,0 +1,113 @@
+<!doctype html><html lang=en-US><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>CUDA.jl 5.0: Integrated profiler and task synchronization changes · JuliaGPU</title><meta name=description content="CUDA.jl 5.0 is an major release that adds an integrated profiler to CUDA.jl, and reworks how tasks are synchronized. The release is slightly breaking, as it changes how local toolkits are handled and raises the minimum Julia and CUDA versions."><link rel=canonical href=https://juliagpu.org/pr-preview/pr-72/post/2023-09-19-cuda_5.0/><meta name=robots content="noindex"><link rel=icon href=/pr-preview/pr-72/favicon.ico sizes=32x32><link rel=icon href=/pr-preview/pr-72/logo.svg type=image/svg+xml><link rel=alternate type=application/rss+xml href=https://juliagpu.org/pr-preview/pr-72/post/index.xml title="JuliaGPU blog"><link rel=stylesheet href=/pr-preview/pr-72/css/site.min.8a1ad019046eb27132fa1714ded3575400c765ea070c245e626e8e6e0417d598.css integrity="sha256-ihrQGQRusnEy+hcU3tNXVADHZeoHDCReYm6ObgQX1Zg="><meta property="og:url" content="https://juliagpu.org/pr-preview/pr-72/post/2023-09-19-cuda_5.0/"><meta property="og:site_name" content="JuliaGPU"><meta property="og:title" content="CUDA.jl 5.0: Integrated profiler and task synchronization changes"><meta property="og:description" content="CUDA.jl 5.0 is an major release that adds an integrated profiler to CUDA.jl, and reworks how tasks are synchronized. The release is slightly breaking, as it changes how local toolkits are handled and raises the minimum Julia and CUDA versions."><meta property="og:locale" content="en_US"><meta property="og:type" content="article"><meta property="article:section" content="post"><meta property="article:published_time" content="2023-09-19T00:00:00+00:00"><meta property="article:modified_time" content="2023-09-19T00:00:00+00:00"><meta property="og:image" content="https://juliagpu.org/pr-preview/pr-72/logo.png"></head><body><a class=skip-link href=#main>Skip to content</a><header class=site-header><div class=container><a class=brand href=/pr-preview/pr-72/><img src=/pr-preview/pr-72/logo.svg alt width=44 height=31>
+<span>JuliaGPU</span></a><nav aria-label=Main><ul><li><a href=/pr-preview/pr-72/backends/>Back-ends</a></li><li><a href=/pr-preview/pr-72/get-started/>Get started</a></li><li><a href=/pr-preview/pr-72/showcases/>Showcases</a></li><li><a href=/pr-preview/pr-72/perf/>Performance</a></li><li><a href=/pr-preview/pr-72/post/ aria-current=page>Blog</a></li><li><a href=https://github.com/JuliaGPU aria-label="JuliaGPU on GitHub"><svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path fill="currentColor" stroke="none" d="M12 .297c-6.63.0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577.0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93.0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176.0.0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22.0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22.0 1.606-.015 2.896-.015 3.286.0.315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li></ul></nav></div></header><main id=main><article class="container prose"><header class=page-header><h1>CUDA.jl 5.0: Integrated profiler and task synchronization changes</h1><p class=post-meta><time datetime=2023-09-19>September 19, 2023</time> · Tim Besard</p></header><p>CUDA.jl 5.0 is an major release that adds an integrated profiler to CUDA.jl, and reworks
+how tasks are synchronized. The release is slightly breaking, as it changes how local
+toolkits are handled and raises the minimum Julia and CUDA versions.</p><h2 id=integrated-profiler><span id=integrated_profiler></span>Integrated profiler <a class=heading-anchor href=#integrated-profiler aria-label="Link to this section">#</a></h2><p>The most exciting new feature in CUDA.jl 5.0 is <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2024>the new integrated
+profiler</a>, which is similar to the <code>@profile</code>
+macro from the Julia standard library. The profiler can be used by simply prefixing any code
+that uses the CUDA libraries with <code>CUDA.@profile</code>:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=nd>@profile</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span><span class=o>.+</span><span class=mi>1</span></code>
+<span class=go>Profiler ran for 268.46 µs, capturing 21 events.</span>
+<span class=go></span>
+<span class=go>Host-side activity: calling CUDA APIs took 230.79 µs (85.97% of the trace)</span>
+<span class=go>┌──────────┬───────────┬───────┬───────────┬───────────┬───────────┬─────────────────────────┐</span>
+<span class=go>│ Time (%) │      Time │ Calls │  Avg time │  Min time │  Max time │ Name                    │</span>
+<span class=go>├──────────┼───────────┼───────┼───────────┼───────────┼───────────┼─────────────────────────┤</span>
+<span class=go>│   76.47% │ 205.28 µs │     1 │ 205.28 µs │ 205.28 µs │ 205.28 µs │ cudaLaunchKernel        │</span>
+<span class=go>│    5.42% │  14.54 µs │     2 │   7.27 µs │   5.01 µs │   9.54 µs │ cuMemAllocFromPoolAsync │</span>
+<span class=go>│    2.93% │   7.87 µs │     1 │   7.87 µs │   7.87 µs │   7.87 µs │ cuLaunchKernel          │</span>
+<span class=go>│    0.36% │ 953.67 ns │     2 │ 476.84 ns │    0.0 ns │ 953.67 ns │ cudaGetLastError        │</span>
+<span class=go>└──────────┴───────────┴───────┴───────────┴───────────┴───────────┴─────────────────────────┘</span>
+<span class=go></span>
+<span class=go>Device-side activity: GPU was busy for 2.15 µs (0.80% of the trace)</span>
+<span class=go>┌──────────┬───────────┬───────┬───────────┬───────────┬───────────┬──────────────────────────────</span>
+<span class=go>│ Time (%) │      Time │ Calls │  Avg time │  Min time │  Max time │ Name                        ⋯</span>
+<span class=go>├──────────┼───────────┼───────┼───────────┼───────────┼───────────┼──────────────────────────────</span>
+<span class=go>│    0.44% │   1.19 µs │     1 │   1.19 µs │   1.19 µs │   1.19 µs │ _Z13gen_sequencedI17curandS ⋯</span>
+<span class=go>│    0.36% │ 953.67 ns │     1 │ 953.67 ns │ 953.67 ns │ 953.67 ns │ _Z16broadcast_kernel15CuKer ⋯</span>
+<span class=go>└──────────┴───────────┴───────┴───────────┴───────────┴───────────┴──────────────────────────────</span>
+<span class=go>                                                                                  1 column omitted</span>
+<span class=go>1-element CuArray{Float32, 1, CUDA.Mem.DeviceBuffer}:</span>
+<span class=go> 1.7242923</span></code></pre></div><p>The output shown above is a summary of what happened during the execution of the code. It is
+split into two sections: <strong>host-side activity</strong>, i.e., API calls to the CUDA libraries, and
+the resulting <strong>device-side activity</strong>. As part of each section, the output shows the time
+spent and the ratio to the total execution time. These ratios are important, and a good tool
+to quickly assess the performance of your code. For example, in the above output, we see
+that most of the time is spent on the host calling the CUDA libraries, and only very little
+time is actually spent computing things on the GPU. This indicates that the GPU is severely
+underutilized, which can be solved by increasing the problem size.</p><p>Instead of a summary, it is also possible to view a <strong>chronological trace</strong> by passing the
+<code>trace=true</code> keyword argument:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=nd>@profile</span> <span class=n>trace</span><span class=o>=</span><span class=nb>true</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1</span><span class=p>)</span><span class=o>.+</span><span class=mi>1</span><span class=p>;</span></code>
+<span class=go>Profiler ran for 262.98 µs, capturing 21 events.</span>
+<span class=go></span>
+<span class=go>Host-side activity: calling CUDA APIs took 227.21 µs (86.40% of the trace)</span>
+<span class=go>┌────┬───────────┬───────────┬─────────────────────────┬────────────────────────┐</span>
+<span class=go>│ ID │     Start │      Time │                    Name │ Details                │</span>
+<span class=go>├────┼───────────┼───────────┼─────────────────────────┼────────────────────────┤</span>
+<span class=go>│  5 │   6.44 µs │   9.06 µs │ cuMemAllocFromPoolAsync │ 4 bytes, device memory │</span>
+<span class=go>│  7 │  19.31 µs │ 715.26 ns │        cudaGetLastError │ -                      │</span>
+<span class=go>│  8 │  22.41 µs │ 204.09 µs │        cudaLaunchKernel │ -                      │</span>
+<span class=go>│  9 │ 227.21 µs │    0.0 ns │        cudaGetLastError │ -                      │</span>
+<span class=go>│ 14 │  232.7 µs │   3.58 µs │ cuMemAllocFromPoolAsync │ 4 bytes, device memory │</span>
+<span class=go>│ 18 │ 250.34 µs │   7.39 µs │          cuLaunchKernel │ -                      │</span>
+<span class=go>└────┴───────────┴───────────┴─────────────────────────┴────────────────────────┘</span>
+<span class=go></span>
+<span class=go>Device-side activity: GPU was busy for 2.38 µs (0.91% of the trace)</span>
+<span class=go>┌────┬───────────┬─────────┬─────────┬────────┬──────┬────────────────────────────────────────────</span>
+<span class=go>│ ID │     Start │    Time │ Threads │ Blocks │ Regs │ Name                                      ⋯</span>
+<span class=go>├────┼───────────┼─────────┼─────────┼────────┼──────┼────────────────────────────────────────────</span>
+<span class=go>│  8 │ 225.31 µs │ 1.19 µs │      64 │     64 │   38 │ _Z13gen_sequencedI17curandStateXORWOWfiXa ⋯</span>
+<span class=go>│ 18 │ 257.73 µs │ 1.19 µs │       1 │      1 │   18 │ _Z16broadcast_kernel15CuKernelContext13Cu ⋯</span>
+<span class=go>└────┴───────────┴─────────┴─────────┴────────┴──────┴────────────────────────────────────────────</span>
+<span class=go>                                                                                  1 column omitted</span></code></pre></div><p>Here, we can see a list of events that the profiler captured. Each event has a unique ID,
+which can be used to corelate host-side and device-side events. For example, we can see that
+event 8 on the host is a call to <code>cudaLaunchKernel</code>, which corresponds to to the execution
+of a CURAND kernel on the device.</p><p>The integrated profiler is a great tool to quickly assess the performance of your GPU
+application, identify bottlenecks, and find opportunities for optimization. For complex
+applications, however, it is still recommended to use NVIDIA&rsquo;s NSight Systems or Compute
+profilers, which provide a more detailed, graphical view of what is happening on the GPU.</p><h2 id=synchronization-on-worker-threads><span id=synchronization_on_worker_threads></span>Synchronization on worker threads <a class=heading-anchor href=#synchronization-on-worker-threads aria-label="Link to this section">#</a></h2><p>Another noteworthy change affects how tasks are synchronized. To enable concurrent
+execution, i.e., to make it possible for other Julia tasks to execute while waiting for the
+GPU to finish, CUDA.jl used to rely on so-called stream callbacks. These callbacks were a
+significant source of latency, at least 25us per invocation but sometimes <em>much</em> longer, and
+have also been slated for deprecation and eventual removal from the CUDA toolkit.</p><p>Instead, on Julia 1.9 and later, CUDA.jl <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2025>now
+uses</a> worker threads to wait for GPU
+operations to finish. This mechanism is significantly faster, taking around 5us per
+invocation, but more importantly offers a much more reliable and predictable latency. You
+can observe this mechanism using the integrated profiler:</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-julia-repl data-lang=julia-repl><span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>a</span> <span class=o>=</span> <span class=n>CUDA</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>,</span> <span class=mi>1024</span><span class=p>)</span></code>
+<span class=gp>julia&gt; </span><code class="code-inline language-julia"><span class=n>CUDA</span><span class=o>.</span><span class=nd>@profile</span> <span class=n>trace</span><span class=o>=</span><span class=nb>true</span> <span class=n>CUDA</span><span class=o>.</span><span class=nd>@sync</span> <span class=n>a</span> <span class=o>.+</span> <span class=n>a</span></code>
+<span class=go>Profiler ran for 12.29 ms, capturing 527 events.</span>
+<span class=go></span>
+<span class=go>Host-side activity: calling CUDA APIs took 11.75 ms (95.64% of the trace)</span>
+<span class=go>┌─────┬───────────┬───────────┬────────┬─────────────────────────┐</span>
+<span class=go>│  ID │     Start │      Time │ Thread │                    Name │</span>
+<span class=go>├─────┼───────────┼───────────┼────────┼─────────────────────────┤</span>
+<span class=go>│   5 │   6.91 µs │  13.59 µs │      1 │ cuMemAllocFromPoolAsync │</span>
+<span class=go>│   9 │  36.72 µs │ 199.56 µs │      1 │          cuLaunchKernel │</span>
+<span class=go>│ 525 │ 510.69 µs │  11.75 ms │      2 │     cuStreamSynchronize │</span>
+<span class=go>└─────┴───────────┴───────────┴────────┴─────────────────────────┘</span></code></pre></div><p>For some users, this may still be too slow, so we have added two mechanisms that disable
+nonblocking synchronization and simply block the calling thread until the GPU operation
+finishes. The first is a global setting, which can be enabled by setting the
+<code>nonblocking_synchronization</code> preference to <code>false</code>, which can be done using Preferences.jl.
+<a href=https://github.com/JuliaGPU/CUDA.jl/pull/2060>The second</a> is a fine-grained flag to pass
+to synchronization functions: <code>synchronize(x; blocking=true)</code>, <code>CUDA.@sync blocking=true ...</code>, etc. Both these mechanisms should <em>not</em> be used widely, and are only intended for use
+in latency-critical code, e.g., when benchmarking or profiling.</p><h2 id=local-toolkit-discovery><span id=local_toolkit_discovery></span>Local toolkit discovery <a class=heading-anchor href=#local-toolkit-discovery aria-label="Link to this section">#</a></h2><p>One of the breaking changes involves <a href=https://github.com/JuliaGPU/CUDA.jl/pull/2058>how local toolkits are
+discovered</a>, when opting out of the use of
+artifacts. Previously, this could be enabled by calling
+<code>CUDA.set_runtime_version!("local")</code>, which generated a <code>version = "local"</code> preference. We
+are now changing this into two separate preferences, <code>version</code> and <code>local</code>, where the
+<code>version</code> preference overrides the version of the CUDA toolkit, and the <code>local</code>
+preference independently indicates whether to use a local CUDA toolkit or not.</p><p>Concretely, this means that you will now need to call
+<code>CUDA.set_runtime_version!(local_toolkit=true)</code> to enable the use of a local toolkit. The
+toolkit version will be auto-detected, but can be overridden by also passing a version:
+<code>CUDA.set_runtime_version!(version; local_toolkit=true)</code>. This may be necessary when CUDA
+is not available during precompilation, e.g., on the log-in node of a cluster, or when
+building a container image.</p><h2 id=raised-minimum-requirements><span id=raised_minimum_requirements></span>Raised minimum requirements <a class=heading-anchor href=#raised-minimum-requirements aria-label="Link to this section">#</a></h2><p>Finally, CUDA.jl 5.0 raises the minimum Julia and CUDA versions. The minimum Julia version
+is now 1.8, which should be enforced by the Julia package manager. The minimum CUDA toolkit
+version is now 11.4, but this cannot be enforced by the package manager. As a result, if you
+need to use an older version of the CUDA toolkit, you will need to pin CUDA.jl to v4.4 or
+below. <a href=https://github.com/JuliaGPU/CUDA.jl/blob/master/README.md>The README</a> will maintain
+a table of supported CUDA toolkit versions.</p><p>Most users will not be affected by this change: If you use the artifact-provided CUDA
+toolkit, you will automatically get the latest version supported by your CUDA driver.</p><h2 id=other-changes><span id=other_changes></span>Other changes <a class=heading-anchor href=#other-changes aria-label="Link to this section">#</a></h2><ul><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/2034>Support for CUDA 12.2</a>;</li><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/2040>Memory limits</a> are now enforced by CUDA,
+resulting in better performance;</li><li><a href=https://github.com/JuliaGPU/CUDA.jl/pull/1946>Support for Julia 1.10</a> (with help from
+<a href=https://github.com/dkarrasch>@dkarrasch</a>);</li><li>Support for batched <a href=https://github.com/JuliaGPU/CUDA.jl/pull/1975><code>gemm</code></a>,
+<a href=https://github.com/JuliaGPU/CUDA.jl/pull/1981><code>gemv</code></a> and
+<a href=https://github.com/JuliaGPU/CUDA.jl/pull/2063><code>svd</code></a> (by
+<a href=https://github.com/lpawela>@lpawela</a> and <a href=https://github.com/nikopj>@nikopj</a>.</li></ul><nav class=post-nav aria-label="More posts"><a rel=next href=/pr-preview/pr-72/post/2023-11-07-cuda_5.1/><span>Newer</span>CUDA.jl 5.1: Unified memory and cooperative groups</a>
+<a rel=prev href=/pr-preview/pr-72/post/2023-07-19-oneapi_profiling/><span>Older</span>Profiling oneAPI.jl applications with VTune</a></nav></article></main><footer class=site-footer><div class=container><ul><li><a href=https://discourse.julialang.org/c/domain/gpu/11>Discourse</a></li><li><a href=https://julialang.slack.com/messages/C689Y34LE/>Slack</a></li><li><a href=https://github.com/JuliaGPU>GitHub</a></li><li><a href=/pr-preview/pr-72/post/index.xml>RSS</a></li></ul><p>Built with <a href=https://gohugo.io/>Hugo</a> from <a href=https://github.com/JuliaGPU/juliagpu.org>github.com/JuliaGPU/juliagpu.org</a>.</p></div></footer></body></html>

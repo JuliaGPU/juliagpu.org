@@ -1,0 +1,35 @@
+{
+  "packages": {
+    "cuda": {
+      "name": "CUDA.jl",
+      "repo": "https://github.com/JuliaGPU/CUDA.jl",
+      "history": "https://cuda.juliagpu.org/bench/history.json",
+      "data": "https://cuda.juliagpu.org/bench/data.js",
+      "branch": "main",
+      "hardware": "NVIDIA GeForce RTX 2070"
+    },
+    "amdgpu": {
+      "name": "AMDGPU.jl",
+      "repo": "https://github.com/JuliaGPU/AMDGPU.jl",
+      "history": "https://amdgpu.juliagpu.org/bench/history.json",
+      "data": "https://amdgpu.juliagpu.org/bench/data.js",
+      "branch": "main",
+      "hardware": "AMD Radeon (gfx1100)"
+    },
+    "metal": {
+      "name": "Metal.jl",
+      "repo": "https://github.com/JuliaGPU/Metal.jl",
+      "history": "https://metal.juliagpu.org/bench/history.json",
+      "data": "https://metal.juliagpu.org/bench/data.js",
+      "branch": "main",
+      "hardware": "Apple silicon"
+    },
+    "kernelabstractions": {
+      "name": "KernelAbstractions.jl",
+      "repo": "https://github.com/JuliaGPU/KernelAbstractions.jl",
+      "history": "https://juliagpu.github.io/KernelAbstractions.jl/bench/history.json",
+      "branch": "main",
+      "hardware": "Intel Core i7-9700K (PoCL)"
+    }
+  }
+}
