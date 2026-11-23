@@ -4,7 +4,7 @@ description: Install the version of Hugo that the site is built with.
 inputs:
   version:
     description: Hugo version to install. Kept up to date by the update-hugo workflow.
-    default: 0.170.0
+    default: 0.170.1
 
 runs:
   using: composite
